@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { RegionData, DistrictData, OP5Fault, ControlSystemOutage, FaultType, User } from "@/lib/types";
 import { useAuth } from "./AuthContext";
@@ -20,7 +19,7 @@ interface DataContextType {
   resolveFault: (id: string, type: "op5" | "control") => void;
 }
 
-// Mock data
+// Mock data with regionId added to each district
 const MOCK_REGIONS: RegionData[] = [
   {
     id: "1",
@@ -29,6 +28,7 @@ const MOCK_REGIONS: RegionData[] = [
       {
         id: "1",
         name: "Accra Metro",
+        regionId: "1", // Added regionId
         population: {
           rural: 25000,
           urban: 180000,
@@ -38,6 +38,7 @@ const MOCK_REGIONS: RegionData[] = [
       {
         id: "2",
         name: "Tema",
+        regionId: "1", // Added regionId
         population: {
           rural: 18000,
           urban: 120000,
@@ -53,6 +54,7 @@ const MOCK_REGIONS: RegionData[] = [
       {
         id: "3",
         name: "Kumasi Metro",
+        regionId: "2", // Added regionId
         population: {
           rural: 45000,
           urban: 220000,
@@ -62,6 +64,7 @@ const MOCK_REGIONS: RegionData[] = [
       {
         id: "4",
         name: "Obuasi",
+        regionId: "2", // Added regionId
         population: {
           rural: 35000,
           urban: 85000,
@@ -77,6 +80,7 @@ const MOCK_REGIONS: RegionData[] = [
       {
         id: "5",
         name: "Sekondi-Takoradi",
+        regionId: "3", // Added regionId
         population: {
           rural: 32000,
           urban: 105000,
@@ -86,6 +90,7 @@ const MOCK_REGIONS: RegionData[] = [
       {
         id: "6",
         name: "Tarkwa",
+        regionId: "3", // Added regionId
         population: {
           rural: 42000,
           urban: 78000,
@@ -227,8 +232,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    // Initialize data
-    const allDistricts = regions.flatMap(region => region.districts);
+    // Initialize data with regionId
+    const allDistricts = regions.flatMap(region => 
+      region.districts.map(district => ({
+        ...district,
+        regionId: region.id
+      }))
+    );
     setDistricts(allDistricts);
     
     // Load sample faults

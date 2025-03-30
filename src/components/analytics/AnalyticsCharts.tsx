@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { OP5Fault, ControlSystemOutage } from "@/lib/types";
@@ -64,6 +65,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ filteredFaults }) => 
     };
   };
 
+  // Type guard to filter faults
   const op5FaultsData = filteredFaults.filter((fault): fault is OP5Fault =>
     'faultLocation' in fault && 'affectedPopulation' in fault
   );

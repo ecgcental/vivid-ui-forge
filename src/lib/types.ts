@@ -19,6 +19,7 @@ export type RegionData = {
 export type DistrictData = {
   id: string;
   name: string;
+  regionId: string; // Added regionId field
   population: {
     rural: number;
     urban: number;
@@ -67,4 +68,20 @@ export interface ControlSystemOutage extends FaultBase {
   areaAffected: string;
   loadMW: number;
   unservedEnergyMWh?: number;
+}
+
+// Add StatsOverviewProps interface to fix the DashboardPage typing issue
+export interface StatsOverviewProps {
+  op5Faults: OP5Fault[];
+  controlOutages: ControlSystemOutage[];
+}
+
+// Add FilterBarProps interface to fix the FilterBar typing issue
+export interface FilterBarProps {
+  setFilterRegion: React.Dispatch<React.SetStateAction<string>>;
+  setFilterDistrict: React.Dispatch<React.SetStateAction<string>>;
+  setFilterStatus: React.Dispatch<React.SetStateAction<"active" | "resolved" | "all">>;
+  filterStatus: "active" | "resolved" | "all";
+  onRefresh: () => void;
+  isRefreshing: boolean;
 }

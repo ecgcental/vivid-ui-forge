@@ -1,13 +1,16 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { AnalyticsCharts } from "@/components/analytics/AnalyticsCharts";
+import AnalyticsCharts from "@/components/analytics/AnalyticsCharts";
+import { useData } from "@/contexts/DataContext";
 
 export default function AnalyticsPage() {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
+  const { getFilteredFaults } = useData();
+  const [filteredFaults, setFilteredFaults] = useState([]);
   
   useEffect(() => {
     if (!isAuthenticated) {
@@ -19,7 +22,11 @@ export default function AnalyticsPage() {
     if (user?.role === "district_engineer") {
       navigate("/dashboard");
     }
-  }, [isAuthenticated, user, navigate]);
+
+    // Get all faults for analytics
+    const { op5Faults, controlOutages } = getFilteredFaults();
+    setFilteredFaults([...op5Faults, ...controlOutages]);
+  }, [isAuthenticated, user, navigate, getFilteredFaults]);
   
   if (!isAuthenticated || user?.role === "district_engineer") {
     return null;
@@ -35,7 +42,7 @@ export default function AnalyticsPage() {
           </p>
         </div>
         
-        <AnalyticsCharts />
+        <AnalyticsCharts filteredFaults={filteredFaults} />
       </div>
     </Layout>
   );
