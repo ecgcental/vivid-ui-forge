@@ -9,7 +9,7 @@ import { StatsOverview } from "@/components/dashboard/StatsOverview";
 import { FaultCard } from "@/components/dashboard/FaultCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, AlertTriangle, ZapOff } from "lucide-react";
+import { PlusCircle, AlertTriangle, ZapOff, RefreshCw } from "lucide-react";
 import { OP5Fault, ControlSystemOutage } from "@/lib/types";
 
 export default function DashboardPage() {
@@ -70,18 +70,25 @@ export default function DashboardPage() {
       <div className="container mx-auto py-6 px-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              Dashboard
+            </h1>
             <p className="text-muted-foreground">
               Monitor and manage power distribution faults
             </p>
           </div>
           
-          <Button asChild>
-            <a href="/report-fault" className="flex items-center">
-              <PlusCircle size={16} className="mr-2" />
-              Report New Fault
-            </a>
-          </Button>
+          <div className="flex gap-3">
+            <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isRefreshing}>
+              <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
+            </Button>
+            <Button asChild>
+              <a href="/report-fault" className="flex items-center">
+                <PlusCircle size={16} className="mr-2" />
+                Report New Fault
+              </a>
+            </Button>
+          </div>
         </div>
         
         <StatsOverview 
@@ -98,23 +105,30 @@ export default function DashboardPage() {
           isRefreshing={isRefreshing}
         />
         
-        <Tabs defaultValue="all">
-          <TabsList className="mb-6">
+        <Tabs defaultValue="all" className="mt-8">
+          <TabsList className="mb-6 grid w-full grid-cols-3 max-w-md mx-auto">
             <TabsTrigger value="all">All Faults</TabsTrigger>
-            <TabsTrigger value="op5" className="flex items-center">
+            <TabsTrigger value="op5" className="flex items-center justify-center">
               <AlertTriangle size={16} className="mr-2" />
               OP5 Faults
             </TabsTrigger>
-            <TabsTrigger value="control" className="flex items-center">
+            <TabsTrigger value="control" className="flex items-center justify-center">
               <ZapOff size={16} className="mr-2" />
-              Control System Outages
+              Control System
             </TabsTrigger>
           </TabsList>
           
           <TabsContent value="all">
             {faults.op5Faults.length === 0 && faults.controlOutages.length === 0 ? (
-              <div className="text-center py-12 border rounded-lg bg-gray-50">
+              <div className="text-center py-12 border rounded-lg bg-muted/20 shadow-sm">
                 <p className="text-muted-foreground">No faults found with the current filters</p>
+                <Button variant="link" onClick={() => {
+                  setFilterRegion(undefined);
+                  setFilterDistrict(undefined);
+                  setFilterStatus("all");
+                }}>
+                  Clear filters
+                </Button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -139,8 +153,15 @@ export default function DashboardPage() {
           
           <TabsContent value="op5">
             {faults.op5Faults.length === 0 ? (
-              <div className="text-center py-12 border rounded-lg bg-gray-50">
+              <div className="text-center py-12 border rounded-lg bg-muted/20 shadow-sm">
                 <p className="text-muted-foreground">No OP5 faults found with the current filters</p>
+                <Button variant="link" onClick={() => {
+                  setFilterRegion(undefined);
+                  setFilterDistrict(undefined);
+                  setFilterStatus("all");
+                }}>
+                  Clear filters
+                </Button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -161,8 +182,15 @@ export default function DashboardPage() {
           
           <TabsContent value="control">
             {faults.controlOutages.length === 0 ? (
-              <div className="text-center py-12 border rounded-lg bg-gray-50">
+              <div className="text-center py-12 border rounded-lg bg-muted/20 shadow-sm">
                 <p className="text-muted-foreground">No control system outages found with the current filters</p>
+                <Button variant="link" onClick={() => {
+                  setFilterRegion(undefined);
+                  setFilterDistrict(undefined);
+                  setFilterStatus("all");
+                }}>
+                  Clear filters
+                </Button>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

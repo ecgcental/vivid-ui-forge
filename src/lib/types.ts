@@ -85,3 +85,16 @@ export interface FilterBarProps {
   onRefresh: () => void;
   isRefreshing: boolean;
 }
+
+// Add DateRange type for the calendar component
+export interface DateRange {
+  from: Date | undefined;
+  to: Date | undefined;
+}
+
+// Add AnalyticsChartProps interface for the analytics charts component
+export interface AnalyticsChartProps {
+  filteredFaults: (OP5Fault | ControlSystemOutage)[];
+  timeRange?: string;
+  chartType?: 'bar' | 'line' | 'pie';
+}
