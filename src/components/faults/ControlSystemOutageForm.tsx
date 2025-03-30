@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -60,12 +59,15 @@ export function ControlSystemOutageForm() {
     : regions.filter(r => user?.region ? r.name === user.region : true);
   
   const filteredDistricts = regionId
-    ? districts.filter(d => d.regionId === regionId && (
+  ? districts.filter(d => {
+      const region = regions.find(r => r.id === regionId);
+      return region?.districts.some(rd => rd.id === d.id) && (
         user?.role === "district_engineer" 
           ? user.district === d.name 
           : true
-      ))
-    : [];
+      );
+    })
+  : [];
   
   // Set default values based on user
   useEffect(() => {

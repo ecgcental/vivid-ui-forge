@@ -1,121 +1,98 @@
-
-import { OP5Fault, ControlSystemOutage } from "@/lib/types";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, BarChart, Clock, Lightning, Users } from "lucide-react";
-import { calculateMTTR, formatDuration } from "@/utils/calculations";
+import { useData } from "@/contexts/DataContext";
+import { Zap, Users, Clock, MonitorSmartphone } from "lucide-react";
 
-type StatsOverviewProps = {
-  op5Faults: OP5Fault[];
-  controlOutages: ControlSystemOutage[];
-};
+interface StatsOverviewProps {
+  regionId?: string;
+  districtId?: string;
+}
 
-export function StatsOverview({ op5Faults, controlOutages }: StatsOverviewProps) {
-  // Calculate total active faults
-  const activeFaults = op5Faults.filter(f => f.status === "active").length + 
-    controlOutages.filter(o => o.status === "active").length;
-  
-  // Calculate total resolved faults
-  const resolvedFaults = op5Faults.filter(f => f.status === "resolved").length + 
-    controlOutages.filter(o => o.status === "resolved").length;
-  
-  // Calculate total affected customers
-  const totalAffectedCustomers = op5Faults.reduce((sum, fault) => {
-    return sum + fault.affectedPopulation.rural + fault.affectedPopulation.urban + fault.affectedPopulation.metro;
-  }, 0) + controlOutages.reduce((sum, outage) => {
-    return sum + outage.customersAffected.rural + outage.customersAffected.urban + outage.customersAffected.metro;
-  }, 0);
-  
-  // Calculate Average MTTR for resolved faults only
-  const resolvedOP5Faults = op5Faults.filter(f => f.status === "resolved");
-  const mttr = resolvedOP5Faults.length 
-    ? calculateMTTR(
-        resolvedOP5Faults.map(f => ({ 
-          occurrenceDate: f.occurrenceDate, 
-          restorationDate: f.restorationDate 
-        }))
-      )
-    : 0;
-  
-  // Calculate total unserved energy
-  const totalUnservedEnergy = controlOutages.reduce((sum, outage) => {
-    return sum + (outage.unservedEnergyMWh || 0);
-  }, 0);
-  
+export function StatsOverview({ regionId, districtId }: StatsOverviewProps) {
+  const { regions, districts, op5Faults, controlOutages } = useData();
+  const [totalFaults, setTotalFaults] = useState(0);
+  const [totalOutages, setTotalOutages] = useState(0);
+  const [affectedPopulation, setAffectedPopulation] = useState(0);
+  const [averageOutageTime, setAverageOutageTime] = useState(0);
+
+  useEffect(() => {
+    // Filter data based on selected region and district
+    const filteredFaults = op5Faults.filter(fault => {
+      if (regionId && fault.regionId !== regionId) return false;
+      if (districtId && fault.districtId !== districtId) return false;
+      return true;
+    });
+
+    const filteredOutages = controlOutages.filter(outage => {
+      if (regionId && outage.regionId !== regionId) return false;
+      if (districtId && outage.districtId !== districtId) return false;
+      return true;
+    });
+
+    // Calculate total faults and outages
+    setTotalFaults(filteredFaults.length);
+    setTotalOutages(filteredOutages.length);
+
+    // Calculate total affected population
+    let totalAffected = 0;
+    filteredFaults.forEach(fault => {
+      totalAffected += fault.affectedPopulation.rural + fault.affectedPopulation.urban + fault.affectedPopulation.metro;
+    });
+    setAffectedPopulation(totalAffected);
+
+    // Calculate average outage time (in minutes)
+    let totalDuration = 0;
+    filteredFaults.forEach(fault => {
+      totalDuration += fault.outrageDuration;
+    });
+    const avgDuration = filteredFaults.length > 0 ? totalDuration / filteredFaults.length : 0;
+    setAverageOutageTime(avgDuration);
+
+  }, [regionId, districtId, op5Faults, controlOutages]);
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Fault Status
-          </CardTitle>
+        <CardHeader>
+          <CardTitle>Total Faults</CardTitle>
+          <CardDescription>Number of reported OP5 faults</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex justify-between">
-            <div>
-              <div className="text-2xl font-bold text-red-600 flex items-center">
-                <AlertCircle size={20} className="mr-1" />
-                {activeFaults}
-              </div>
-              <p className="text-xs text-muted-foreground">Active</p>
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-green-600">
-                {resolvedFaults}
-              </div>
-              <p className="text-xs text-muted-foreground">Resolved</p>
-            </div>
-          </div>
+        <CardContent className="flex items-center space-x-4">
+          <Zap className="h-8 w-8 text-red-500" />
+          <div className="text-3xl font-bold">{totalFaults}</div>
         </CardContent>
       </Card>
-      
+
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Average MTTR
-          </CardTitle>
+        <CardHeader>
+          <CardTitle>Total Outages</CardTitle>
+          <CardDescription>Number of control system outages</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold flex items-center">
-            <Clock size={20} className="mr-1 text-yellow-600" />
-            {mttr ? formatDuration(mttr) : "N/A"}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Mean Time To Repair
-          </p>
+        <CardContent className="flex items-center space-x-4">
+          <MonitorSmartphone className="h-8 w-8 text-orange-500" />
+          <div className="text-3xl font-bold">{totalOutages}</div>
         </CardContent>
       </Card>
-      
+
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Affected Customers
-          </CardTitle>
+        <CardHeader>
+          <CardTitle>Affected Population</CardTitle>
+          <CardDescription>Total population affected by faults</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold flex items-center">
-            <Users size={20} className="mr-1 text-blue-600" />
-            {totalAffectedCustomers.toLocaleString()}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Total Impact
-          </p>
+        <CardContent className="flex items-center space-x-4">
+          <Users className="h-8 w-8 text-blue-500" />
+          <div className="text-3xl font-bold">{affectedPopulation}</div>
         </CardContent>
       </Card>
-      
+
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">
-            Unserved Energy
-          </CardTitle>
+        <CardHeader>
+          <CardTitle>Avg. Outage Time</CardTitle>
+          <CardDescription>Average time to resolve a fault (minutes)</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold flex items-center">
-            <Lightning size={20} className="mr-1 text-orange-600" />
-            {totalUnservedEnergy.toFixed(2)} MWh
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Total
-          </p>
+        <CardContent className="flex items-center space-x-4">
+          <Clock className="h-8 w-8 text-green-500" />
+          <div className="text-3xl font-bold">{averageOutageTime.toFixed(0)}</div>
         </CardContent>
       </Card>
     </div>

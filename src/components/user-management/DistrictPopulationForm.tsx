@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -103,11 +102,14 @@ export function DistrictPopulationForm() {
   
   // Filter districts for district engineers
   const filteredDistricts = selectedRegion
-    ? districts.filter(d => d.regionId === selectedRegion && (
+    ? districts.filter(d => {
+      const region = regions.find(r => r.id === selectedRegion);
+      return region?.districts.some(rd => rd.id === d.id) && (
         user?.role === "district_engineer" 
           ? user.district === d.name 
           : true
-      ))
+      );
+    })
     : [];
   
   return (
