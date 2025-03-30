@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,28 +29,22 @@ import { Calendar } from "@/components/ui/calendar";
 import { CalendarIcon, FilterIcon, XIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { FilterBarProps } from "@/lib/types";
 
-interface FilterBarProps {
-  onFilterChange: (filters: {
-    regionId: string;
-    districtId: string;
-    faultType: string;
-    dateRange: {
-      from: Date | undefined;
-      to: Date | undefined;
-    };
-    status: string;
-  }) => void;
-}
-
-export function FilterBar({ onFilterChange }: FilterBarProps) {
+export function FilterBar({ 
+  setFilterRegion, 
+  setFilterDistrict, 
+  setFilterStatus, 
+  filterStatus, 
+  onRefresh, 
+  isRefreshing 
+}: FilterBarProps) {
   const { regions, districts } = useData();
   const { user } = useAuth();
   
   const [selectedRegion, setSelectedRegion] = useState<string>("");
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
   const [selectedFaultType, setSelectedFaultType] = useState<string>("");
-  const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [date, setDate] = useState<{
     from: Date | undefined;
     to: Date | undefined;
@@ -65,31 +60,32 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
         const userRegion = regions.find(r => r.name === user.region);
         if (userRegion) {
           setSelectedRegion(userRegion.id);
+          setFilterRegion(userRegion.id);
           
           const userDistrict = districts.find(d => d.name === user.district);
           if (userDistrict) {
             setSelectedDistrict(userDistrict.id);
+            setFilterDistrict(userDistrict.id);
           }
         }
       } else if (user.role === "regional_engineer" && user.region) {
         const userRegion = regions.find(r => r.name === user.region);
         if (userRegion) {
           setSelectedRegion(userRegion.id);
+          setFilterRegion(userRegion.id);
         }
       }
     }
-  }, [user, regions, districts]);
+  }, [user, regions, districts, setFilterRegion, setFilterDistrict]);
   
-  // Update parent component when filters change
+  // Update filters when selections change
   useEffect(() => {
-    onFilterChange({
-      regionId: selectedRegion,
-      districtId: selectedDistrict,
-      faultType: selectedFaultType,
-      dateRange: date,
-      status: selectedStatus
-    });
-  }, [selectedRegion, selectedDistrict, selectedFaultType, date, selectedStatus, onFilterChange]);
+    setFilterRegion(selectedRegion);
+  }, [selectedRegion, setFilterRegion]);
+  
+  useEffect(() => {
+    setFilterDistrict(selectedDistrict);
+  }, [selectedDistrict, setFilterDistrict]);
   
   const handleRegionChange = (selectedRegionId: string) => {
     setSelectedRegion(selectedRegionId);
@@ -100,13 +96,16 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
     // Don't clear region/district for district/regional engineers
     if (user?.role === "global_engineer") {
       setSelectedRegion("");
+      setFilterRegion("");
       setSelectedDistrict("");
+      setFilterDistrict("");
     } else if (user?.role === "regional_engineer") {
       setSelectedDistrict("");
+      setFilterDistrict("");
     }
     
     setSelectedFaultType("");
-    setSelectedStatus("");
+    setFilterStatus("all");
     setDate({
       from: undefined,
       to: undefined,
@@ -192,12 +191,15 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
               </div>
               
               <div>
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <Select 
+                  value={filterStatus} 
+                  onValueChange={setFilterStatus}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Statuses</SelectItem>
+                    <SelectItem value="all">All Statuses</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
                     <SelectItem value="resolved">Resolved</SelectItem>
                   </SelectContent>
@@ -259,6 +261,17 @@ export function FilterBar({ onFilterChange }: FilterBarProps) {
                     />
                   </PopoverContent>
                 </Popover>
+              </div>
+              
+              <div className="md:col-span-2">
+                <Button
+                  variant="outline"
+                  onClick={onRefresh}
+                  disabled={isRefreshing}
+                  className="w-full"
+                >
+                  {isRefreshing ? "Refreshing..." : "Refresh Data"}
+                </Button>
               </div>
             </div>
           </TabsContent>

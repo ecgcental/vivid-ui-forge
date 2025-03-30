@@ -1,54 +1,40 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useData } from "@/contexts/DataContext";
 import { Zap, Users, Clock, MonitorSmartphone } from "lucide-react";
+import { OP5Fault, ControlSystemOutage, StatsOverviewProps } from "@/lib/types";
 
-interface StatsOverviewProps {
-  regionId?: string;
-  districtId?: string;
-}
-
-export function StatsOverview({ regionId, districtId }: StatsOverviewProps) {
-  const { regions, districts, op5Faults, controlOutages } = useData();
+export function StatsOverview({ op5Faults, controlOutages }: StatsOverviewProps) {
   const [totalFaults, setTotalFaults] = useState(0);
   const [totalOutages, setTotalOutages] = useState(0);
   const [affectedPopulation, setAffectedPopulation] = useState(0);
   const [averageOutageTime, setAverageOutageTime] = useState(0);
 
   useEffect(() => {
-    // Filter data based on selected region and district
-    const filteredFaults = op5Faults.filter(fault => {
-      if (regionId && fault.regionId !== regionId) return false;
-      if (districtId && fault.districtId !== districtId) return false;
-      return true;
-    });
-
-    const filteredOutages = controlOutages.filter(outage => {
-      if (regionId && outage.regionId !== regionId) return false;
-      if (districtId && outage.districtId !== districtId) return false;
-      return true;
-    });
-
     // Calculate total faults and outages
-    setTotalFaults(filteredFaults.length);
-    setTotalOutages(filteredOutages.length);
+    setTotalFaults(op5Faults.length);
+    setTotalOutages(controlOutages.length);
 
     // Calculate total affected population
     let totalAffected = 0;
-    filteredFaults.forEach(fault => {
+    op5Faults.forEach(fault => {
       totalAffected += fault.affectedPopulation.rural + fault.affectedPopulation.urban + fault.affectedPopulation.metro;
     });
     setAffectedPopulation(totalAffected);
 
     // Calculate average outage time (in minutes)
     let totalDuration = 0;
-    filteredFaults.forEach(fault => {
-      totalDuration += fault.outrageDuration;
+    const faultsWithDuration = op5Faults.filter(fault => fault.outrageDuration !== undefined);
+    faultsWithDuration.forEach(fault => {
+      if (fault.outrageDuration) {
+        totalDuration += fault.outrageDuration;
+      }
     });
-    const avgDuration = filteredFaults.length > 0 ? totalDuration / filteredFaults.length : 0;
+    const avgDuration = faultsWithDuration.length > 0 ? totalDuration / faultsWithDuration.length : 0;
     setAverageOutageTime(avgDuration);
 
-  }, [regionId, districtId, op5Faults, controlOutages]);
+  }, [op5Faults, controlOutages]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
