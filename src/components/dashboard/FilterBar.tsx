@@ -30,6 +30,7 @@ import { CalendarIcon, FilterIcon, XIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { FilterBarProps } from "@/lib/types";
+import { DateRange } from "react-day-picker";
 
 export function FilterBar({ 
   setFilterRegion, 
@@ -44,11 +45,8 @@ export function FilterBar({
   
   const [selectedRegion, setSelectedRegion] = useState<string>("");
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
-  const [selectedFaultType, setSelectedFaultType] = useState<string>("");
-  const [date, setDate] = useState<{
-    from: Date | undefined;
-    to: Date | undefined;
-  }>({
+  const [selectedFaultType, setSelectedFaultType] = useState<string>("all");
+  const [date, setDate] = useState<DateRange>({
     from: undefined,
     to: undefined,
   });
@@ -91,6 +89,11 @@ export function FilterBar({
     setSelectedRegion(selectedRegionId);
     setSelectedDistrict("");  // Reset district when region changes
   };
+
+  const handleStatusChange = (value: string) => {
+    // Cast the string value to the expected type
+    setFilterStatus(value as "all" | "active" | "resolved");
+  };
   
   const handleClearFilters = () => {
     // Don't clear region/district for district/regional engineers
@@ -104,7 +107,7 @@ export function FilterBar({
       setFilterDistrict("");
     }
     
-    setSelectedFaultType("");
+    setSelectedFaultType("all");
     setFilterStatus("all");
     setDate({
       from: undefined,
@@ -193,7 +196,7 @@ export function FilterBar({
               <div>
                 <Select 
                   value={filterStatus} 
-                  onValueChange={setFilterStatus}
+                  onValueChange={handleStatusChange}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Status" />
@@ -216,7 +219,7 @@ export function FilterBar({
                     <SelectValue placeholder="Fault Type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Types</SelectItem>
+                    <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="Planned">Planned</SelectItem>
                     <SelectItem value="Unplanned">Unplanned</SelectItem>
                     <SelectItem value="Emergency">Emergency</SelectItem>
@@ -258,6 +261,7 @@ export function FilterBar({
                       selected={date}
                       onSelect={setDate}
                       numberOfMonths={2}
+                      className="pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>

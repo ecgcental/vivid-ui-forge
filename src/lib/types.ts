@@ -78,8 +78,8 @@ export interface StatsOverviewProps {
 
 // Add FilterBarProps interface to fix the FilterBar typing issue
 export interface FilterBarProps {
-  setFilterRegion: React.Dispatch<React.SetStateAction<string>>;
-  setFilterDistrict: React.Dispatch<React.SetStateAction<string>>;
+  setFilterRegion: React.Dispatch<React.SetStateAction<string | undefined>>;
+  setFilterDistrict: React.Dispatch<React.SetStateAction<string | undefined>>;
   setFilterStatus: React.Dispatch<React.SetStateAction<"active" | "resolved" | "all">>;
   filterStatus: "active" | "resolved" | "all";
   onRefresh: () => void;
