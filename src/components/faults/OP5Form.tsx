@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -21,7 +22,7 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { Loader2, InfoIcon, Users, Clock, ActivityIcon } from "lucide-react";
 import { FaultType } from "@/lib/types";
 import { 
   calculateOutageDuration, 
@@ -55,22 +56,6 @@ export function OP5Form() {
   const [saifi, setSaifi] = useState<number | null>(null);
   const [caidi, setCaidi] = useState<number | null>(null);
   
-  // Filter regions and districts based on user role
-  const filteredRegions = user?.role === "global_engineer" 
-    ? regions 
-    : regions.filter(r => user?.region ? r.name === user.region : true);
-  
-  const filteredDistricts = regionId
-  ? districts.filter(d => {
-      const region = regions.find(r => r.id === regionId);
-      return region?.districts.some(rd => rd.id === d.id) && (
-        user?.role === "district_engineer" 
-          ? user.district === d.name 
-          : true
-      );
-    })
-  : [];
-  
   // Set default values based on user
   useEffect(() => {
     if (user) {
@@ -86,6 +71,23 @@ export function OP5Form() {
     }
   }, [user, regions, districts]);
   
+  // Filter regions and districts based on user role
+  const filteredRegions = user?.role === "global_engineer" 
+    ? regions 
+    : regions.filter(r => user?.region ? r.name === user.region : true);
+
+  // Filter districts based on region and user role  
+  const filteredDistricts = regionId
+    ? districts.filter(d => {
+        const region = regions.find(r => r.id === regionId);
+        return region?.districts.some(rd => rd.id === d.id) && (
+          user?.role === "district_engineer" 
+            ? user.district === d.name 
+            : true
+        );
+      })
+    : [];
+
   // Calculate metrics when dates change
   useEffect(() => {
     if (occurrenceDate && restorationDate) {
@@ -172,25 +174,25 @@ export function OP5Form() {
   };
   
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle>OP5 Fault Report</CardTitle>
+    <Card className="border-0 shadow-none bg-transparent">
+      <CardHeader className="px-0 pt-0">
+        <CardTitle className="text-2xl font-serif">OP5 Fault Report</CardTitle>
         <CardDescription>
           Report a fault in the OP5 system with detailed information
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="region">Region</Label>
+      <CardContent className="px-0">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-3">
+              <Label htmlFor="region" className="text-base font-medium">Region</Label>
               <Select 
                 value={regionId} 
                 onValueChange={setRegionId}
                 disabled={user?.role === "district_engineer" || user?.role === "regional_engineer"}
                 required
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-12 text-base bg-background/50 border-muted">
                   <SelectValue placeholder="Select region" />
                 </SelectTrigger>
                 <SelectContent>
@@ -203,15 +205,15 @@ export function OP5Form() {
               </Select>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="district">District</Label>
+            <div className="space-y-3">
+              <Label htmlFor="district" className="text-base font-medium">District</Label>
               <Select 
                 value={districtId} 
                 onValueChange={setDistrictId}
                 disabled={user?.role === "district_engineer" || !regionId}
                 required
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-12 text-base bg-background/50 border-muted">
                   <SelectValue placeholder="Select district" />
                 </SelectTrigger>
                 <SelectContent>
@@ -228,22 +230,23 @@ export function OP5Form() {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="occurrenceDate">Fault Occurrence Date & Time</Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-3">
+              <Label htmlFor="occurrenceDate" className="text-base font-medium">Fault Occurrence Date & Time</Label>
               <Input
                 id="occurrenceDate"
                 type="datetime-local"
                 value={occurrenceDate}
                 onChange={(e) => setOccurrenceDate(e.target.value)}
                 required
+                className="h-12 text-base bg-background/50 border-muted"
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="faultType">Type of Fault</Label>
+            <div className="space-y-3">
+              <Label htmlFor="faultType" className="text-base font-medium">Type of Fault</Label>
               <Select value={faultType} onValueChange={(value) => setFaultType(value as FaultType)} required>
-                <SelectTrigger>
+                <SelectTrigger className="h-12 text-base bg-background/50 border-muted">
                   <SelectValue placeholder="Select fault type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -256,8 +259,8 @@ export function OP5Form() {
             </div>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="faultLocation">Fault Location</Label>
+          <div className="space-y-3">
+            <Label htmlFor="faultLocation" className="text-base font-medium">Fault Location</Label>
             <Input
               id="faultLocation"
               type="text"
@@ -265,79 +268,105 @@ export function OP5Form() {
               value={faultLocation}
               onChange={(e) => setFaultLocation(e.target.value)}
               required
+              className="h-12 text-base bg-background/50 border-muted"
             />
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="restorationDate">Fault Restoration Date & Time</Label>
+          <div className="space-y-3">
+            <Label htmlFor="restorationDate" className="text-base font-medium">Fault Restoration Date & Time</Label>
             <Input
               id="restorationDate"
               type="datetime-local"
               value={restorationDate}
               onChange={(e) => setRestorationDate(e.target.value)}
+              className="h-12 text-base bg-background/50 border-muted"
             />
             <p className="text-xs text-muted-foreground">
               Leave empty if the fault is still active
             </p>
           </div>
           
-          <Tabs defaultValue="affected">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="affected">Affected Population</TabsTrigger>
-              <TabsTrigger value="calculations">Calculations</TabsTrigger>
+          <Tabs defaultValue="affected" className="w-full">
+            <TabsList className="w-full grid grid-cols-2 bg-muted/50 p-1">
+              <TabsTrigger value="affected" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <Users className="h-4 w-4 mr-2" />
+                Affected Population
+              </TabsTrigger>
+              <TabsTrigger value="calculations" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <ActivityIcon className="h-4 w-4 mr-2" />
+                Calculations
+              </TabsTrigger>
             </TabsList>
-            <TabsContent value="affected" className="space-y-6 pt-4">
+            <TabsContent value="affected" className="space-y-6 pt-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="ruralAffected">Rural Population Affected</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="ruralAffected" className="font-medium flex items-center">
+                    Rural Population Affected
+                    <InfoIcon className="h-4 w-4 ml-1 text-muted-foreground" />
+                  </Label>
                   <Input
                     id="ruralAffected"
                     type="number"
                     min="0"
                     value={ruralAffected}
                     onChange={(e) => setRuralAffected(parseInt(e.target.value) || 0)}
+                    className="bg-background/50 border-muted"
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="urbanAffected">Urban Population Affected</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="urbanAffected" className="font-medium flex items-center">
+                    Urban Population Affected
+                    <InfoIcon className="h-4 w-4 ml-1 text-muted-foreground" />
+                  </Label>
                   <Input
                     id="urbanAffected"
                     type="number"
                     min="0"
                     value={urbanAffected}
                     onChange={(e) => setUrbanAffected(parseInt(e.target.value) || 0)}
+                    className="bg-background/50 border-muted"
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="metroAffected">Metro Population Affected</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="metroAffected" className="font-medium flex items-center">
+                    Metro Population Affected
+                    <InfoIcon className="h-4 w-4 ml-1 text-muted-foreground" />
+                  </Label>
                   <Input
                     id="metroAffected"
                     type="number"
                     min="0"
                     value={metroAffected}
                     onChange={(e) => setMetroAffected(parseInt(e.target.value) || 0)}
+                    className="bg-background/50 border-muted"
                   />
                 </div>
               </div>
             </TabsContent>
             
-            <TabsContent value="calculations" className="pt-4">
-              <div className="space-y-6">
+            <TabsContent value="calculations" className="pt-6">
+              <div className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="outageDuration">Outage Duration</Label>
-                    <div className="bg-muted rounded-md p-2 text-sm">
+                  <div className="space-y-3">
+                    <Label htmlFor="outageDuration" className="font-medium flex items-center">
+                      <Clock className="h-4 w-4 mr-1" />
+                      Outage Duration
+                    </Label>
+                    <div className="bg-muted/50 rounded-md p-3 text-sm border border-muted">
                       {outageDuration !== null 
                         ? `${Math.floor(outageDuration / 60)} hours ${outageDuration % 60} minutes` 
                         : "Not calculated yet"}
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="mttr">MTTR (Mean Time To Repair)</Label>
-                    <div className="bg-muted rounded-md p-2 text-sm">
+                  <div className="space-y-3">
+                    <Label htmlFor="mttr" className="font-medium flex items-center">
+                      <Clock className="h-4 w-4 mr-1" />
+                      MTTR (Mean Time To Repair)
+                    </Label>
+                    <div className="bg-muted/50 rounded-md p-3 text-sm border border-muted">
                       {mttr !== null 
                         ? `${Math.floor(mttr / 60)} hours ${Math.round(mttr % 60)} minutes` 
                         : "Not calculated yet"}
@@ -345,20 +374,23 @@ export function OP5Form() {
                   </div>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label>Reliability Indices</Label>
+                <div className="space-y-3">
+                  <Label className="font-medium flex items-center">
+                    <ActivityIcon className="h-4 w-4 mr-1" />
+                    Reliability Indices
+                  </Label>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-muted rounded-md p-2 text-sm">
+                    <div className="bg-muted/50 rounded-md p-3 text-sm border border-muted">
                       <div className="font-medium">SAIDI</div>
                       <div>{saidi !== null ? saidi.toFixed(2) : "Not calculated yet"}</div>
                     </div>
                     
-                    <div className="bg-muted rounded-md p-2 text-sm">
+                    <div className="bg-muted/50 rounded-md p-3 text-sm border border-muted">
                       <div className="font-medium">SAIFI</div>
                       <div>{saifi !== null ? saifi.toFixed(2) : "Not calculated yet"}</div>
                     </div>
                     
-                    <div className="bg-muted rounded-md p-2 text-sm">
+                    <div className="bg-muted/50 rounded-md p-3 text-sm border border-muted">
                       <div className="font-medium">CAIDI</div>
                       <div>{caidi !== null ? caidi.toFixed(2) : "Not calculated yet"}</div>
                     </div>
@@ -369,11 +401,11 @@ export function OP5Form() {
           </Tabs>
         </form>
       </CardContent>
-      <CardFooter>
-        <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full">
+      <CardFooter className="px-0 pt-4">
+        <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full h-12 text-base font-medium">
           {isSubmitting ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
               Submitting...
             </>
           ) : (

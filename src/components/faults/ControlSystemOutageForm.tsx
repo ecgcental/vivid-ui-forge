@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -22,7 +23,7 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { Loader2, InfoIcon, Users, MapPin, Calculator } from "lucide-react";
 import { FaultType } from "@/lib/types";
 import { 
   calculateDurationHours,
@@ -53,22 +54,6 @@ export function ControlSystemOutageForm() {
   const [durationHours, setDurationHours] = useState<number | null>(null);
   const [unservedEnergyMWh, setUnservedEnergyMWh] = useState<number | null>(null);
   
-  // Filter regions and districts based on user role
-  const filteredRegions = user?.role === "global_engineer" 
-    ? regions 
-    : regions.filter(r => user?.region ? r.name === user.region : true);
-  
-  const filteredDistricts = regionId
-  ? districts.filter(d => {
-      const region = regions.find(r => r.id === regionId);
-      return region?.districts.some(rd => rd.id === d.id) && (
-        user?.role === "district_engineer" 
-          ? user.district === d.name 
-          : true
-      );
-    })
-  : [];
-  
   // Set default values based on user
   useEffect(() => {
     if (user) {
@@ -83,6 +68,22 @@ export function ControlSystemOutageForm() {
       }
     }
   }, [user, regions, districts]);
+  
+  // Filter regions and districts based on user role
+  const filteredRegions = user?.role === "global_engineer" 
+    ? regions 
+    : regions.filter(r => user?.region ? r.name === user.region : true);
+  
+  const filteredDistricts = regionId
+    ? districts.filter(d => {
+        const region = regions.find(r => r.id === regionId);
+        return region?.districts.some(rd => rd.id === d.id) && (
+          user?.role === "district_engineer" 
+            ? user.district === d.name 
+            : true
+        );
+      })
+    : [];
   
   // Calculate metrics when dates or load changes
   useEffect(() => {
@@ -146,25 +147,25 @@ export function ControlSystemOutageForm() {
   };
   
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle>Control System Outage Report</CardTitle>
+    <Card className="border-0 shadow-none bg-transparent">
+      <CardHeader className="px-0 pt-0">
+        <CardTitle className="text-2xl font-serif">Control System Outage Report</CardTitle>
         <CardDescription>
           Report a control system outage with detailed information
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="region">Region</Label>
+      <CardContent className="px-0">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-3">
+              <Label htmlFor="region" className="text-base font-medium">Region</Label>
               <Select 
                 value={regionId} 
                 onValueChange={setRegionId}
                 disabled={user?.role === "district_engineer" || user?.role === "regional_engineer"}
                 required
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-12 text-base bg-background/50 border-muted">
                   <SelectValue placeholder="Select region" />
                 </SelectTrigger>
                 <SelectContent>
@@ -177,15 +178,15 @@ export function ControlSystemOutageForm() {
               </Select>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="district">District</Label>
+            <div className="space-y-3">
+              <Label htmlFor="district" className="text-base font-medium">District</Label>
               <Select 
                 value={districtId} 
                 onValueChange={setDistrictId}
                 disabled={user?.role === "district_engineer" || !regionId}
                 required
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-12 text-base bg-background/50 border-muted">
                   <SelectValue placeholder="Select district" />
                 </SelectTrigger>
                 <SelectContent>
@@ -202,22 +203,23 @@ export function ControlSystemOutageForm() {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="occurrenceDate">Outage Occurrence Date & Time</Label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-3">
+              <Label htmlFor="occurrenceDate" className="text-base font-medium">Outage Occurrence Date & Time</Label>
               <Input
                 id="occurrenceDate"
                 type="datetime-local"
                 value={occurrenceDate}
                 onChange={(e) => setOccurrenceDate(e.target.value)}
                 required
+                className="h-12 text-base bg-background/50 border-muted"
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="faultType">Type of Fault</Label>
+            <div className="space-y-3">
+              <Label htmlFor="faultType" className="text-base font-medium">Type of Fault</Label>
               <Select value={faultType} onValueChange={(value) => setFaultType(value as FaultType)} required>
-                <SelectTrigger>
+                <SelectTrigger className="h-12 text-base bg-background/50 border-muted">
                   <SelectValue placeholder="Select fault type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -230,86 +232,110 @@ export function ControlSystemOutageForm() {
             </div>
           </div>
           
-          <Tabs defaultValue="affected">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="affected">Affected Customers</TabsTrigger>
-              <TabsTrigger value="details">Outage Details</TabsTrigger>
-              <TabsTrigger value="calculations">Calculations</TabsTrigger>
+          <Tabs defaultValue="affected" className="w-full">
+            <TabsList className="w-full grid grid-cols-3 bg-muted/50 p-1">
+              <TabsTrigger value="affected" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <Users className="h-4 w-4 mr-2" />
+                Affected Customers
+              </TabsTrigger>
+              <TabsTrigger value="details" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <MapPin className="h-4 w-4 mr-2" />
+                Outage Details
+              </TabsTrigger>
+              <TabsTrigger value="calculations" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <Calculator className="h-4 w-4 mr-2" />
+                Calculations
+              </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="affected" className="space-y-6 pt-4">
+            <TabsContent value="affected" className="space-y-6 pt-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="ruralAffected">Rural Customers Affected</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="ruralAffected" className="font-medium flex items-center">
+                    Rural Customers Affected
+                    <InfoIcon className="h-4 w-4 ml-1 text-muted-foreground" />
+                  </Label>
                   <Input
                     id="ruralAffected"
                     type="number"
                     min="0"
                     value={ruralAffected}
                     onChange={(e) => setRuralAffected(parseInt(e.target.value) || 0)}
+                    className="bg-background/50 border-muted"
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="urbanAffected">Urban Customers Affected</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="urbanAffected" className="font-medium flex items-center">
+                    Urban Customers Affected
+                    <InfoIcon className="h-4 w-4 ml-1 text-muted-foreground" />
+                  </Label>
                   <Input
                     id="urbanAffected"
                     type="number"
                     min="0"
                     value={urbanAffected}
                     onChange={(e) => setUrbanAffected(parseInt(e.target.value) || 0)}
+                    className="bg-background/50 border-muted"
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label htmlFor="metroAffected">Metro Customers Affected</Label>
+                <div className="space-y-3">
+                  <Label htmlFor="metroAffected" className="font-medium flex items-center">
+                    Metro Customers Affected
+                    <InfoIcon className="h-4 w-4 ml-1 text-muted-foreground" />
+                  </Label>
                   <Input
                     id="metroAffected"
                     type="number"
                     min="0"
                     value={metroAffected}
                     onChange={(e) => setMetroAffected(parseInt(e.target.value) || 0)}
+                    className="bg-background/50 border-muted"
                   />
                 </div>
               </div>
             </TabsContent>
             
-            <TabsContent value="details" className="space-y-6 pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="reason">Reason for Outage</Label>
+            <TabsContent value="details" className="space-y-6 pt-6">
+              <div className="space-y-3">
+                <Label htmlFor="reason" className="text-base font-medium">Reason for Outage</Label>
                 <Textarea
                   id="reason"
                   placeholder="Describe the reason for the outage"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   rows={2}
+                  className="bg-background/50 border-muted"
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="indications">Indications on Control Panel</Label>
+              <div className="space-y-3">
+                <Label htmlFor="indications" className="text-base font-medium">Indications on Control Panel</Label>
                 <Textarea
                   id="indications"
                   placeholder="Describe the indications observed on the control panel"
                   value={indications}
                   onChange={(e) => setIndications(e.target.value)}
                   rows={2}
+                  className="bg-background/50 border-muted"
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="areaAffected">Area Affected</Label>
+              <div className="space-y-3">
+                <Label htmlFor="areaAffected" className="text-base font-medium">Area Affected</Label>
                 <Input
                   id="areaAffected"
                   type="text"
                   placeholder="E.g., North Sector, Industrial Zone"
                   value={areaAffected}
                   onChange={(e) => setAreaAffected(e.target.value)}
+                  className="h-12 text-base bg-background/50 border-muted"
                 />
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="loadMW">Load in MW</Label>
+              <div className="space-y-3">
+                <Label htmlFor="loadMW" className="text-base font-medium">Load in MW</Label>
                 <Input
                   id="loadMW"
                   type="number"
@@ -319,19 +345,21 @@ export function ControlSystemOutageForm() {
                   value={loadMW}
                   onChange={(e) => setLoadMW(parseFloat(e.target.value) || 0)}
                   required
+                  className="h-12 text-base bg-background/50 border-muted"
                 />
               </div>
             </TabsContent>
             
-            <TabsContent value="calculations" className="pt-4">
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="restorationDate">Restoration Date & Time</Label>
+            <TabsContent value="calculations" className="pt-6">
+              <div className="space-y-8">
+                <div className="space-y-3">
+                  <Label htmlFor="restorationDate" className="text-base font-medium">Restoration Date & Time</Label>
                   <Input
                     id="restorationDate"
                     type="datetime-local"
                     value={restorationDate}
                     onChange={(e) => setRestorationDate(e.target.value)}
+                    className="h-12 text-base bg-background/50 border-muted"
                   />
                   <p className="text-xs text-muted-foreground">
                     Leave empty if the outage is still active
@@ -339,18 +367,18 @@ export function ControlSystemOutageForm() {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="durationHours">Duration of Outage</Label>
-                    <div className="bg-muted rounded-md p-2 text-sm">
+                  <div className="space-y-3">
+                    <Label htmlFor="durationHours" className="font-medium">Duration of Outage</Label>
+                    <div className="bg-muted/50 rounded-md p-3 text-sm border border-muted">
                       {durationHours !== null 
                         ? `${durationHours.toFixed(2)} hours` 
                         : "Not calculated yet"}
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="unservedEnergyMWh">Unserved Energy (MWh)</Label>
-                    <div className="bg-muted rounded-md p-2 text-sm">
+                  <div className="space-y-3">
+                    <Label htmlFor="unservedEnergyMWh" className="font-medium">Unserved Energy (MWh)</Label>
+                    <div className="bg-muted/50 rounded-md p-3 text-sm border border-muted">
                       {unservedEnergyMWh !== null 
                         ? `${unservedEnergyMWh.toFixed(2)} MWh` 
                         : "Not calculated yet"}
@@ -362,11 +390,11 @@ export function ControlSystemOutageForm() {
           </Tabs>
         </form>
       </CardContent>
-      <CardFooter>
-        <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full">
+      <CardFooter className="px-0 pt-4">
+        <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full h-12 text-base font-medium">
           {isSubmitting ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
               Submitting...
             </>
           ) : (
