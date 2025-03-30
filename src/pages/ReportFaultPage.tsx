@@ -8,16 +8,35 @@ import { AlertTriangle, ZapOff, ClipboardList } from "lucide-react";
 import { OP5Form } from "@/components/faults/OP5Form";
 import { ControlSystemOutageForm } from "@/components/faults/ControlSystemOutageForm";
 import { Card, CardContent } from "@/components/ui/card";
+import { useData } from "@/contexts/DataContext";
 
 export default function ReportFaultPage() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const { regions, districts } = useData();
   const navigate = useNavigate();
+  
+  // Store the default region and district IDs based on user role
+  const [defaultRegionId, setDefaultRegionId] = useState<string>("");
+  const [defaultDistrictId, setDefaultDistrictId] = useState<string>("");
   
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
     }
-  }, [isAuthenticated, navigate]);
+    
+    // Set default values based on user role
+    if (user) {
+      if (user.region) {
+        const userRegion = regions.find(r => r.name === user.region);
+        if (userRegion) setDefaultRegionId(userRegion.id);
+      }
+      
+      if (user.district) {
+        const userDistrict = districts.find(d => d.name === user.district);
+        if (userDistrict) setDefaultDistrictId(userDistrict.id);
+      }
+    }
+  }, [isAuthenticated, navigate, user, regions, districts]);
   
   if (!isAuthenticated) {
     return null;
@@ -51,11 +70,11 @@ export default function ReportFaultPage() {
               </TabsList>
               
               <TabsContent value="op5" className="mt-0">
-                <OP5Form />
+                <OP5Form defaultRegionId={defaultRegionId} defaultDistrictId={defaultDistrictId} />
               </TabsContent>
               
               <TabsContent value="control" className="mt-0">
-                <ControlSystemOutageForm />
+                <ControlSystemOutageForm defaultRegionId={defaultRegionId} defaultDistrictId={defaultDistrictId} />
               </TabsContent>
             </Tabs>
           </CardContent>

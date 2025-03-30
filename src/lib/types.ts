@@ -98,3 +98,9 @@ export interface AnalyticsChartProps {
   timeRange?: string;
   chartType?: 'bar' | 'line' | 'pie';
 }
+
+// Add new interface for OP5Form and ControlSystemOutageForm props
+export interface FaultFormProps {
+  defaultRegionId?: string;
+  defaultDistrictId?: string;
+}

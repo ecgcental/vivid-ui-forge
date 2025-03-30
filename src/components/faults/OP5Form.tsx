@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -33,14 +32,19 @@ import {
 } from "@/utils/calculations";
 import { toast } from "@/components/ui/sonner";
 
-export function OP5Form() {
+interface OP5FormProps {
+  defaultRegionId?: string;
+  defaultDistrictId?: string;
+}
+
+export function OP5Form({ defaultRegionId = "", defaultDistrictId = "" }: OP5FormProps) {
   const { regions, districts, addOP5Fault } = useData();
   const { user } = useAuth();
   const navigate = useNavigate();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [regionId, setRegionId] = useState<string>("");
-  const [districtId, setDistrictId] = useState<string>("");
+  const [regionId, setRegionId] = useState<string>(defaultRegionId);
+  const [districtId, setDistrictId] = useState<string>(defaultDistrictId);
   const [occurrenceDate, setOccurrenceDate] = useState<string>("");
   const [faultType, setFaultType] = useState<FaultType>("Unplanned");
   const [faultLocation, setFaultLocation] = useState<string>("");
@@ -56,20 +60,16 @@ export function OP5Form() {
   const [saifi, setSaifi] = useState<number | null>(null);
   const [caidi, setCaidi] = useState<number | null>(null);
   
-  // Set default values based on user
+  // Update region and district when props change
   useEffect(() => {
-    if (user) {
-      if (user.region) {
-        const userRegion = regions.find(r => r.name === user.region);
-        if (userRegion) setRegionId(userRegion.id);
-      }
-      
-      if (user.district) {
-        const userDistrict = districts.find(d => d.name === user.district);
-        if (userDistrict) setDistrictId(userDistrict.id);
-      }
+    if (defaultRegionId) {
+      setRegionId(defaultRegionId);
     }
-  }, [user, regions, districts]);
+    
+    if (defaultDistrictId) {
+      setDistrictId(defaultDistrictId);
+    }
+  }, [defaultRegionId, defaultDistrictId]);
   
   // Filter regions and districts based on user role
   const filteredRegions = user?.role === "global_engineer" 

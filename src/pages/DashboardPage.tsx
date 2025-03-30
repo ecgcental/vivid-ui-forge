@@ -9,12 +9,12 @@ import { StatsOverview } from "@/components/dashboard/StatsOverview";
 import { FaultCard } from "@/components/dashboard/FaultCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, AlertTriangle, ZapOff, RefreshCw } from "lucide-react";
+import { PlusCircle, AlertTriangle, ZapOff, RefreshCw, Filter } from "lucide-react";
 import { OP5Fault, ControlSystemOutage } from "@/lib/types";
 
 export default function DashboardPage() {
   const { isAuthenticated, user } = useAuth();
-  const { getFilteredFaults } = useData();
+  const { getFilteredFaults, regions, districts } = useData();
   const navigate = useNavigate();
   
   const [filterRegion, setFilterRegion] = useState<string | undefined>(undefined);
@@ -26,11 +26,35 @@ export default function DashboardPage() {
     controlOutages: []
   });
   
+  // Set initial filter values based on user role
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
+      return;
     }
-  }, [isAuthenticated, navigate]);
+    
+    if (user) {
+      // For district engineer, set both region and district filters
+      if (user.role === "district_engineer" && user.region && user.district) {
+        const userRegion = regions.find(r => r.name === user.region);
+        if (userRegion) {
+          setFilterRegion(userRegion.id);
+          
+          const userDistrict = districts.find(d => d.name === user.district);
+          if (userDistrict) {
+            setFilterDistrict(userDistrict.id);
+          }
+        }
+      } 
+      // For regional engineer, set only region filter
+      else if (user.role === "regional_engineer" && user.region) {
+        const userRegion = regions.find(r => r.name === user.region);
+        if (userRegion) {
+          setFilterRegion(userRegion.id);
+        }
+      }
+    }
+  }, [isAuthenticated, navigate, user, regions, districts]);
   
   useEffect(() => {
     loadFaults();
@@ -123,8 +147,12 @@ export default function DashboardPage() {
               <div className="text-center py-12 border rounded-lg bg-muted/20 shadow-sm">
                 <p className="text-muted-foreground">No faults found with the current filters</p>
                 <Button variant="link" onClick={() => {
-                  setFilterRegion(undefined);
-                  setFilterDistrict(undefined);
+                  if (user?.role === "global_engineer") {
+                    setFilterRegion(undefined);
+                    setFilterDistrict(undefined);
+                  } else if (user?.role === "regional_engineer") {
+                    setFilterDistrict(undefined);
+                  }
                   setFilterStatus("all");
                 }}>
                   Clear filters
