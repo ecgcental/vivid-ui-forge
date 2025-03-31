@@ -50,9 +50,9 @@ export function Navbar() {
         <div className="flex items-center">
           <Link to="/" className="flex items-center space-x-2">
             <img 
-              src="/lovable-uploads/ecg-logo.png" 
+              src="/lovable-uploads/8a9a1582-1dac-407d-adcc-a9d1c6f772bc.png" 
               alt="ECG Logo" 
-              className="h-10 w-10"
+              className="h-12 w-auto"
             />
             <span className="font-bold text-lg">ECG Fault Master</span>
           </Link>
@@ -66,9 +66,9 @@ export function Navbar() {
         <div className="flex items-center gap-4">
           {isAuthenticated ? (
             <div className="hidden md:flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <User size={18} />
+              <div className="flex flex-col items-end">
                 <span className="text-sm font-medium">{user?.name}</span>
+                <span className="text-xs text-muted-foreground">{user?.role?.replace('_', ' ')}</span>
               </div>
               <Button 
                 variant="outline" 
@@ -111,9 +111,9 @@ export function Navbar() {
                   <Separator className="my-4" />
                   {isAuthenticated ? (
                     <div className="space-y-4">
-                      <div className="flex items-center gap-2">
-                        <User size={18} />
+                      <div className="flex flex-col gap-1">
                         <span className="text-sm font-medium">{user?.name}</span>
+                        <span className="text-xs text-muted-foreground">{user?.role?.replace('_', ' ')}</span>
                       </div>
                       <Button 
                         variant="outline" 

@@ -32,7 +32,14 @@ export function LoginForm() {
 
   return (
     <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
+      <CardHeader className="text-center">
+        <div className="mx-auto mb-4">
+          <img 
+            src="/lovable-uploads/8a9a1582-1dac-407d-adcc-a9d1c6f772bc.png" 
+            alt="ECG Logo" 
+            className="h-16 w-auto mx-auto"
+          />
+        </div>
         <CardTitle className="text-2xl">Login to ECG Fault Master</CardTitle>
         <CardDescription>
           Enter your credentials to access your account

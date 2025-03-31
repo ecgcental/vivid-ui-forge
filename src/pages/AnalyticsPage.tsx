@@ -1,7 +1,8 @@
+
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import AnalyticsCharts from "@/components/analytics/AnalyticsCharts";
 import { useData } from "@/contexts/DataContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +12,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
-import { Download, FileText, Filter } from "lucide-react";
+import { Download, FileText, Filter, Eye, Calendar, MapPin, AlertTriangle, BarChart as ChartIcon } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export default function AnalyticsPage() {
   const { isAuthenticated, user } = useAuth();
@@ -22,6 +25,8 @@ export default function AnalyticsPage() {
   const [filterDistrict, setFilterDistrict] = useState<string | undefined>(undefined);
   const [selectedRegion, setSelectedRegion] = useState<string>("");
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
+  const [selectedFault, setSelectedFault] = useState<any>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   
   useEffect(() => {
     if (!isAuthenticated) {
@@ -94,14 +99,16 @@ export default function AnalyticsPage() {
     const dataRows = filteredFaults.map((fault: any) => {
       const type = 'faultLocation' in fault ? 'OP5 Fault' : 'Control Outage';
       const duration = 'outrageDuration' in fault ? fault.outrageDuration || 0 : 0;
+      const region = regions.find(r => r.id === fault.regionId)?.name || fault.regionId;
+      const district = districts.find(d => d.id === fault.districtId)?.name || fault.districtId;
       
       return [
         fault.id,
         type,
-        fault.regionId,
-        fault.districtId,
+        region,
+        district,
         format(new Date(fault.occurrenceDate), 'yyyy-MM-dd'),
-        format(new Date(fault.restorationDate), 'yyyy-MM-dd'),
+        fault.restorationDate ? format(new Date(fault.restorationDate), 'yyyy-MM-dd') : 'N/A',
         fault.status,
         fault.faultType,
         duration
@@ -127,6 +134,20 @@ export default function AnalyticsPage() {
   const availableDistricts = filterRegion 
     ? districts.filter(d => d.regionId === filterRegion) 
     : districts;
+  
+  // Function to get region and district names
+  const getRegionName = (regionId: string) => {
+    return regions.find(r => r.id === regionId)?.name || regionId;
+  };
+  
+  const getDistrictName = (districtId: string) => {
+    return districts.find(d => d.id === districtId)?.name || districtId;
+  };
+  
+  const showFaultDetails = (fault: any) => {
+    setSelectedFault(fault);
+    setDetailsOpen(true);
+  };
   
   if (!isAuthenticated) {
     return null;
@@ -265,15 +286,16 @@ export default function AnalyticsPage() {
                     <TableHead>District</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Details</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredFaults.slice(0, 5).map((fault: any) => (
+                  {filteredFaults.slice(0, 7).map((fault: any) => (
                     <TableRow key={fault.id}>
                       <TableCell className="font-medium">{fault.id.substring(0, 10)}</TableCell>
                       <TableCell>{'faultLocation' in fault ? 'OP5 Fault' : 'Control Outage'}</TableCell>
-                      <TableCell>{fault.regionId}</TableCell>
-                      <TableCell>{fault.districtId}</TableCell>
+                      <TableCell>{getRegionName(fault.regionId)}</TableCell>
+                      <TableCell>{getDistrictName(fault.districtId)}</TableCell>
                       <TableCell>{format(new Date(fault.occurrenceDate), 'MMM dd, yyyy')}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs ${
@@ -284,6 +306,17 @@ export default function AnalyticsPage() {
                           {fault.status}
                         </span>
                       </TableCell>
+                      <TableCell>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="flex items-center gap-1 p-0"
+                          onClick={() => showFaultDetails(fault)}
+                        >
+                          <Eye size={16} />
+                          View
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -291,6 +324,135 @@ export default function AnalyticsPage() {
             </CardContent>
           </Card>
         </div>
+        
+        {/* Fault Details Dialog */}
+        <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+          <DialogContent className="max-w-2xl">
+            {selectedFault && (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    {selectedFault.faultType === 'Unplanned' && <AlertTriangle className="h-5 w-5 text-orange-500" />}
+                    {selectedFault.faultType === 'Planned' && <Calendar className="h-5 w-5 text-blue-500" />}
+                    {selectedFault.faultType === 'Emergency' && <AlertTriangle className="h-5 w-5 text-red-500" />}
+                    {selectedFault.faultType === 'Load Shedding' && <ChartIcon className="h-5 w-5 text-purple-500" />}
+                    {'faultLocation' in selectedFault ? 'OP5 Fault Details' : 'Control System Outage Details'}
+                  </DialogTitle>
+                  <DialogDescription>
+                    <div className="flex items-center gap-1 mt-1">
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span>{getRegionName(selectedFault.regionId)}, {getDistrictName(selectedFault.districtId)}</span>
+                    </div>
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Fault Information</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <span className="text-xs text-muted-foreground">ID</span>
+                        <p className="text-sm">{selectedFault.id}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground">Type</span>
+                        <p className="text-sm">
+                          <Badge variant="outline" className="mt-1">
+                            {selectedFault.faultType}
+                          </Badge>
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground">Status</span>
+                        <p className="text-sm">
+                          <Badge className={`mt-1 ${
+                            selectedFault.status === 'active' 
+                              ? 'bg-red-100 text-red-800 hover:bg-red-100' 
+                              : 'bg-green-100 text-green-800 hover:bg-green-100'
+                          }`}>
+                            {selectedFault.status.toUpperCase()}
+                          </Badge>
+                        </p>
+                      </div>
+                      {'faultLocation' in selectedFault && (
+                        <div>
+                          <span className="text-xs text-muted-foreground">Location</span>
+                          <p className="text-sm">{selectedFault.faultLocation}</p>
+                        </div>
+                      )}
+                      {'reason' in selectedFault && (
+                        <div>
+                          <span className="text-xs text-muted-foreground">Reason</span>
+                          <p className="text-sm">{selectedFault.reason}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Time & Impact</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <span className="text-xs text-muted-foreground">Occurrence Date</span>
+                        <p className="text-sm">{format(new Date(selectedFault.occurrenceDate), 'PPP p')}</p>
+                      </div>
+                      {selectedFault.restorationDate && (
+                        <div>
+                          <span className="text-xs text-muted-foreground">Restoration Date</span>
+                          <p className="text-sm">{format(new Date(selectedFault.restorationDate), 'PPP p')}</p>
+                        </div>
+                      )}
+                      {'outrageDuration' in selectedFault && selectedFault.outrageDuration && (
+                        <div>
+                          <span className="text-xs text-muted-foreground">Duration</span>
+                          <p className="text-sm">{selectedFault.outrageDuration} minutes</p>
+                        </div>
+                      )}
+                      {'affectedPopulation' in selectedFault && (
+                        <div>
+                          <span className="text-xs text-muted-foreground">Affected Population</span>
+                          <p className="text-sm">
+                            Rural: {selectedFault.affectedPopulation.rural}, 
+                            Urban: {selectedFault.affectedPopulation.urban}, 
+                            Metro: {selectedFault.affectedPopulation.metro}
+                          </p>
+                        </div>
+                      )}
+                      {'customersAffected' in selectedFault && (
+                        <div>
+                          <span className="text-xs text-muted-foreground">Customers Affected</span>
+                          <p className="text-sm">
+                            Rural: {selectedFault.customersAffected.rural}, 
+                            Urban: {selectedFault.customersAffected.urban}, 
+                            Metro: {selectedFault.customersAffected.metro}
+                          </p>
+                        </div>
+                      )}
+                      {'loadMW' in selectedFault && (
+                        <div>
+                          <span className="text-xs text-muted-foreground">Load</span>
+                          <p className="text-sm">{selectedFault.loadMW} MW</p>
+                        </div>
+                      )}
+                      {'unservedEnergyMWh' in selectedFault && (
+                        <div>
+                          <span className="text-xs text-muted-foreground">Unserved Energy</span>
+                          <p className="text-sm">{selectedFault.unservedEnergyMWh.toFixed(2)} MWh</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-6">
+                  <Link to={`/dashboard?id=${selectedFault.id}`} className="text-primary hover:underline text-sm">
+                    View on Dashboard
+                  </Link>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
