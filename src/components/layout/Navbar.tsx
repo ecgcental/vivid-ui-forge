@@ -1,3 +1,4 @@
+
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
@@ -49,9 +50,9 @@ export function Navbar() {
         <div className="flex items-center">
           <Link to="/" className="flex items-center space-x-2">
             <img 
-              src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwBAMAAAClLOS0AAAABGdBTUEAALGPC/xhBQAAAAFzUkdCAK7OHOkAAAAJcEhZcwAACxMAAAsTAQCanBgAAAAwUExURUdwTAWr8gOq8QCs8gCr8QGr8QSr8QCr8QCr8QCr8QCq8QSr8AKr8QKq8QKr8QGr8atTvxUAAAAPdFJOUwAQcJ/f7yBgzzDPr0CA329g2T4AAAFdSURBVDjLnZQxS8NAGIZfY5Ka1MHF4GBR0KWgBQcRdHDrocVJGhScXFxb/ANdHBTETVFwKQ7FH6A4OjnUTRAnQUEcBDdxUJDqGJOc33c5uEu/Ie/z3iUNAP9RyUWR5VrQY7IWkOGnBjqMrAQk9U7AQo+ScZBXPQmcYshJHQPRryR+Fz3/WJFoFMDkEVXhoffLOliGT4xo4qhp8OEvJt4MsI3zkAZIGHDPNHlQGTRkQTUYIuDQCmOZZiA6CEh5YL0yBTVgglQYYJO2UXWA0IcAGsUJHYB2CyM6uaIADG+OKKXhfAp8QM90QkZJJgWeYTqkY5lLwRuKYwbIZARSYL9YbvyLLVewAVrDFTygAC7+a1aCK8QprDB7c4UO8NlZx1GZrFtVJj6AOm2isBw0Bi6Zp+EA3yRRD0ioM3WZ1QO8d+Yhm3oAL9fcnTLWAwQjFJqG0Pg30GiVF98pWvIB5ew7LSFT6mkAAAAASUVORK5CYII=" 
+              src="/lovable-uploads/ecg-logo.png" 
               alt="ECG Logo" 
-              className="h-8 w-8"
+              className="h-10 w-10"
             />
             <span className="font-bold text-lg">ECG Fault Master</span>
           </Link>

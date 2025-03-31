@@ -4,7 +4,7 @@ import { Layout } from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertTriangle, ZapOff, ClipboardList, User } from "lucide-react";
+import { AlertTriangle, ZapOff, ClipboardList, User, Building2 } from "lucide-react";
 import { OP5Form } from "@/components/faults/OP5Form";
 import { ControlSystemOutageForm } from "@/components/faults/ControlSystemOutageForm";
 import { Card, CardContent } from "@/components/ui/card";
@@ -66,6 +66,16 @@ export default function ReportFaultPage() {
         return "Engineer";
     }
   };
+
+  // Get user's location (district/region) display
+  const getLocationDisplay = () => {
+    if (user?.district) {
+      return user.district;
+    } else if (user?.region) {
+      return user.region;
+    }
+    return "Global";
+  };
   
   return (
     <Layout>
@@ -80,7 +90,7 @@ export default function ReportFaultPage() {
           </p>
         </div>
 
-        {/* User information section */}
+        {/* User information section - enhanced */}
         <div className="flex flex-col items-center justify-center mb-8">
           <Avatar className="h-16 w-16 border-2 border-primary/20 mb-3">
             <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${user?.name}`} />
@@ -90,12 +100,16 @@ export default function ReportFaultPage() {
           </Avatar>
           <div className="text-center">
             <h2 className="text-xl font-semibold">{user?.name}</h2>
-            <Badge variant="outline" className="mt-1 font-normal">
-              <User className="mr-1 h-3 w-3" />
-              {getRoleDisplay()}
-              {user?.district && ` - ${user.district}`}
-              {!user?.district && user?.region && ` - ${user.region}`}
-            </Badge>
+            <div className="flex items-center justify-center gap-2 mt-2">
+              <Badge variant="outline" className="font-normal">
+                <User className="mr-1 h-3 w-3" />
+                {getRoleDisplay()}
+              </Badge>
+              <Badge variant="outline" className="font-normal bg-primary/5">
+                <Building2 className="mr-1 h-3 w-3" />
+                {getLocationDisplay()}
+              </Badge>
+            </div>
           </div>
         </div>
         

@@ -11,6 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/components/ui/sonner";
+import { useNavigate } from "react-router-dom";
 
 type FaultCardProps = {
   fault: OP5Fault | ControlSystemOutage;
@@ -22,6 +23,7 @@ export function FaultCard({ fault, type }: FaultCardProps) {
   const { user } = useAuth();
   const [isResolveOpen, setIsResolveOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const navigate = useNavigate();
   
   const region = regions.find(r => r.id === fault.regionId);
   const district = districts.find(d => d.id === fault.districtId);
@@ -63,6 +65,11 @@ export function FaultCard({ fault, type }: FaultCardProps) {
     deleteFault(fault.id, type);
     setIsDeleteOpen(false);
     toast.success("Fault has been deleted");
+  };
+  
+  const handleEdit = () => {
+    // For now, just show a toast - in a real implementation, this would navigate to an edit form
+    toast.info(`Edit functionality for ${isOP5 ? "OP5 fault" : "Control System Outage"} ${fault.id} will be implemented soon`);
   };
   
   const canResolve = () => {
@@ -238,19 +245,19 @@ export function FaultCard({ fault, type }: FaultCardProps) {
           </Button>
         )}
         
-        {/* Add Edit button */}
+        {/* Edit button */}
         {canEdit && (
           <Button 
             variant="outline" 
             className="flex-1"
-            onClick={() => toast.info("Edit functionality will be implemented soon")}
+            onClick={handleEdit}
           >
             <Edit size={16} className="mr-2" />
             Edit
           </Button>
         )}
         
-        {/* Add Delete button */}
+        {/* Delete button */}
         {canEdit && (
           <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
             <DialogTrigger asChild>

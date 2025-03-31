@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { RegionData, DistrictData, OP5Fault, ControlSystemOutage, FaultType, User } from "@/lib/types";
 import { useAuth } from "./AuthContext";
@@ -19,6 +20,7 @@ interface DataContextType {
   resolveFault: (id: string, type: "op5" | "control") => void;
   deleteFault: (id: string, type: "op5" | "control") => void;
   canEditFault: (fault: OP5Fault | ControlSystemOutage) => boolean;
+  editFault: (id: string, type: "op5" | "control", data: Partial<OP5Fault | ControlSystemOutage>) => void;
 }
 
 // Mock data with regionId added to each district
@@ -326,9 +328,77 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteFault = (id: string, type: "op5" | "control") => {
     if (type === "op5") {
-      setOP5Faults(prev => prev.filter(fault => fault.id !== id));
+      const faultToDelete = op5Faults.find(fault => fault.id === id);
+      if (!faultToDelete) {
+        toast.error("Fault not found");
+        return;
+      }
+      
+      // Check if user has permission to delete this fault
+      if (canEditFault(faultToDelete)) {
+        setOP5Faults(prev => prev.filter(fault => fault.id !== id));
+        toast.success("Fault deleted successfully");
+      } else {
+        toast.error("You don't have permission to delete this fault");
+      }
     } else {
-      setControlOutages(prev => prev.filter(outage => outage.id !== id));
+      const outageToDelete = controlOutages.find(outage => outage.id === id);
+      if (!outageToDelete) {
+        toast.error("Outage not found");
+        return;
+      }
+      
+      // Check if user has permission to delete this outage
+      if (canEditFault(outageToDelete)) {
+        setControlOutages(prev => prev.filter(outage => outage.id !== id));
+        toast.success("Outage deleted successfully");
+      } else {
+        toast.error("You don't have permission to delete this outage");
+      }
+    }
+  };
+
+  const editFault = (id: string, type: "op5" | "control", data: Partial<OP5Fault | ControlSystemOutage>) => {
+    if (type === "op5") {
+      const faultToEdit = op5Faults.find(fault => fault.id === id);
+      if (!faultToEdit) {
+        toast.error("Fault not found");
+        return;
+      }
+      
+      // Check if user has permission to edit this fault
+      if (canEditFault(faultToEdit)) {
+        setOP5Faults(prev => 
+          prev.map(fault => 
+            fault.id === id 
+              ? { ...fault, ...data, lastUpdatedAt: new Date().toISOString() }
+              : fault
+          )
+        );
+        toast.success("Fault updated successfully");
+      } else {
+        toast.error("You don't have permission to edit this fault");
+      }
+    } else {
+      const outageToEdit = controlOutages.find(outage => outage.id === id);
+      if (!outageToEdit) {
+        toast.error("Outage not found");
+        return;
+      }
+      
+      // Check if user has permission to edit this outage
+      if (canEditFault(outageToEdit)) {
+        setControlOutages(prev => 
+          prev.map(outage => 
+            outage.id === id 
+              ? { ...outage, ...data, lastUpdatedAt: new Date().toISOString() }
+              : outage
+          )
+        );
+        toast.success("Outage updated successfully");
+      } else {
+        toast.error("You don't have permission to edit this outage");
+      }
     }
   };
 
@@ -369,24 +439,46 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resolveFault = (id: string, type: "op5" | "control") => {
     if (type === "op5") {
-      setOP5Faults(prev => 
-        prev.map(fault => 
-          fault.id === id 
-            ? { ...fault, status: "resolved", restorationDate: new Date().toISOString() }
-            : fault
-        )
-      );
+      const faultToResolve = op5Faults.find(fault => fault.id === id);
+      if (!faultToResolve) {
+        toast.error("Fault not found");
+        return;
+      }
+      
+      // Check if user has permission to resolve this fault
+      if (canEditFault(faultToResolve)) {
+        setOP5Faults(prev => 
+          prev.map(fault => 
+            fault.id === id 
+              ? { ...fault, status: "resolved", restorationDate: new Date().toISOString() }
+              : fault
+          )
+        );
+        toast.success("Fault marked as resolved!");
+      } else {
+        toast.error("You don't have permission to resolve this fault");
+      }
     } else {
-      setControlOutages(prev => 
-        prev.map(outage => 
-          outage.id === id 
-            ? { ...outage, status: "resolved", restorationDate: new Date().toISOString() }
-            : outage
-        )
-      );
+      const outageToResolve = controlOutages.find(outage => outage.id === id);
+      if (!outageToResolve) {
+        toast.error("Outage not found");
+        return;
+      }
+      
+      // Check if user has permission to resolve this outage
+      if (canEditFault(outageToResolve)) {
+        setControlOutages(prev => 
+          prev.map(outage => 
+            outage.id === id 
+              ? { ...outage, status: "resolved", restorationDate: new Date().toISOString() }
+              : outage
+          )
+        );
+        toast.success("Outage marked as resolved!");
+      } else {
+        toast.error("You don't have permission to resolve this outage");
+      }
     }
-    
-    toast.success("Fault marked as resolved!");
   };
 
   return (
@@ -403,7 +495,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         getFilteredFaults,
         resolveFault,
         deleteFault,
-        canEditFault
+        canEditFault,
+        editFault
       }}
     >
       {children}
