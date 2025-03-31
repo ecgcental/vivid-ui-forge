@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "@/components/ui/sonner";
 
 export function LoginForm() {
   const [email, setEmail] = useState("");
@@ -36,7 +37,7 @@ export function LoginForm() {
           <img 
             src="/lovable-uploads/8a9a1582-1dac-407d-adcc-a9d1c6f772bc.png" 
             alt="ECG Logo" 
-            className="h-20 w-auto mx-auto"
+            className="h-16 w-auto mx-auto"
           />
         </div>
         <CardTitle className="text-2xl">Login to ECG Fault Master</CardTitle>
