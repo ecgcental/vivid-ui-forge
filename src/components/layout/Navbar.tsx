@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
@@ -30,11 +29,10 @@ export function Navbar() {
           <Link to="/report-fault" className="text-foreground hover:text-primary transition-colors">
             Report Fault
           </Link>
-          {(user?.role === "regional_engineer" || user?.role === "global_engineer") && (
-            <Link to="/analytics" className="text-foreground hover:text-primary transition-colors">
-              Analytics
-            </Link>
-          )}
+          {/* Allow all engineers (including district) to access analytics */}
+          <Link to="/analytics" className="text-foreground hover:text-primary transition-colors">
+            Analytics
+          </Link>
           {user?.role === "global_engineer" && (
             <Link to="/user-management" className="text-foreground hover:text-primary transition-colors">
               User Management

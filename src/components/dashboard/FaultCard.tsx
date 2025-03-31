@@ -5,11 +5,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatDuration } from "@/utils/calculations";
-import { AlertTriangle, BarChart, Clock, MapPin, Users, CheckCircle2, XCircle } from "lucide-react";
+import { AlertTriangle, BarChart, Clock, MapPin, Users, CheckCircle2, XCircle, Edit, Trash2 } from "lucide-react";
 import { useData } from "@/contexts/DataContext";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "@/components/ui/sonner";
 
 type FaultCardProps = {
   fault: OP5Fault | ControlSystemOutage;
@@ -17,9 +18,10 @@ type FaultCardProps = {
 };
 
 export function FaultCard({ fault, type }: FaultCardProps) {
-  const { regions, districts, resolveFault } = useData();
+  const { regions, districts, resolveFault, deleteFault, canEditFault } = useData();
   const { user } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isResolveOpen, setIsResolveOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   
   const region = regions.find(r => r.id === fault.regionId);
   const district = districts.find(d => d.id === fault.districtId);
@@ -53,7 +55,14 @@ export function FaultCard({ fault, type }: FaultCardProps) {
   
   const handleResolve = () => {
     resolveFault(fault.id, type);
-    setIsOpen(false);
+    setIsResolveOpen(false);
+    toast.success("Fault has been marked as resolved");
+  };
+
+  const handleDelete = () => {
+    deleteFault(fault.id, type);
+    setIsDeleteOpen(false);
+    toast.success("Fault has been deleted");
   };
   
   const canResolve = () => {
@@ -72,6 +81,8 @@ export function FaultCard({ fault, type }: FaultCardProps) {
     // Global engineers can resolve anywhere
     return user?.role === "global_engineer";
   };
+
+  const canEdit = canEditFault(fault);
   
   return (
     <Card className="h-full flex flex-col">
@@ -183,11 +194,11 @@ export function FaultCard({ fault, type }: FaultCardProps) {
           </Accordion>
         </div>
       </CardContent>
-      <CardFooter className="pt-4">
+      <CardFooter className="pt-4 flex flex-wrap gap-2">
         {canResolve() && fault.status === "active" ? (
-          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <Dialog open={isResolveOpen} onOpenChange={setIsResolveOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="flex-1">
                 <CheckCircle2 size={16} className="mr-2" />
                 Mark as Resolved
               </Button>
@@ -200,7 +211,7 @@ export function FaultCard({ fault, type }: FaultCardProps) {
                 </DialogDescription>
               </DialogHeader>
               <div className="flex justify-end gap-2 mt-4">
-                <Button variant="outline" onClick={() => setIsOpen(false)}>
+                <Button variant="outline" onClick={() => setIsResolveOpen(false)}>
                   <XCircle size={16} className="mr-2" />
                   Cancel
                 </Button>
@@ -212,7 +223,7 @@ export function FaultCard({ fault, type }: FaultCardProps) {
             </DialogContent>
           </Dialog>
         ) : (
-          <Button variant="outline" className="w-full" disabled>
+          <Button variant="outline" className="flex-1" disabled>
             {fault.status === "active" ? (
               <>
                 <XCircle size={16} className="mr-2" />
@@ -225,6 +236,42 @@ export function FaultCard({ fault, type }: FaultCardProps) {
               </>
             )}
           </Button>
+        )}
+        
+        {/* Add Edit button */}
+        {canEdit && (
+          <Button 
+            variant="outline" 
+            className="flex-1"
+            onClick={() => toast.info("Edit functionality will be implemented soon")}
+          >
+            <Edit size={16} className="mr-2" />
+            Edit
+          </Button>
+        )}
+        
+        {/* Add Delete button */}
+        {canEdit && (
+          <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" className="flex-1 text-destructive hover:text-destructive">
+                <Trash2 size={16} className="mr-2" />
+                Delete
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Confirm Deletion</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete this fault? This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter className="mt-4">
+                <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Cancel</Button>
+                <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         )}
       </CardFooter>
     </Card>

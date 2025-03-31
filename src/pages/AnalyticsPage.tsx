@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,10 +16,12 @@ import { Download, FileText, Filter } from "lucide-react";
 export default function AnalyticsPage() {
   const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
-  const { getFilteredFaults, regions } = useData();
+  const { getFilteredFaults, regions, districts } = useData();
   const [filteredFaults, setFilteredFaults] = useState([]);
   const [filterRegion, setFilterRegion] = useState<string | undefined>(undefined);
+  const [filterDistrict, setFilterDistrict] = useState<string | undefined>(undefined);
   const [selectedRegion, setSelectedRegion] = useState<string>("");
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("");
   
   useEffect(() => {
     if (!isAuthenticated) {
@@ -28,27 +29,60 @@ export default function AnalyticsPage() {
       return;
     }
     
-    // Only regional and global engineers can access analytics
-    if (user?.role === "district_engineer") {
-      navigate("/dashboard");
+    // Initialize filters based on user role
+    if (user) {
+      if (user.role === "district_engineer" && user.district) {
+        // District engineers can only see their district data
+        const userDistrict = districts.find(d => d.name === user.district);
+        if (userDistrict) {
+          setFilterDistrict(userDistrict.id);
+          setSelectedDistrict(userDistrict.id);
+          
+          // Also set the region
+          const userRegion = regions.find(r => r.id === userDistrict.regionId);
+          if (userRegion) {
+            setFilterRegion(userRegion.id);
+            setSelectedRegion(userRegion.id);
+          }
+        }
+      } else if (user.role === "regional_engineer" && user.region) {
+        // Regional engineers default to their region
+        const userRegion = regions.find(r => r.name === user.region);
+        if (userRegion) {
+          setFilterRegion(userRegion.id);
+          setSelectedRegion(userRegion.id);
+        }
+      }
     }
 
     loadData();
-  }, [isAuthenticated, user, navigate, filterRegion]);
+  }, [isAuthenticated, user, navigate, filterRegion, filterDistrict]);
   
   const loadData = () => {
     // Get filtered faults for analytics
-    const { op5Faults, controlOutages } = getFilteredFaults(filterRegion);
+    const { op5Faults, controlOutages } = getFilteredFaults(filterRegion, filterDistrict);
     setFilteredFaults([...op5Faults, ...controlOutages]);
   };
   
   const handleRegionChange = (value: string) => {
     if (value === "all") {
       setFilterRegion(undefined);
+      // Reset district when changing to "all regions"
+      setFilterDistrict(undefined);
+      setSelectedDistrict("");
     } else {
       setFilterRegion(value);
     }
     setSelectedRegion(value);
+  };
+
+  const handleDistrictChange = (value: string) => {
+    if (value === "all") {
+      setFilterDistrict(undefined);
+    } else {
+      setFilterDistrict(value);
+    }
+    setSelectedDistrict(value);
   };
   
   const exportDetailed = () => {
@@ -86,7 +120,15 @@ export default function AnalyticsPage() {
     document.body.removeChild(link);
   };
   
-  if (!isAuthenticated || user?.role === "district_engineer") {
+  // For district engineers, we restrict them to only see their district data
+  const canChangeFilters = user?.role !== "district_engineer";
+  
+  // Filter the districts based on selected region
+  const availableDistricts = filterRegion 
+    ? districts.filter(d => d.regionId === filterRegion) 
+    : districts;
+  
+  if (!isAuthenticated) {
     return null;
   }
   
@@ -98,25 +140,47 @@ export default function AnalyticsPage() {
             Analytics & Reporting
           </h1>
           <p className="text-muted-foreground">
-            Analyze fault patterns and generate insights for better decision making
+            {user?.role === "district_engineer" 
+              ? `Analysis for ${user.district}` 
+              : "Analyze fault patterns and generate insights for better decision making"}
           </p>
         </div>
         
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div className="flex items-center gap-2">
-            <Select value={selectedRegion} onValueChange={handleRegionChange}>
-              <SelectTrigger className="w-[220px]">
-                <SelectValue placeholder="Filter by Region" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Regions</SelectItem>
-                {regions.map(region => (
-                  <SelectItem key={region.id} value={region.id}>
-                    {region.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {canChangeFilters && (
+              <>
+                <Select value={selectedRegion} onValueChange={handleRegionChange} disabled={user?.role === "district_engineer"}>
+                  <SelectTrigger className="w-[220px]">
+                    <SelectValue placeholder="Filter by Region" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Regions</SelectItem>
+                    {regions.map(region => (
+                      <SelectItem key={region.id} value={region.id}>
+                        {region.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {selectedRegion && selectedRegion !== "all" && (
+                  <Select value={selectedDistrict} onValueChange={handleDistrictChange} disabled={user?.role === "district_engineer"}>
+                    <SelectTrigger className="w-[220px]">
+                      <SelectValue placeholder="Filter by District" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Districts</SelectItem>
+                      {availableDistricts.map(district => (
+                        <SelectItem key={district.id} value={district.id}>
+                          {district.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </>
+            )}
           </div>
           
           <div className="flex items-center gap-2">
@@ -153,7 +217,7 @@ export default function AnalyticsPage() {
                 {filteredFaults.filter((f: any) => 'faultLocation' in f).length}
               </div>
               <p className="text-xs text-muted-foreground">
-                {filterRegion ? `In selected region` : 'Across all regions'}
+                {filterRegion || filterDistrict ? `In selected area` : 'Across all regions'}
               </p>
             </CardContent>
           </Card>
@@ -167,7 +231,7 @@ export default function AnalyticsPage() {
                 {filteredFaults.filter((f: any) => 'customersAffected' in f).length}
               </div>
               <p className="text-xs text-muted-foreground">
-                {filterRegion ? `In selected region` : 'Across all regions'}
+                {filterRegion || filterDistrict ? `In selected area` : 'Across all regions'}
               </p>
             </CardContent>
           </Card>
@@ -182,7 +246,7 @@ export default function AnalyticsPage() {
                 <div>
                   <CardTitle>Recent Faults</CardTitle>
                   <CardDescription>
-                    Latest fault reports across the network
+                    Latest fault reports {filterDistrict ? "in this district" : filterRegion ? "in this region" : "across the network"}
                   </CardDescription>
                 </div>
                 <Button variant="outline" className="flex items-center gap-2" onClick={exportDetailed}>
@@ -206,7 +270,7 @@ export default function AnalyticsPage() {
                 <TableBody>
                   {filteredFaults.slice(0, 5).map((fault: any) => (
                     <TableRow key={fault.id}>
-                      <TableCell className="font-medium">{fault.id}</TableCell>
+                      <TableCell className="font-medium">{fault.id.substring(0, 10)}</TableCell>
                       <TableCell>{'faultLocation' in fault ? 'OP5 Fault' : 'Control Outage'}</TableCell>
                       <TableCell>{fault.regionId}</TableCell>
                       <TableCell>{fault.districtId}</TableCell>

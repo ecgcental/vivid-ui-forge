@@ -17,6 +17,8 @@ interface DataContextType {
     controlOutages: ControlSystemOutage[];
   };
   resolveFault: (id: string, type: "op5" | "control") => void;
+  deleteFault: (id: string, type: "op5" | "control") => void;
+  canEditFault: (fault: OP5Fault | ControlSystemOutage) => boolean;
 }
 
 // Mock data with regionId added to each district
@@ -301,6 +303,35 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success("District information updated successfully!");
   };
 
+  const canEditFault = (fault: OP5Fault | ControlSystemOutage): boolean => {
+    if (!user) return false;
+    
+    // Check if the fault belongs to the user's district/region
+    const district = districts.find(d => d.id === fault.districtId);
+    const region = regions.find(r => r.id === fault.regionId);
+    
+    // District engineers can only edit faults in their district
+    if (user.role === "district_engineer") {
+      return user.district === district?.name;
+    }
+    
+    // Regional engineers can edit faults in their region
+    if (user.role === "regional_engineer") {
+      return user.region === region?.name;
+    }
+    
+    // Global engineers can edit faults anywhere
+    return user.role === "global_engineer";
+  };
+
+  const deleteFault = (id: string, type: "op5" | "control") => {
+    if (type === "op5") {
+      setOP5Faults(prev => prev.filter(fault => fault.id !== id));
+    } else {
+      setControlOutages(prev => prev.filter(outage => outage.id !== id));
+    }
+  };
+
   const getFilteredFaults = (regionId?: string, districtId?: string) => {
     let filteredOP5 = op5Faults;
     let filteredControl = controlOutages;
@@ -313,6 +344,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (districtId) {
       filteredOP5 = filteredOP5.filter(fault => fault.districtId === districtId);
       filteredControl = filteredControl.filter(outage => outage.districtId === districtId);
+    }
+    
+    // If the user is a district engineer, restrict to their district
+    if (user?.role === "district_engineer" && user.district) {
+      const userDistrict = districts.find(d => d.name === user.district);
+      if (userDistrict) {
+        filteredOP5 = filteredOP5.filter(fault => fault.districtId === userDistrict.id);
+        filteredControl = filteredControl.filter(outage => outage.districtId === userDistrict.id);
+      }
+    }
+    
+    // If the user is a regional engineer, restrict to their region
+    if (user?.role === "regional_engineer" && user.region && !regionId) {
+      const userRegion = regions.find(r => r.name === user.region);
+      if (userRegion) {
+        filteredOP5 = filteredOP5.filter(fault => fault.regionId === userRegion.id);
+        filteredControl = filteredControl.filter(outage => outage.regionId === userRegion.id);
+      }
     }
     
     return { op5Faults: filteredOP5, controlOutages: filteredControl };
@@ -352,7 +401,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         addControlOutage,
         updateDistrict,
         getFilteredFaults,
-        resolveFault
+        resolveFault,
+        deleteFault,
+        canEditFault
       }}
     >
       {children}

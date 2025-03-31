@@ -24,18 +24,27 @@ export default function ReportFaultPage() {
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
+      return;
     }
     
     // Set default values based on user role
     if (user) {
-      if (user.region) {
-        const userRegion = regions.find(r => r.name === user.region);
-        if (userRegion) setDefaultRegionId(userRegion.id);
-      }
-      
-      if (user.district) {
+      // For district engineers, find and set their district ID
+      if (user.role === "district_engineer" && user.district) {
         const userDistrict = districts.find(d => d.name === user.district);
-        if (userDistrict) setDefaultDistrictId(userDistrict.id);
+        if (userDistrict) {
+          setDefaultDistrictId(userDistrict.id);
+          setDefaultRegionId(userDistrict.regionId);
+          console.log("Setting district ID:", userDistrict.id, "for district:", user.district);
+        }
+      }
+      // For regional engineers, find and set their region ID
+      else if (user.role === "regional_engineer" && user.region) {
+        const userRegion = regions.find(r => r.name === user.region);
+        if (userRegion) {
+          setDefaultRegionId(userRegion.id);
+          console.log("Setting region ID:", userRegion.id, "for region:", user.region);
+        }
       }
     }
   }, [isAuthenticated, navigate, user, regions, districts]);
