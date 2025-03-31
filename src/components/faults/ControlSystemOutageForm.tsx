@@ -349,24 +349,25 @@ export function ControlSystemOutageForm({ defaultRegionId = "", defaultDistrictI
                   className="h-12 text-base bg-background/50 border-muted"
                 />
               </div>
+
+              {/* Moved Restoration Date & Time to details tab */}
+              <div className="space-y-3">
+                <Label htmlFor="restorationDate" className="text-base font-medium">Restoration Date & Time</Label>
+                <Input
+                  id="restorationDate"
+                  type="datetime-local"
+                  value={restorationDate}
+                  onChange={(e) => setRestorationDate(e.target.value)}
+                  className="h-12 text-base bg-background/50 border-muted"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Leave empty if the outage is still active
+                </p>
+              </div>
             </TabsContent>
             
             <TabsContent value="calculations" className="pt-6">
               <div className="space-y-8">
-                <div className="space-y-3">
-                  <Label htmlFor="restorationDate" className="text-base font-medium">Restoration Date & Time</Label>
-                  <Input
-                    id="restorationDate"
-                    type="datetime-local"
-                    value={restorationDate}
-                    onChange={(e) => setRestorationDate(e.target.value)}
-                    className="h-12 text-base bg-background/50 border-muted"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Leave empty if the outage is still active
-                  </p>
-                </div>
-                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <Label htmlFor="durationHours" className="font-medium">Duration of Outage</Label>
@@ -392,7 +393,7 @@ export function ControlSystemOutageForm({ defaultRegionId = "", defaultDistrictI
         </form>
       </CardContent>
       <CardFooter className="px-0 pt-4">
-        <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full h-12 text-base font-medium">
+        <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full h-12 text-base font-medium bg-primary hover:bg-primary/90">
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
