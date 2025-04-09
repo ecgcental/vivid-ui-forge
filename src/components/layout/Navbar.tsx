@@ -1,3 +1,4 @@
+
 import {
   Sheet,
   SheetContent,
@@ -7,7 +8,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { Menu } from "lucide-react"
-import { NavLinks } from "./NavLinks"
+import { NavLinks } from "@/components/layout/NavLinks"
 
 export function Navbar() {
   return (
