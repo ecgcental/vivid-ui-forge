@@ -237,7 +237,7 @@ export function VITInspectionForm({
                   </SelectTrigger>
                   <SelectContent>
                     {vitAssets.map((asset) => (
-                      <SelectItem key={asset.id} value={asset.id}>
+                      <SelectItem key={asset.id} value={asset.id || "unknown-asset"}>
                         {asset.serialNumber} - {asset.typeOfUnit}
                       </SelectItem>
                     ))}

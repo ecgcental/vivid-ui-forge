@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -159,7 +158,7 @@ export function VITAssetForm({ asset, onSubmit, onCancel }: VITAssetFormProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {filteredRegions.map(region => (
-                    <SelectItem key={region.id} value={region.id}>
+                    <SelectItem key={region.id} value={region.id || "unknown-region"}>
                       {region.name}
                     </SelectItem>
                   ))}
@@ -180,7 +179,7 @@ export function VITAssetForm({ asset, onSubmit, onCancel }: VITAssetFormProps) {
                 </SelectTrigger>
                 <SelectContent>
                   {filteredDistricts.map(district => (
-                    <SelectItem key={district.id} value={district.id}>
+                    <SelectItem key={district.id} value={district.id || "unknown-district"}>
                       {district.name}
                     </SelectItem>
                   ))}
