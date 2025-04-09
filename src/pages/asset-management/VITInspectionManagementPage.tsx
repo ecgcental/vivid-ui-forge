@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
 import { format } from "date-fns";
 import { jsPDF } from "jspdf";
+import "jspdf-autotable"; // Import the autotable plugin
 import {
   Tabs,
   TabsContent,
@@ -39,6 +40,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+// Add type declaration for jsPDF with autotable extensions
+declare module "jspdf" {
+  interface jsPDF {
+    lastAutoTable?: {
+      finalY?: number;
+    };
+    autoTable: (options: any) => jsPDF;
+  }
+}
 
 export default function VITInspectionManagementPage() {
   const navigate = useNavigate();
@@ -409,7 +420,6 @@ function InspectionRecordsTable({ onViewDetails }: { onViewDetails: (inspection:
       ["Correct Labelling", inspection.correctLabelling]
     ];
     
-    // @ts-ignore - jsPDF types are not complete
     doc.autoTable({
       startY: 84,
       head: [checklistItems[0]],
@@ -423,8 +433,8 @@ function InspectionRecordsTable({ onViewDetails }: { onViewDetails: (inspection:
       }
     });
     
-    // Add remarks
-    let finalY = doc.lastAutoTable?.finalY || 200;
+    // Get the final y position after the table
+    let finalY = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY : 200;
     
     if (inspection.remarks) {
       doc.setFontSize(14);
