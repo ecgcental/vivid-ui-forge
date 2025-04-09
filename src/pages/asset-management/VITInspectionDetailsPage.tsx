@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -25,6 +24,13 @@ declare module "jspdf" {
       finalY?: number;
     };
     autoTable: (options: any) => jsPDF;
+    internal: {
+      pageSize: {
+        width: number;
+        height: number;
+      };
+      pages: any[];
+    };
   }
 }
 
@@ -330,7 +336,8 @@ export default function VITInspectionDetailsPage() {
     doc.text(`Overall assessment: ${issuesCount === 0 ? 'No issues found' : issuesCount < 3 ? 'Minor issues found' : issuesCount < 7 ? 'Moderate issues found' : 'Major issues found'}`, 14, finalY + 30);
     
     // Add timestamp and page numbers
-    const totalPages = doc.internal.getNumberOfPages();
+    // Changed how we get the number of pages to avoid the TypeScript error
+    const totalPages = doc.internal.pages.length - 1;
     for (let i = 1; i <= totalPages; i++) {
       doc.setPage(i);
       doc.setFontSize(8);
