@@ -1,0 +1,53 @@
+
+[
+  {
+    "id": "district-01",
+    "regionId": "region-01",
+    "name": "Accra Metropolitan",
+    "population": {
+      "rural": 20000,
+      "urban": 350000,
+      "metro": 800000
+    }
+  },
+  {
+    "id": "district-02",
+    "regionId": "region-01",
+    "name": "Tema Metropolitan",
+    "population": {
+      "rural": 15000,
+      "urban": 250000,
+      "metro": 450000
+    }
+  },
+  {
+    "id": "district-05",
+    "regionId": "region-02",
+    "name": "Kumasi Metropolitan",
+    "population": {
+      "rural": 30000,
+      "urban": 280000,
+      "metro": 600000
+    }
+  },
+  {
+    "id": "district-09",
+    "regionId": "region-03",
+    "name": "Sekondi-Takoradi Metropolitan",
+    "population": {
+      "rural": 40000,
+      "urban": 220000,
+      "metro": 350000
+    }
+  },
+  {
+    "id": "district-13",
+    "regionId": "region-04",
+    "name": "Koforidua Municipal",
+    "population": {
+      "rural": 50000,
+      "urban": 180000,
+      "metro": 120000
+    }
+  }
+]

@@ -1,0 +1,19 @@
+
+[
+  {
+    "id": "region-01",
+    "name": "Greater Accra"
+  },
+  {
+    "id": "region-02",
+    "name": "Ashanti"
+  },
+  {
+    "id": "region-03",
+    "name": "Western"
+  },
+  {
+    "id": "region-04",
+    "name": "Eastern"
+  }
+]

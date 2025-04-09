@@ -1,0 +1,40 @@
+
+[
+  {
+    "id": "op5-001",
+    "regionId": "region-01",
+    "districtId": "district-01",
+    "occurrenceDate": "2023-03-15T10:30:00Z",
+    "restorationDate": "2023-03-15T15:45:00Z",
+    "faultType": "Unplanned",
+    "faultLocation": "Main Street Substation",
+    "status": "resolved",
+    "outrageDuration": 315,
+    "mttr": 290,
+    "affectedPopulation": {
+      "rural": 5000,
+      "urban": 85000,
+      "metro": 120000
+    },
+    "reliabilityIndices": {
+      "saidi": 0.023,
+      "saifi": 0.015,
+      "caidi": 1.533
+    }
+  },
+  {
+    "id": "op5-002",
+    "regionId": "region-02",
+    "districtId": "district-05",
+    "occurrenceDate": "2023-04-02T14:15:00Z",
+    "restorationDate": "",
+    "faultType": "Emergency",
+    "faultLocation": "Business District Substation",
+    "status": "active",
+    "affectedPopulation": {
+      "rural": 0,
+      "urban": 45000,
+      "metro": 85000
+    }
+  }
+]

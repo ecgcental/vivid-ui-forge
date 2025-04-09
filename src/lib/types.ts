@@ -3,6 +3,15 @@ import { type ClassValue } from "clsx";
 
 export type UserRole = "district_engineer" | "regional_engineer" | "global_engineer" | null;
 
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  region?: string;
+  district?: string;
+};
+
 export type RegionPopulation = {
   rural: number;
   urban: number;
@@ -82,6 +91,8 @@ export type YesNoOption = "Yes" | "No";
 
 export type GoodBadOption = "Good" | "Bad";
 
+export type ConditionStatus = "good" | "bad";
+
 export type VITAsset = {
   id: string;
   regionId: string;
@@ -126,6 +137,16 @@ export type VITInspectionChecklist = {
   remarks: string;
 };
 
+// Add missing types for inspection data
+export type SubstationInspection = {
+  id: string;
+  regionId: string;
+  districtId: string;
+  substationName: string;
+  date: string;
+  items: { id: string; name: string; status: ConditionStatus; remarks: string }[];
+};
+
 export interface AuthContextType {
   user: {
     name: string;
@@ -147,10 +168,12 @@ export interface DataContextType {
   controlOutages: ControlSystemOutage[];
   vitAssets: VITAsset[];
   vitInspections: VITInspectionChecklist[];
+  savedInspections?: SubstationInspection[];
   addOP5Fault: (fault: Omit<OP5Fault, "id" | "status">) => void;
   addControlOutage: (outage: Omit<ControlSystemOutage, "id" | "status">) => void;
   resolveFault: (id: string, type: "op5" | "control") => void;
   deleteFault: (id: string, type: "op5" | "control") => void;
+  getFilteredFaults?: (regionId?: string, districtId?: string) => { op5Faults: OP5Fault[], controlOutages: ControlSystemOutage[] };
   canEditFault: (fault: OP5Fault | ControlSystemOutage) => boolean;
   addVITAsset: (asset: Omit<VITAsset, "id" | "createdAt" | "updatedAt">) => void;
   updateVITAsset: (id: string, asset: Partial<VITAsset>) => void;
@@ -158,4 +181,9 @@ export interface DataContextType {
   addVITInspection: (inspection: Omit<VITInspectionChecklist, "id">) => void;
   updateVITInspection: (id: string, inspection: Partial<VITInspectionChecklist>) => void;
   deleteVITInspection: (id: string) => void;
+  updateDistrict?: (id: string, updates: Partial<District>) => void;
+  getSavedInspection?: (id: string) => SubstationInspection | undefined;
+  updateInspection?: (id: string, data: Partial<SubstationInspection>) => void;
+  saveInspection?: (data: Omit<SubstationInspection, "id">) => void;
+  deleteInspection?: (id: string) => void;
 }

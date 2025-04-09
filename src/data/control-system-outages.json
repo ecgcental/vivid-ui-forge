@@ -1,0 +1,41 @@
+
+[
+  {
+    "id": "control-001",
+    "regionId": "region-01",
+    "districtId": "district-02",
+    "occurrenceDate": "2023-03-25T08:45:00Z",
+    "restorationDate": "2023-03-25T14:20:00Z",
+    "faultType": "Planned",
+    "status": "resolved",
+    "reason": "System upgrade and maintenance",
+    "controlPanelIndications": "All indicators normal after maintenance",
+    "areaAffected": "Industrial Zone",
+    "loadMW": 35.5,
+    "unservedEnergyMWh": 195.25,
+    "customersAffected": {
+      "rural": 0,
+      "urban": 120000,
+      "metro": 0
+    }
+  },
+  {
+    "id": "control-002",
+    "regionId": "region-03",
+    "districtId": "district-09",
+    "occurrenceDate": "2023-04-10T19:30:00Z",
+    "restorationDate": "",
+    "faultType": "Unplanned",
+    "status": "active",
+    "reason": "Control system failure",
+    "controlPanelIndications": "Multiple circuit breakers tripped",
+    "areaAffected": "Commercial District",
+    "loadMW": 28.7,
+    "unservedEnergyMWh": 172.2,
+    "customersAffected": {
+      "rural": 15000,
+      "urban": 85000,
+      "metro": 0
+    }
+  }
+]

@@ -17,6 +17,11 @@ import {
   DataContextType,
   VITAsset,
   VITInspectionChecklist,
+  VoltageLevel,
+  VITStatus,
+  YesNoOption,
+  GoodBadOption,
+  SubstationInspection
 } from "@/lib/types";
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -29,6 +34,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [controlOutages, setControlOutages] = useState<ControlSystemOutage[]>([]);
   const [vitAssets, setVITAssets] = useState<VITAsset[]>([]);
   const [vitInspections, setVITInspections] = useState<VITInspectionChecklist[]>([]);
+  const [savedInspections, setSavedInspections] = useState<SubstationInspection[]>([]);
 
   // Initialize data from mock JSON
   useEffect(() => {
@@ -53,9 +59,36 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setOP5Faults(mockOP5FaultsData);
     setControlOutages(mockControlSystemOutagesData);
     
-    // Load VIT assets and inspections
-    setVITAssets(mockVITAssetsData);
-    setVITInspections(mockVITInspectionsData);
+    // Load VIT assets and inspections with proper type casting
+    setVITAssets(mockVITAssetsData.map(asset => ({
+      ...asset,
+      voltageLevel: asset.voltageLevel as VoltageLevel,
+      status: asset.status as VITStatus
+    })));
+    
+    setVITInspections(mockVITInspectionsData.map(inspection => ({
+      ...inspection,
+      rodentTermiteEncroachment: inspection.rodentTermiteEncroachment as YesNoOption,
+      cleanDustFree: inspection.cleanDustFree as YesNoOption,
+      protectionButtonEnabled: inspection.protectionButtonEnabled as YesNoOption,
+      recloserButtonEnabled: inspection.recloserButtonEnabled as YesNoOption,
+      groundEarthButtonEnabled: inspection.groundEarthButtonEnabled as YesNoOption,
+      acPowerOn: inspection.acPowerOn as YesNoOption,
+      batteryPowerLow: inspection.batteryPowerLow as YesNoOption,
+      handleLockOn: inspection.handleLockOn as YesNoOption,
+      remoteButtonEnabled: inspection.remoteButtonEnabled as YesNoOption,
+      gasLevelLow: inspection.gasLevelLow as YesNoOption,
+      earthingArrangementAdequate: inspection.earthingArrangementAdequate as YesNoOption,
+      noFusesBlown: inspection.noFusesBlown as YesNoOption,
+      noDamageToBushings: inspection.noDamageToBushings as YesNoOption,
+      noDamageToHVConnections: inspection.noDamageToHVConnections as YesNoOption,
+      insulatorsClean: inspection.insulatorsClean as YesNoOption,
+      paintworkAdequate: inspection.paintworkAdequate as YesNoOption,
+      ptFuseLinkIntact: inspection.ptFuseLinkIntact as YesNoOption,
+      noCorrosion: inspection.noCorrosion as YesNoOption,
+      silicaGelCondition: inspection.silicaGelCondition as GoodBadOption,
+      correctLabelling: inspection.correctLabelling as YesNoOption
+    })));
   }, []);
 
   // Function to determine if user can edit a fault
@@ -80,6 +113,24 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
 
     return false;
+  };
+  
+  // Function to get filtered faults
+  const getFilteredFaults = (regionId?: string, districtId?: string) => {
+    let filteredOP5 = op5Faults;
+    let filteredControl = controlOutages;
+    
+    if (regionId) {
+      filteredOP5 = filteredOP5.filter(fault => fault.regionId === regionId);
+      filteredControl = filteredControl.filter(outage => outage.regionId === regionId);
+    }
+    
+    if (districtId) {
+      filteredOP5 = filteredOP5.filter(fault => fault.districtId === districtId);
+      filteredControl = filteredControl.filter(outage => outage.districtId === districtId);
+    }
+    
+    return { op5Faults: filteredOP5, controlOutages: filteredControl };
   };
   
   // CRUD functions for OP5 faults
@@ -199,6 +250,50 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     toast.success("VIT Inspection deleted successfully");
   };
 
+  // Update district function
+  const updateDistrict = (id: string, updates: Partial<District>) => {
+    setDistricts(prev => 
+      prev.map(district => 
+        district.id === id
+          ? { ...district, ...updates }
+          : district
+      )
+    );
+    toast.success("District information updated successfully");
+  };
+
+  // Functions for substation inspections
+  const saveInspection = (data: Omit<SubstationInspection, "id">) => {
+    const newInspection = {
+      ...data,
+      id: uuidv4()
+    };
+    
+    setSavedInspections(prev => [...prev, newInspection]);
+    toast.success("Inspection saved successfully");
+    return newInspection.id;
+  };
+
+  const getSavedInspection = (id: string) => {
+    return savedInspections.find(inspection => inspection.id === id);
+  };
+
+  const updateInspection = (id: string, data: Partial<SubstationInspection>) => {
+    setSavedInspections(prev => 
+      prev.map(item => 
+        item.id === id
+          ? { ...item, ...data }
+          : item
+      )
+    );
+    toast.success("Inspection updated successfully");
+  };
+
+  const deleteInspection = (id: string) => {
+    setSavedInspections(prev => prev.filter(item => item.id !== id));
+    toast.success("Inspection deleted successfully");
+  };
+  
   return (
     <DataContext.Provider
       value={{
@@ -208,17 +303,24 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         controlOutages,
         vitAssets,
         vitInspections,
+        savedInspections,
         addOP5Fault,
         addControlOutage,
         resolveFault,
         deleteFault,
         canEditFault,
+        getFilteredFaults,
         addVITAsset,
         updateVITAsset,
         deleteVITAsset,
         addVITInspection,
         updateVITInspection,
         deleteVITInspection,
+        updateDistrict,
+        saveInspection,
+        getSavedInspection,
+        updateInspection,
+        deleteInspection
       }}
     >
       {children}
