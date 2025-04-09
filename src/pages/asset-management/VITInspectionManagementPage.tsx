@@ -23,7 +23,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { PlusCircle, Database, ClipboardList, Eye, Pencil, Download, FileText, Trash2 } from "lucide-react";
+import {
+  PlusCircle, Eye, Pencil, Download, FileText, Trash2
+} from "lucide-react";
 import { VITAsset, VITInspectionChecklist } from "@/lib/types";
 import {
   Select,
@@ -39,7 +41,16 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Add type declaration for jsPDF with autotable extensions
 declare module "jspdf" {
@@ -60,6 +71,7 @@ export default function VITInspectionManagementPage() {
   const [selectedAssetId, setSelectedAssetId] = useState<string>("");
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [selectedInspection, setSelectedInspection] = useState<VITInspectionChecklist | null>(null);
+  const [isEditInspectionOpen, setIsEditInspectionOpen] = useState(false);
 
   const handleAddAsset = () => {
     setSelectedAsset(null);
@@ -84,11 +96,18 @@ export default function VITInspectionManagementPage() {
   const handleCloseInspectionForm = () => {
     setIsInspectionFormOpen(false);
     setSelectedAssetId("");
+    setSelectedInspection(null);
   };
 
   const handleViewDetails = (inspection: VITInspectionChecklist) => {
     setSelectedInspection(inspection);
     setIsDetailsDialogOpen(true);
+  };
+
+  const handleEditInspection = (inspection: VITInspectionChecklist) => {
+    setSelectedInspection(inspection);
+    setSelectedAssetId(inspection.vitAssetId);
+    setIsEditInspectionOpen(true);
   };
 
   return (
@@ -97,16 +116,6 @@ export default function VITInspectionManagementPage() {
         <div className="flex flex-col space-y-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">VIT Inspection Management</h1>
-            <div className="flex gap-2">
-              <Button onClick={() => setActiveTab("assets")}>
-                <Database className="mr-2 h-4 w-4" />
-                Assets
-              </Button>
-              <Button onClick={() => setActiveTab("inspections")}>
-                <ClipboardList className="mr-2 h-4 w-4" />
-                Inspections
-              </Button>
-            </div>
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -132,7 +141,10 @@ export default function VITInspectionManagementPage() {
             </TabsContent>
             
             <TabsContent value="inspections" className="space-y-4">
-              <InspectionRecordsTable onViewDetails={handleViewDetails} />
+              <InspectionRecordsTable 
+                onViewDetails={handleViewDetails} 
+                onEditInspection={handleEditInspection}
+              />
             </TabsContent>
           </Tabs>
         </div>
@@ -154,15 +166,22 @@ export default function VITInspectionManagementPage() {
         </SheetContent>
       </Sheet>
 
-      {/* Inspection Form Sheet */}
-      <Sheet open={isInspectionFormOpen} onOpenChange={setIsInspectionFormOpen}>
+      {/* Inspection Form Sheet - Used for both Add and Edit */}
+      <Sheet open={isInspectionFormOpen || isEditInspectionOpen} onOpenChange={(open) => {
+        if (!open) {
+          setIsInspectionFormOpen(false);
+          setIsEditInspectionOpen(false);
+          handleCloseInspectionForm();
+        }
+      }}>
         <SheetContent className="sm:max-w-xl overflow-y-auto">
           <SheetHeader>
-            <SheetTitle>Add VIT Inspection</SheetTitle>
+            <SheetTitle>{selectedInspection ? "Edit VIT Inspection" : "Add VIT Inspection"}</SheetTitle>
           </SheetHeader>
           <div className="mt-6">
             <VITInspectionForm
               assetId={selectedAssetId}
+              inspection={selectedInspection}
               onSubmit={handleCloseInspectionForm}
               onCancel={handleCloseInspectionForm}
             />
@@ -316,7 +335,10 @@ function InspectionDetailsView({ inspection }: { inspection: VITInspectionCheckl
 }
 
 // Internal component for inspection records table
-function InspectionRecordsTable({ onViewDetails }: { onViewDetails: (inspection: VITInspectionChecklist) => void }) {
+function InspectionRecordsTable({ onViewDetails, onEditInspection }: { 
+  onViewDetails: (inspection: VITInspectionChecklist) => void;
+  onEditInspection: (inspection: VITInspectionChecklist) => void;
+}) {
   const { vitInspections, vitAssets, regions, districts, deleteVITInspection } = useData();
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -339,11 +361,6 @@ function InspectionRecordsTable({ onViewDetails }: { onViewDetails: (inspection:
         );
       })
     : vitInspections;
-
-  const handleEditInspection = (inspection: VITInspectionChecklist) => {
-    // For now, just show a toast - would implement edit functionality in a real app
-    toast.info("Edit functionality will be implemented in the future");
-  };
 
   const handleDeleteInspection = (id: string) => {
     if (window.confirm("Are you sure you want to delete this inspection record?")) {
@@ -450,6 +467,7 @@ function InspectionRecordsTable({ onViewDetails }: { onViewDetails: (inspection:
     
     // Save PDF
     doc.save(`vit-inspection-${asset.serialNumber}-${format(new Date(inspection.inspectionDate), "yyyy-MM-dd")}.pdf`);
+    toast.success("PDF report generated successfully");
   };
   
   return (
@@ -474,7 +492,7 @@ function InspectionRecordsTable({ onViewDetails }: { onViewDetails: (inspection:
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">District</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inspector</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issues</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -539,42 +557,54 @@ function InspectionRecordsTable({ onViewDetails }: { onViewDetails: (inspection:
                         {issuesCount} {issuesCount === 1 ? "issue" : "issues"}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div className="flex justify-start gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => onViewDetails(inspection)}
-                          title="View Details"
-                        >
-                          <Eye size={16} />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleEditInspection(inspection)}
-                          title="Edit"
-                        >
-                          <Pencil size={16} />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => exportToPDF(inspection)}
-                          title="Export to PDF"
-                        >
-                          <FileText size={16} />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleDeleteInspection(inspection.id)}
-                          className="text-red-500 hover:text-red-700"
-                          title="Delete"
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="h-4 w-4"
+                            >
+                              <circle cx="12" cy="12" r="1" />
+                              <circle cx="19" cy="12" r="1" />
+                              <circle cx="5" cy="12" r="1" />
+                            </svg>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => onViewDetails(inspection)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onEditInspection(inspection)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => exportToPDF(inspection)}>
+                            <FileText className="mr-2 h-4 w-4" />
+                            Export to PDF
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            className="text-red-600" 
+                            onClick={() => handleDeleteInspection(inspection.id)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 );

@@ -9,14 +9,14 @@ export default function EditVITInspectionPage() {
   
   // This is a stub page - we're handling edits through sheets/modals in the main pages
   useEffect(() => {
-    // Redirect to the inspection details page for the asset
+    // Redirect to the inspection management page
     navigate(`/asset-management/vit-inspection-management`);
   }, [id, navigate]);
 
   return (
     <Layout>
       <div className="container py-8">
-        <p>Redirecting...</p>
+        <p>Redirecting to inspection management...</p>
       </div>
     </Layout>
   );
