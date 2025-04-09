@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import { AssetManagementNav } from "@/components/layout/AssetManagementNav";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -138,6 +139,7 @@ export default function VITInspectionPage() {
 
   return (
     <Layout>
+      <AssetManagementNav />
       <div className="container mx-auto py-8">
         <div className="mb-8 flex justify-between items-center">
           <div>

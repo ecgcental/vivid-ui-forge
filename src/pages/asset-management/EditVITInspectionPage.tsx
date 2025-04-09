@@ -1,7 +1,7 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
+import { AssetManagementNav } from "@/components/layout/AssetManagementNav";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -135,6 +135,7 @@ export default function EditVITInspectionPage() {
 
   return (
     <Layout>
+      <AssetManagementNav />
       <div className="container mx-auto py-8">
         <div className="mb-8 flex justify-between items-center">
           <div className="flex items-center space-x-4">
