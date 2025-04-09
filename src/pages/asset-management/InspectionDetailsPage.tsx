@@ -5,7 +5,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SubstationInspectionData } from "@/lib/asset-types";
+import { SubstationInspection } from "@/lib/types";
 import { useData } from "@/contexts/DataContext";
 import { format } from "date-fns";
 import { ChevronLeft, Download, FileText, Pencil } from "lucide-react";
@@ -17,7 +17,7 @@ export default function InspectionDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getSavedInspection } = useData();
-  const [inspection, setInspection] = useState<SubstationInspectionData | null>(null);
+  const [inspection, setInspection] = useState<SubstationInspection | null>(null);
   const [activeTab, setActiveTab] = useState("general");
 
   useEffect(() => {

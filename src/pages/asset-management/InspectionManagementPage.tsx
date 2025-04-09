@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { useNavigate } from "react-router-dom";
@@ -14,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { SubstationInspectionData } from "@/lib/asset-types";
+import { SubstationInspection } from "@/lib/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/components/ui/sonner";
 import { Eye, FileText, Pencil, Trash2, Download } from "lucide-react";
@@ -51,7 +50,7 @@ export default function InspectionManagementPage() {
     }
   };
 
-  const exportToPDF = (inspection: SubstationInspectionData) => {
+  const exportToPDF = (inspection: SubstationInspection) => {
     const doc = new jsPDF();
     
     // Add title
@@ -118,7 +117,7 @@ export default function InspectionManagementPage() {
     doc.save(`inspection-${inspection.substationNo}-${inspection.date}.pdf`);
   };
 
-  const exportToCSV = (inspection: SubstationInspectionData) => {
+  const exportToCSV = (inspection: SubstationInspection) => {
     // Prepare CSV content
     const headers = ["Category", "Item", "Status", "Remarks"];
     const rows = inspection.items.map(item => [

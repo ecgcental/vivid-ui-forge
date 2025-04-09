@@ -17,7 +17,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { SubstationInspectionData, ConditionStatus, InspectionItem } from "@/lib/asset-types";
+import { SubstationInspection, ConditionStatus, InspectionItem } from "@/lib/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
 import { ChevronLeft } from "lucide-react";
@@ -25,10 +25,10 @@ import { ChevronLeft } from "lucide-react";
 export default function EditInspectionPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { getSavedInspection, updateInspection } = useData();
+  const { getSavedInspection, updateInspection, regions, districts } = useData();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("general");
-  const [formData, setFormData] = useState<Partial<SubstationInspectionData>>({
+  const [formData, setFormData] = useState<Partial<SubstationInspection>>({
     region: user?.region || "",
     district: user?.district || "",
     date: new Date().toISOString().split('T')[0],
@@ -51,7 +51,7 @@ export default function EditInspectionPage() {
   }, [id, getSavedInspection, navigate]);
 
   // Handle generic form input changes
-  const handleInputChange = (field: keyof SubstationInspectionData, value: any) => {
+  const handleInputChange = (field: keyof SubstationInspection, value: any) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -83,8 +83,18 @@ export default function EditInspectionPage() {
     }
     
     if (id) {
+      // Update the region and district IDs based on their names
+      const regionId = regions.find(r => r.name === formData.region)?.id || formData.regionId;
+      const districtId = districts.find(d => d.name === formData.district)?.id || formData.districtId;
+      
+      const updatedData: Partial<SubstationInspection> = {
+        ...formData,
+        regionId,
+        districtId
+      };
+      
       // Update the inspection data
-      updateInspection(id, formData);
+      updateInspection(id, updatedData);
       
       // Navigate to the details page
       navigate(`/asset-management/inspection-details/${id}`);

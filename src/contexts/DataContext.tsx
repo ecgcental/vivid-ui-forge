@@ -21,7 +21,9 @@ import {
   VITStatus,
   YesNoOption,
   GoodBadOption,
-  SubstationInspection
+  SubstationInspection,
+  FaultType,
+  InspectionItem
 } from "@/lib/types";
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -55,9 +57,18 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setRegions(loadedRegions);
     setDistricts(loadedDistricts);
     
-    // Load fault data
-    setOP5Faults(mockOP5FaultsData);
-    setControlOutages(mockControlSystemOutagesData);
+    // Load fault data with proper type casting
+    setOP5Faults(mockOP5FaultsData.map(fault => ({
+      ...fault,
+      faultType: fault.faultType as FaultType,
+      status: fault.status as "active" | "resolved"
+    })));
+    
+    setControlOutages(mockControlSystemOutagesData.map(outage => ({
+      ...outage,
+      faultType: outage.faultType as FaultType,
+      status: outage.status as "active" | "resolved"
+    })));
     
     // Load VIT assets and inspections with proper type casting
     setVITAssets(mockVITAssetsData.map(asset => ({
@@ -264,7 +275,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   // Functions for substation inspections
   const saveInspection = (data: Omit<SubstationInspection, "id">) => {
-    const newInspection = {
+    const newInspection: SubstationInspection = {
       ...data,
       id: uuidv4()
     };

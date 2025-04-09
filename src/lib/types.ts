@@ -137,14 +137,28 @@ export type VITInspectionChecklist = {
   remarks: string;
 };
 
-// Add missing types for inspection data
+// Updated to align with SubstationInspectionData
 export type SubstationInspection = {
   id: string;
   regionId: string;
   districtId: string;
-  substationName: string;
+  region: string;
+  district: string;
   date: string;
-  items: { id: string; name: string; status: ConditionStatus; remarks: string }[];
+  substationNo: string;
+  substationName?: string;
+  type: 'indoor' | 'outdoor';
+  items: InspectionItem[];
+  createdAt?: string;
+  createdBy?: string;
+};
+
+export type InspectionItem = {
+  id: string;
+  category: string;
+  name: string;
+  status: ConditionStatus;
+  remarks: string;
 };
 
 export interface AuthContextType {
@@ -184,6 +198,6 @@ export interface DataContextType {
   updateDistrict?: (id: string, updates: Partial<District>) => void;
   getSavedInspection?: (id: string) => SubstationInspection | undefined;
   updateInspection?: (id: string, data: Partial<SubstationInspection>) => void;
-  saveInspection?: (data: Omit<SubstationInspection, "id">) => void;
+  saveInspection?: (data: Omit<SubstationInspection, "id">) => string;
   deleteInspection?: (id: string) => void;
 }
