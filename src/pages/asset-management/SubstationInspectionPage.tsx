@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -457,7 +458,7 @@ export default function SubstationInspectionPage() {
                         Next: Outdoor Equipment
                       </Button>
                     </div>
-                  TabsContent>
+                  </TabsContent>
                   
                   {/* Outdoor Equipment */}
                   <TabsContent value="outdoor" className="space-y-6">
