@@ -18,7 +18,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { PlusCircle, database, clipboardList } from "lucide-react";
+import { PlusCircle, Database, ClipboardList } from "lucide-react";
 import { VITAsset } from "@/lib/types";
 import {
   Select,
@@ -68,11 +68,11 @@ export default function VITInspectionManagementPage() {
             <h1 className="text-2xl font-bold">VIT Inspection Management</h1>
             <div className="flex gap-2">
               <Button onClick={() => setActiveTab("assets")}>
-                <database className="mr-2 h-4 w-4" />
+                <Database className="mr-2 h-4 w-4" />
                 Assets
               </Button>
               <Button onClick={() => setActiveTab("inspections")}>
-                <clipboardList className="mr-2 h-4 w-4" />
+                <ClipboardList className="mr-2 h-4 w-4" />
                 Inspections
               </Button>
             </div>
