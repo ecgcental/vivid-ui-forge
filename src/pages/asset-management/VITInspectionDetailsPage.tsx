@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -18,6 +19,7 @@ import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 
 // Add type declaration for jsPDF with autotable extensions
+// Modified declaration to avoid type conflicts
 declare module "jspdf" {
   interface jsPDF {
     lastAutoTable?: {
@@ -31,6 +33,7 @@ declare module "jspdf" {
       };
       pages: any[];
     };
+    setPage: (pageNumber: number) => jsPDF;
   }
 }
 
