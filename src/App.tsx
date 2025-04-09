@@ -14,6 +14,8 @@ import DashboardPage from "./pages/DashboardPage";
 import ReportFaultPage from "./pages/ReportFaultPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import UserManagementPage from "./pages/UserManagementPage";
+import LoadMonitoringPage from "./pages/asset-management/LoadMonitoringPage";
+import SubstationInspectionPage from "./pages/asset-management/SubstationInspectionPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +36,8 @@ const App = () => (
               <Route path="/report-fault" element={<ReportFaultPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/user-management" element={<UserManagementPage />} />
+              <Route path="/asset-management/load-monitoring" element={<LoadMonitoringPage />} />
+              <Route path="/asset-management/substation-inspection" element={<SubstationInspectionPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
