@@ -137,7 +137,15 @@ export type VITInspectionChecklist = {
   remarks: string;
 };
 
-// Updated to align with SubstationInspectionData
+// Updated to match with asset-types
+export type InspectionItem = {
+  id: string;
+  category: string;
+  name: string;
+  status: ConditionStatus;
+  remarks: string;
+};
+
 export type SubstationInspection = {
   id: string;
   regionId: string;
@@ -151,14 +159,6 @@ export type SubstationInspection = {
   items: InspectionItem[];
   createdAt?: string;
   createdBy?: string;
-};
-
-export type InspectionItem = {
-  id: string;
-  category: string;
-  name: string;
-  status: ConditionStatus;
-  remarks: string;
 };
 
 export interface AuthContextType {

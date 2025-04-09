@@ -15,7 +15,7 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { SubstationInspectionData, ConditionStatus, InspectionItem } from "@/lib/asset-types";
+import { SubstationInspection, ConditionStatus, InspectionItem } from "@/lib/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
 import { useNavigate } from "react-router-dom";
@@ -35,7 +35,7 @@ export default function SubstationInspectionPage() {
   const { user } = useAuth();
   const { regions, districts, saveInspection } = useData();
   const navigate = useNavigate();
-  const [formData, setFormData] = useState<Partial<SubstationInspectionData>>({
+  const [formData, setFormData] = useState<Partial<SubstationInspection>>({
     region: user?.region || "",
     district: user?.district || "",
     date: new Date().toISOString().split('T')[0],
@@ -89,7 +89,7 @@ export default function SubstationInspectionPage() {
   ]);
 
   // Handle generic form input changes
-  const handleInputChange = (field: keyof SubstationInspectionData, value: any) => {
+  const handleInputChange = (field: keyof SubstationInspection, value: any) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -103,7 +103,7 @@ export default function SubstationInspectionPage() {
       newCategories[categoryIndex] = {
         ...newCategories[categoryIndex],
         items: newCategories[categoryIndex].items.map((item, index) =>
-          index === itemIndex ? { ...item, status: status } : item
+          index === itemIndex ? { ...item, status } : item
         ),
       };
       return newCategories;
@@ -117,7 +117,7 @@ export default function SubstationInspectionPage() {
       newCategories[categoryIndex] = {
         ...newCategories[categoryIndex],
         items: newCategories[categoryIndex].items.map((item, index) =>
-          index === itemIndex ? { ...item, remarks: remarks } : item
+          index === itemIndex ? { ...item, remarks } : item
         ),
       };
       return newCategories;
@@ -129,25 +129,34 @@ export default function SubstationInspectionPage() {
     
     const region = user?.region || formData.region || "";
     const district = user?.district || formData.district || "";
-    const regionIdFound = regions.find(r => r.name === region)?.id || "";
-    const districtIdFound = districts.find(d => d.name === district)?.id || "";
     
-    const inspectionData: Omit<SubstationInspectionData, "id" | "createdAt" | "createdBy"> = {
+    // Find the region and district IDs from the names
+    const regionFound = regions.find(r => r.name === region);
+    const districtFound = districts.find(d => d.name === district);
+    
+    const regionId = regionFound?.id || "";
+    const districtId = districtFound?.id || "";
+    
+    const inspectionItems: InspectionItem[] = categories.flatMap(category =>
+      category.items.map(item => ({
+        id: item.id,
+        category: category.name.toLowerCase(),
+        name: item.name,
+        status: item.status,
+        remarks: item.remarks,
+      }))
+    );
+    
+    const inspectionData: Omit<SubstationInspection, "id"> = {
+      regionId,
+      districtId,
       region: region,
       district: district,
       date: formData.date || new Date().toISOString().split('T')[0],
       substationNo: formData.substationNo || "",
       substationName: formData.substationName,
       type: formData.type || "indoor",
-      items: categories.flatMap(category =>
-        category.items.map(item => ({
-          id: item.id,
-          category: category.name.toLowerCase(),
-          name: item.name,
-          status: item.status,
-          remarks: item.remarks,
-        }))
-      ),
+      items: inspectionItems,
     };
     
     const id = saveInspection(inspectionData);
@@ -259,7 +268,7 @@ export default function SubstationInspectionPage() {
                       <h3 className="text-base font-medium flex-1">{item.name}</h3>
                       <div className="flex items-center space-x-6">
                         <RadioGroup
-                          value={item.status || "good"}
+                          value={item.status}
                           onValueChange={(value) => updateItemStatus(categoryIndex, itemIndex, value as "good" | "bad")}
                           className="flex items-center space-x-4"
                         >
