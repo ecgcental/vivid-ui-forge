@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -428,7 +429,7 @@ function InspectionRecordsTable({ onViewDetails, onEditInspection, onViewAsset }
       ["Ground Earth Button Enabled", inspection.groundEarthButtonEnabled],
       ["AC Power On", inspection.acPowerOn],
       ["Battery Power Low", inspection.batteryPowerLow],
-      ["Handle Lock On", inspection.handleLock On],
+      ["Handle Lock On", inspection.handleLockOn],
       ["Remote Button Enabled", inspection.remoteButtonEnabled],
       ["Gas Level Low", inspection.gasLevelLow],
       ["Earthing Arrangement Adequate", inspection.earthingArrangementAdequate],
@@ -630,3 +631,4 @@ function InspectionRecordsTable({ onViewDetails, onEditInspection, onViewAsset }
     </div>
   );
 }
+
