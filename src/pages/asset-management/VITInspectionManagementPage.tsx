@@ -40,7 +40,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -109,6 +108,10 @@ export default function VITInspectionManagementPage() {
     setSelectedAssetId(inspection.vitAssetId);
     setIsEditInspectionOpen(true);
   };
+  
+  const handleViewAsset = (assetId: string) => {
+    navigate(`/asset-management/vit-inspection-details/${assetId}`);
+  };
 
   return (
     <Layout>
@@ -144,6 +147,7 @@ export default function VITInspectionManagementPage() {
               <InspectionRecordsTable 
                 onViewDetails={handleViewDetails} 
                 onEditInspection={handleEditInspection}
+                onViewAsset={handleViewAsset}
               />
             </TabsContent>
           </Tabs>
@@ -334,13 +338,15 @@ function InspectionDetailsView({ inspection }: { inspection: VITInspectionCheckl
   );
 }
 
-// Internal component for inspection records table
-function InspectionRecordsTable({ onViewDetails, onEditInspection }: { 
+// Internal component for inspection records table with standardized actions matching the asset table
+function InspectionRecordsTable({ onViewDetails, onEditInspection, onViewAsset }: { 
   onViewDetails: (inspection: VITInspectionChecklist) => void;
   onEditInspection: (inspection: VITInspectionChecklist) => void;
+  onViewAsset: (assetId: string) => void;
 }) {
   const { vitInspections, vitAssets, regions, districts, deleteVITInspection } = useData();
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
 
   // Filter inspections based on search term
   const filteredInspections = searchTerm 
@@ -422,7 +428,7 @@ function InspectionRecordsTable({ onViewDetails, onEditInspection }: {
       ["Ground Earth Button Enabled", inspection.groundEarthButtonEnabled],
       ["AC Power On", inspection.acPowerOn],
       ["Battery Power Low", inspection.batteryPowerLow],
-      ["Handle Lock On", inspection.handleLockOn],
+      ["Handle Lock On", inspection.handleLock On],
       ["Remote Button Enabled", inspection.remoteButtonEnabled],
       ["Gas Level Low", inspection.gasLevelLow],
       ["Earthing Arrangement Adequate", inspection.earthingArrangementAdequate],
@@ -470,10 +476,18 @@ function InspectionRecordsTable({ onViewDetails, onEditInspection }: {
     toast.success("PDF report generated successfully");
   };
   
+  const handleViewInspectionDetails = (inspection: VITInspectionChecklist) => {
+    onViewAsset(inspection.vitAssetId);
+  };
+
+  const handleEditInspectionDetails = (inspection: VITInspectionChecklist) => {
+    navigate(`/asset-management/edit-vit-inspection/${inspection.id}`);
+  };
+  
   return (
     <div>
       <div className="mb-4">
-        <input
+        <Input
           type="text"
           placeholder="Search inspections by serial number, location, region or district..."
           value={searchTerm}
@@ -583,11 +597,11 @@ function InspectionRecordsTable({ onViewDetails, onEditInspection }: {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => onViewDetails(inspection)}>
+                          <DropdownMenuItem onClick={() => handleViewInspectionDetails(inspection)}>
                             <Eye className="mr-2 h-4 w-4" />
                             View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => onEditInspection(inspection)}>
+                          <DropdownMenuItem onClick={() => handleEditInspectionDetails(inspection)}>
                             <Pencil className="mr-2 h-4 w-4" />
                             Edit
                           </DropdownMenuItem>
