@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
 import { FilterBar } from "@/components/dashboard/FilterBar";
 import { StatsOverview } from "@/components/dashboard/StatsOverview";
@@ -107,10 +106,10 @@ export default function DashboardPage() {
               <RefreshCw size={16} className={isRefreshing ? "animate-spin" : ""} />
             </Button>
             <Button asChild>
-              <a href="/report-fault" className="flex items-center">
+              <Link to="/report-fault" className="flex items-center">
                 <PlusCircle size={16} className="mr-2" />
                 Report New Fault
-              </a>
+              </Link>
             </Button>
           </div>
         </div>

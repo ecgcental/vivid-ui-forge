@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { SignupForm } from "@/components/auth/SignupForm";
@@ -19,6 +18,9 @@ export default function SignupPage() {
     <Layout>
       <div className="container mx-auto py-10 px-4">
         <div className="max-w-md mx-auto">
+          <div className="flex justify-center mb-6">
+            <img src="/lovable-uploads/ecg-logo.png" alt="ECG Logo" className="h-16 w-auto" />
+          </div>
           <h1 className="text-2xl font-bold mb-6 text-center">Sign Up for ECG Fault Master</h1>
           <SignupForm />
         </div>

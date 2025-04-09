@@ -1,4 +1,3 @@
-
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -62,7 +61,7 @@ export default function HomePage() {
               <Button asChild size="lg" className="bg-ecg-gold text-black hover:bg-ecg-gold/90">
                 <Link to="/login">Get Started</Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="border-white text-white hover:bg-white/10">
+              <Button asChild size="lg" className="bg-ecg-gold text-black hover:bg-ecg-gold/90">
                 <Link to="/dashboard">View Dashboard</Link>
               </Button>
             </div>

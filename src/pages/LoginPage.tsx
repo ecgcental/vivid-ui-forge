@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { LoginForm } from "@/components/auth/LoginForm";
@@ -19,7 +18,6 @@ export default function LoginPage() {
     <Layout>
       <div className="container mx-auto py-10 px-4">
         <div className="max-w-md mx-auto">
-          <h1 className="text-2xl font-bold mb-6 text-center">Login to ECG Fault Master</h1>
           <LoginForm />
         </div>
       </div>

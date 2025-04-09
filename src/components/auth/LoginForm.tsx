@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,7 +34,7 @@ export function LoginForm() {
       <CardHeader className="text-center">
         <div className="mx-auto mb-4">
           <img 
-            src="/lovable-uploads/8a9a1582-1dac-407d-adcc-a9d1c6f772bc.png" 
+            src="/lovable-uploads/ecg-logo.png" 
             alt="ECG Logo" 
             className="h-16 w-auto mx-auto"
           />

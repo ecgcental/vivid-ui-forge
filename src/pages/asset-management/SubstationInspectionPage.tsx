@@ -142,7 +142,7 @@ export default function SubstationInspectionPage() {
         id: item.id,
         category: category.name.toLowerCase(),
         name: item.name,
-        status: item.status,
+        status: item.status || "good",
         remarks: item.remarks,
       }))
     );
