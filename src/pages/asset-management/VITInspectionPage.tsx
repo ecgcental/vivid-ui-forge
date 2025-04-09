@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
-import { AssetManagementNav } from "@/components/layout/AssetManagementNav";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,26 +30,26 @@ export default function VITInspectionPage() {
   
   // Initial list of VIT inspection items
   const initialVITItems: VITItem[] = [
-    { id: uuidv4(), name: "Rodent/termite encroachments of cubicle", status: "unset" as YesNoStatus, remarks: "" },
-    { id: uuidv4(), name: "Clean and dust free compartments", status: "unset" as YesNoStatus, remarks: "" },
-    { id: uuidv4(), name: "Is protection button enabled", status: "unset" as YesNoStatus, remarks: "" },
-    { id: uuidv4(), name: "Is recloser button enabled", status: "unset" as YesNoStatus, remarks: "" },
-    { id: uuidv4(), name: "Is GROUND/EARTH button enabled", status: "unset" as YesNoStatus, remarks: "" },
-    { id: uuidv4(), name: "Is AC power ON/OFF", status: "unset" as YesNoStatus, remarks: "" },
-    { id: uuidv4(), name: "Is Battery Power Low", status: "unset" as YesNoStatus, remarks: "" },
-    { id: uuidv4(), name: "Is Handle Luck ON", status: "unset" as YesNoStatus, remarks: "" },
-    { id: uuidv4(), name: "Is remote button enabled", status: "unset" as YesNoStatus, remarks: "" },
-    { id: uuidv4(), name: "Is Gas Level Low?", status: "unset" as YesNoStatus, remarks: "" },
-    { id: uuidv4(), name: "Earthling arrangement adequate", status: "unset" as YesNoStatus, remarks: "" },
-    { id: uuidv4(), name: "No fuses blown in control cubicle", status: "unset" as YesNoStatus, remarks: "" },
-    { id: uuidv4(), name: "No damage to bushings or insulators any cub, equipment", status: "unset" as YesNoStatus, remarks: "" },
-    { id: uuidv4(), name: "No damage to H.V.connections i.e., unraveling strands, caging of conductors heating", status: "unset" as YesNoStatus, remarks: "" },
-    { id: uuidv4(), name: "Insulators clean", status: "unset" as YesNoStatus, remarks: "" },
-    { id: uuidv4(), name: "Paintwork adequate", status: "unset" as YesNoStatus, remarks: "" },
-    { id: uuidv4(), name: "PT fuse link intact", status: "unset" as YesNoStatus, remarks: "" },
-    { id: uuidv4(), name: "No corrosion on equipment", status: "unset" as YesNoStatus, remarks: "" },
-    { id: uuidv4(), name: "Condition of silica gel", status: "unset" as GoodBadStatus, remarks: "" },
-    { id: uuidv4(), name: "Check for correct labelling and warning notices", status: "unset" as YesNoStatus, remarks: "" }
+    { id: uuidv4(), name: "Rodent/termite encroachments of cubicle", status: "" as YesNoStatus, remarks: "" },
+    { id: uuidv4(), name: "Clean and dust free compartments", status: "" as YesNoStatus, remarks: "" },
+    { id: uuidv4(), name: "Is protection button enabled", status: "" as YesNoStatus, remarks: "" },
+    { id: uuidv4(), name: "Is recloser button enabled", status: "" as YesNoStatus, remarks: "" },
+    { id: uuidv4(), name: "Is GROUND/EARTH button enabled", status: "" as YesNoStatus, remarks: "" },
+    { id: uuidv4(), name: "Is AC power ON/OFF", status: "" as YesNoStatus, remarks: "" },
+    { id: uuidv4(), name: "Is Battery Power Low", status: "" as YesNoStatus, remarks: "" },
+    { id: uuidv4(), name: "Is Handle Luck ON", status: "" as YesNoStatus, remarks: "" },
+    { id: uuidv4(), name: "Is remote button enabled", status: "" as YesNoStatus, remarks: "" },
+    { id: uuidv4(), name: "Is Gas Level Low?", status: "" as YesNoStatus, remarks: "" },
+    { id: uuidv4(), name: "Earthling arrangement adequate", status: "" as YesNoStatus, remarks: "" },
+    { id: uuidv4(), name: "No fuses blown in control cubicle", status: "" as YesNoStatus, remarks: "" },
+    { id: uuidv4(), name: "No damage to bushings or insulators any cub, equipment", status: "" as YesNoStatus, remarks: "" },
+    { id: uuidv4(), name: "No damage to H.V.connections i.e., unraveling strands, caging of conductors heating", status: "" as YesNoStatus, remarks: "" },
+    { id: uuidv4(), name: "Insulators clean", status: "" as YesNoStatus, remarks: "" },
+    { id: uuidv4(), name: "Paintwork adequate", status: "" as YesNoStatus, remarks: "" },
+    { id: uuidv4(), name: "PT fuse link intact", status: "" as YesNoStatus, remarks: "" },
+    { id: uuidv4(), name: "No corrosion on equipment", status: "" as YesNoStatus, remarks: "" },
+    { id: uuidv4(), name: "Condition of silica gel", status: "" as GoodBadStatus, remarks: "" },
+    { id: uuidv4(), name: "Check for correct labelling and warning notices", status: "" as YesNoStatus, remarks: "" }
   ];
 
   const [formData, setFormData] = useState<Partial<VITInspectionData>>({
@@ -115,7 +114,7 @@ export default function VITInspectionPage() {
     }
     
     // Check if all items have a status
-    const hasEmptyStatus = formData.items?.some(item => item.status === "unset");
+    const hasEmptyStatus = formData.items?.some(item => item.status === "");
     if (hasEmptyStatus) {
       toast.error("Please select Yes/No for all inspection items");
       return false;
@@ -139,7 +138,6 @@ export default function VITInspectionPage() {
 
   return (
     <Layout>
-      <AssetManagementNav />
       <div className="container mx-auto py-8">
         <div className="mb-8 flex justify-between items-center">
           <div>
