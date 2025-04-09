@@ -16,6 +16,9 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import UserManagementPage from "./pages/UserManagementPage";
 import LoadMonitoringPage from "./pages/asset-management/LoadMonitoringPage";
 import SubstationInspectionPage from "./pages/asset-management/SubstationInspectionPage";
+import InspectionManagementPage from "./pages/asset-management/InspectionManagementPage";
+import InspectionDetailsPage from "./pages/asset-management/InspectionDetailsPage";
+import EditInspectionPage from "./pages/asset-management/EditInspectionPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +41,9 @@ const App = () => (
               <Route path="/user-management" element={<UserManagementPage />} />
               <Route path="/asset-management/load-monitoring" element={<LoadMonitoringPage />} />
               <Route path="/asset-management/substation-inspection" element={<SubstationInspectionPage />} />
+              <Route path="/asset-management/inspection-management" element={<InspectionManagementPage />} />
+              <Route path="/asset-management/inspection-details/:id" element={<InspectionDetailsPage />} />
+              <Route path="/asset-management/edit-inspection/:id" element={<EditInspectionPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

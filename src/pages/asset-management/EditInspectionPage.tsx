@@ -1,6 +1,6 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,93 +17,38 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { v4 as uuidv4 } from 'uuid';
 import { SubstationInspectionData, ConditionStatus, InspectionItem } from "@/lib/asset-types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
+import { ChevronLeft } from "lucide-react";
 
-export default function SubstationInspectionPage() {
+export default function EditInspectionPage() {
+  const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { saveInspection } = useData();
+  const { getSavedInspection, updateInspection } = useData();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("general");
-
-  // Initial list of inspection items
-  const initialInspectionItems: InspectionItem[] = [
-    // 1. GENERAL BUILDING
-    { id: uuidv4(), category: "general", name: "House keeping", status: "good", remarks: "" },
-    { id: uuidv4(), category: "general", name: "Paintwork", status: "good", remarks: "" },
-    { id: uuidv4(), category: "general", name: "Roof leakage", status: "good", remarks: "" },
-    { id: uuidv4(), category: "general", name: "Doors locks/Hinges", status: "good", remarks: "" },
-    { id: uuidv4(), category: "general", name: "Washroom Cleanliness", status: "good", remarks: "" },
-    { id: uuidv4(), category: "general", name: "Toilet Facility condition", status: "good", remarks: "" },
-    { id: uuidv4(), category: "general", name: "Water flow/ availability", status: "good", remarks: "" },
-    { id: uuidv4(), category: "general", name: "AC Unit working", status: "good", remarks: "" },
-    { id: uuidv4(), category: "general", name: "Inside Lighting", status: "good", remarks: "" },
-    { id: uuidv4(), category: "general", name: "Fire Extinguisher available/In good condition", status: "good", remarks: "" },
-    { id: uuidv4(), category: "general", name: "Logo and signboard available and on equipments", status: "good", remarks: "" },
-    
-    // 2. CONTROL EQUIPMENT
-    { id: uuidv4(), category: "control", name: "Control Cabinet Clean", status: "good", remarks: "" },
-    { id: uuidv4(), category: "control", name: "General outlook of cable termination 11KV", status: "good", remarks: "" },
-    { id: uuidv4(), category: "control", name: "General outlook of cable termination 33KV", status: "good", remarks: "" },
-    { id: uuidv4(), category: "control", name: "Ammeters/Voltmeters functioning", status: "good", remarks: "" },
-    { id: uuidv4(), category: "control", name: "Annunciators functioning", status: "good", remarks: "" },
-    { id: uuidv4(), category: "control", name: "Heaters operation ok", status: "good", remarks: "" },
-    { id: uuidv4(), category: "control", name: "Labelling Clear", status: "good", remarks: "" },
-    { id: uuidv4(), category: "control", name: "Alarm", status: "good", remarks: "" },
-    { id: uuidv4(), category: "control", name: "SF6 gas level", status: "good", remarks: "" },
-    { id: uuidv4(), category: "control", name: "All closing Spring Charge motor working", status: "good", remarks: "" },
-    { id: uuidv4(), category: "control", name: "Relay flags/Indication", status: "good", remarks: "" },
-    { id: uuidv4(), category: "control", name: "Semaphore indications", status: "good", remarks: "" },
-    { id: uuidv4(), category: "control", name: "Battery bank outlook", status: "good", remarks: "" },
-    { id: uuidv4(), category: "control", name: "Battery electrolyte level", status: "good", remarks: "" },
-    { id: uuidv4(), category: "control", name: "Battery voltage", status: "good", remarks: "" },
-    
-    // 3. POWER TRANSFORMER
-    { id: uuidv4(), category: "transformer", name: "General outlook, No corrosion of fans, radiators", status: "good", remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Transformer bushing (check for flashover or dirt)", status: "good", remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Oil Level gauge", status: "good", remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Oil leakage", status: "good", remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Themometer ok", status: "good", remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Gas presure indicator working", status: "good", remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Silica gel OK", status: "good", remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Trafo body earthed/grounded", status: "good", remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Neutral point earthed/grounded", status: "good", remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Fans operating correctly", status: "good", remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "OLTC Oil level", status: "good", remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Any leakage OLTC OK", status: "good", remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Heaters in OLTC, Marshalling box working", status: "good", remarks: "" },
-    
-    // 4. OUTDOOR EQUIPMENT
-    { id: uuidv4(), category: "outdoor", name: "Disconnect switch properly closed/open", status: "good", remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Disconnect switch (check latching allignmet)", status: "good", remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Disconnect switch porcelain (check for dirt or flashover)", status: "good", remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Disconnect switch motor mechanism functioning", status: "good", remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Disconnect switch operating handle damage", status: "good", remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Heaters in Disconnect switch box working", status: "good", remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Lighting/Surge Arrestor porcelain dusty", status: "good", remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Lighting/Surge Arrestor counter functioning", status: "good", remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "CT Bushing (check for dirt or flashover)", status: "good", remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "VT Bushing (check for dirt or flashover)", status: "good", remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "CB check for SF6 gas level", status: "good", remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Check CB Housing for rust", status: "good", remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Heaters in CB Housing working", status: "good", remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Check all Cable termination", status: "good", remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Inspect all Clamps", status: "good", remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Hissing Noise", status: "good", remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "All equipment and system earthing secured", status: "good", remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "General condition of the station transformer", status: "good", remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "General condition of the NGR/Earthing transformer", status: "good", remarks: "" }
-  ];
-
   const [formData, setFormData] = useState<Partial<SubstationInspectionData>>({
     region: user?.region || "",
     district: user?.district || "",
     date: new Date().toISOString().split('T')[0],
     type: "indoor",
-    items: initialInspectionItems
+    items: []
   });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (id) {
+      const inspection = getSavedInspection(id);
+      if (inspection) {
+        setFormData(inspection);
+        setLoading(false);
+      } else {
+        toast.error("Inspection not found");
+        navigate("/asset-management/inspection-management");
+      }
+    }
+  }, [id, getSavedInspection, navigate]);
 
   // Handle generic form input changes
   const handleInputChange = (field: keyof SubstationInspectionData, value: any) => {
@@ -137,29 +82,45 @@ export default function SubstationInspectionPage() {
       return;
     }
     
-    // Save the inspection data
-    saveInspection(formData as Omit<SubstationInspectionData, "id" | "createdAt" | "createdBy">);
-    
-    // Navigate to the management page
-    navigate("/asset-management/inspection-management");
+    if (id) {
+      // Update the inspection data
+      updateInspection(id, formData);
+      
+      // Navigate to the details page
+      navigate(`/asset-management/inspection-details/${id}`);
+    }
   };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container mx-auto py-8">
+          <Card>
+            <CardContent className="pt-6">
+              <p>Loading inspection data...</p>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
       <div className="container mx-auto py-8">
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Primary Substation Inspection</h1>
-            <p className="text-muted-foreground mt-2">
-              Complete the inspection checklist to ensure substation safety and performance
-            </p>
-          </div>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate("/asset-management/inspection-management")}
-          >
-            View All Inspections
-          </Button>
+        <Button
+          variant="outline"
+          onClick={() => navigate(`/asset-management/inspection-details/${id}`)}
+          className="mb-6"
+        >
+          <ChevronLeft className="mr-2 h-4 w-4" /> Back to Inspection Details
+        </Button>
+        
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">Edit Inspection</h1>
+          <p className="text-muted-foreground mt-2">
+            Update the inspection data for Substation {formData.substationNo}
+          </p>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -247,7 +208,7 @@ export default function SubstationInspectionPage() {
               <CardHeader>
                 <CardTitle>Inspection Checklist</CardTitle>
                 <CardDescription>
-                  Complete the inspection checklist for all substation components
+                  Update the inspection checklist for all substation components
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -552,9 +513,16 @@ export default function SubstationInspectionPage() {
               </CardContent>
             </Card>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end space-x-4">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => navigate(`/asset-management/inspection-details/${id}`)}
+              >
+                Cancel
+              </Button>
               <Button type="submit" size="lg">
-                Submit Inspection Report
+                Save Changes
               </Button>
             </div>
           </div>

@@ -1,6 +1,5 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { RegionData, DistrictData, OP5Fault, ControlSystemOutage, FaultType, User } from "@/lib/types";
+import { RegionData, DistrictData, OP5Fault, ControlSystemOutage, FaultType, User, SubstationInspectionData, InspectionItem, ConditionStatus } from "@/lib/types";
 import { useAuth } from "./AuthContext";
 import { toast } from "@/components/ui/sonner";
 
@@ -10,6 +9,7 @@ interface DataContextType {
   op5Faults: OP5Fault[];
   controlOutages: ControlSystemOutage[];
   loading: boolean;
+  savedInspections: SubstationInspectionData[];
   addOP5Fault: (fault: Omit<OP5Fault, "id" | "createdBy" | "createdAt" | "status">) => void;
   addControlOutage: (outage: Omit<ControlSystemOutage, "id" | "createdBy" | "createdAt" | "status">) => void;
   updateDistrict: (districtId: string, data: Partial<DistrictData>) => void;
@@ -21,6 +21,12 @@ interface DataContextType {
   deleteFault: (id: string, type: "op5" | "control") => void;
   canEditFault: (fault: OP5Fault | ControlSystemOutage) => boolean;
   editFault: (id: string, type: "op5" | "control", data: Partial<OP5Fault | ControlSystemOutage>) => void;
+  
+  // New methods for inspections
+  saveInspection: (inspection: Omit<SubstationInspectionData, "id" | "createdAt" | "createdBy">) => void;
+  updateInspection: (id: string, data: Partial<SubstationInspectionData>) => void;
+  deleteInspection: (id: string) => void;
+  getSavedInspection: (id: string) => SubstationInspectionData | undefined;
 }
 
 // Mock data with regionId added to each district
@@ -233,6 +239,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [districts, setDistricts] = useState<DistrictData[]>([]);
   const [op5Faults, setOP5Faults] = useState<OP5Fault[]>([]);
   const [controlOutages, setControlOutages] = useState<ControlSystemOutage[]>([]);
+  const [savedInspections, setSavedInspections] = useState<SubstationInspectionData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -249,8 +256,58 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setOP5Faults(generateSampleOP5Faults());
     setControlOutages(generateSampleControlOutages());
     
+    // Generate some sample inspections
+    const sampleInspections = generateSampleInspections(regions);
+    setSavedInspections(sampleInspections);
+    
     setLoading(false);
   }, []);
+
+  // Generate sample inspections
+  const generateSampleInspections = (regions: RegionData[]): SubstationInspectionData[] => {
+    const inspections: SubstationInspectionData[] = [];
+    
+    for (let i = 0; i < 5; i++) {
+      const regionIndex = Math.floor(Math.random() * regions.length);
+      const region = regions[regionIndex];
+      const districtIndex = Math.floor(Math.random() * region.districts.length);
+      const district = region.districts[districtIndex];
+      
+      const types: ('indoor' | 'outdoor')[] = ['indoor', 'outdoor'];
+      const categories = ['general', 'control', 'transformer', 'outdoor'];
+      
+      const items: InspectionItem[] = [];
+      
+      // Generate 30 random items
+      for (let j = 0; j < 30; j++) {
+        const category = categories[Math.floor(Math.random() * categories.length)];
+        const status: ConditionStatus = Math.random() > 0.8 ? 'bad' : 'good';
+        
+        items.push({
+          id: `item-${i}-${j}`,
+          category,
+          name: `${category.charAt(0).toUpperCase() + category.slice(1)} Item ${j + 1}`,
+          status,
+          remarks: status === 'bad' ? `Issue found with ${category} item ${j + 1}` : ''
+        });
+      }
+      
+      inspections.push({
+        id: `inspection-${i + 1}`,
+        region: region.name,
+        district: district.name,
+        date: randomDate(),
+        substationNo: `SUB-${1000 + i}`,
+        substationName: `${region.name} Substation ${i + 1}`,
+        type: types[Math.floor(Math.random() * types.length)],
+        items,
+        createdAt: new Date().toISOString(),
+        createdBy: 'system'
+      });
+    }
+    
+    return inspections;
+  };
 
   const addOP5Fault = (fault: Omit<OP5Fault, "id" | "createdBy" | "createdAt" | "status">) => {
     if (!user) return;
@@ -481,6 +538,44 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Add a new inspection
+  const saveInspection = (inspection: Omit<SubstationInspectionData, "id" | "createdAt" | "createdBy">) => {
+    if (!user) return;
+    
+    const newInspection: SubstationInspectionData = {
+      ...inspection,
+      id: `inspection-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      createdBy: user.id
+    };
+    
+    setSavedInspections(prev => [...prev, newInspection]);
+    toast.success("Inspection saved successfully!");
+  };
+
+  // Update an existing inspection
+  const updateInspection = (id: string, data: Partial<SubstationInspectionData>) => {
+    setSavedInspections(prev => 
+      prev.map(inspection => 
+        inspection.id === id 
+          ? { ...inspection, ...data }
+          : inspection
+      )
+    );
+    
+    toast.success("Inspection updated successfully!");
+  };
+
+  // Delete an inspection
+  const deleteInspection = (id: string) => {
+    setSavedInspections(prev => prev.filter(inspection => inspection.id !== id));
+  };
+
+  // Get a specific inspection by ID
+  const getSavedInspection = (id: string) => {
+    return savedInspections.find(inspection => inspection.id === id);
+  };
+  
   return (
     <DataContext.Provider
       value={{
@@ -489,6 +584,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         op5Faults,
         controlOutages,
         loading,
+        savedInspections,
         addOP5Fault,
         addControlOutage,
         updateDistrict,
@@ -496,7 +592,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         resolveFault,
         deleteFault,
         canEditFault,
-        editFault
+        editFault,
+        saveInspection,
+        updateInspection,
+        deleteInspection,
+        getSavedInspection
       }}
     >
       {children}

@@ -45,10 +45,14 @@ export interface InspectionItem {
 }
 
 export interface SubstationInspectionData {
+  id: string;
   region: string;
   district: string;
   date: string;
   substationNo: string;
+  substationName?: string;
   type: 'indoor' | 'outdoor';
   items: InspectionItem[];
+  createdAt: string;
+  createdBy: string;
 }
