@@ -98,7 +98,7 @@ export default function EditVITInspectionPage() {
     }
     
     // Check if all items have a status
-    const hasEmptyStatus = formData.items.some(item => item.status === "");
+    const hasEmptyStatus = formData.items.some(item => item.status === "unset");
     if (hasEmptyStatus) {
       toast.error("Please select Yes/No for all inspection items");
       return false;

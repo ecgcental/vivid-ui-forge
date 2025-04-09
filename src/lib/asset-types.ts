@@ -34,9 +34,9 @@ export interface LoadMonitoringData {
   calculatedNeutral: number;
 }
 
-export type ConditionStatus = 'good' | 'bad';
-export type YesNoStatus = 'yes' | 'no';
-export type GoodBadStatus = 'good' | 'bad';
+export type ConditionStatus = 'good' | 'bad' | 'unset';
+export type YesNoStatus = 'yes' | 'no' | 'unset';
+export type GoodBadStatus = 'good' | 'bad' | 'unset';
 
 export interface InspectionItem {
   id: string;

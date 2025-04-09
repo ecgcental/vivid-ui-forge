@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
@@ -30,70 +31,70 @@ export default function SubstationInspectionPage() {
   // Initial list of inspection items without preset status
   const initialInspectionItems: InspectionItem[] = [
     // 1. GENERAL BUILDING
-    { id: uuidv4(), category: "general", name: "House keeping", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "general", name: "Paintwork", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "general", name: "Roof leakage", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "general", name: "Doors locks/Hinges", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "general", name: "Washroom Cleanliness", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "general", name: "Toilet Facility condition", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "general", name: "Water flow/ availability", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "general", name: "AC Unit working", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "general", name: "Inside Lighting", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "general", name: "Fire Extinguisher available/In good condition", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "general", name: "Logo and signboard available and on equipments", status: "" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "general", name: "House keeping", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "general", name: "Paintwork", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "general", name: "Roof leakage", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "general", name: "Doors locks/Hinges", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "general", name: "Washroom Cleanliness", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "general", name: "Toilet Facility condition", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "general", name: "Water flow/ availability", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "general", name: "AC Unit working", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "general", name: "Inside Lighting", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "general", name: "Fire Extinguisher available/In good condition", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "general", name: "Logo and signboard available and on equipments", status: "unset" as ConditionStatus, remarks: "" },
     
     // 2. CONTROL EQUIPMENT
-    { id: uuidv4(), category: "control", name: "Control Cabinet Clean", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "control", name: "General outlook of cable termination 11KV", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "control", name: "General outlook of cable termination 33KV", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "control", name: "Ammeters/Voltmeters functioning", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "control", name: "Annunciators functioning", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "control", name: "Heaters operation ok", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "control", name: "Labelling Clear", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "control", name: "Alarm", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "control", name: "SF6 gas level", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "control", name: "All closing Spring Charge motor working", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "control", name: "Relay flags/Indication", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "control", name: "Semaphore indications", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "control", name: "Battery bank outlook", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "control", name: "Battery electrolyte level", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "control", name: "Battery voltage", status: "" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "control", name: "Control Cabinet Clean", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "control", name: "General outlook of cable termination 11KV", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "control", name: "General outlook of cable termination 33KV", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "control", name: "Ammeters/Voltmeters functioning", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "control", name: "Annunciators functioning", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "control", name: "Heaters operation ok", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "control", name: "Labelling Clear", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "control", name: "Alarm", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "control", name: "SF6 gas level", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "control", name: "All closing Spring Charge motor working", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "control", name: "Relay flags/Indication", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "control", name: "Semaphore indications", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "control", name: "Battery bank outlook", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "control", name: "Battery electrolyte level", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "control", name: "Battery voltage", status: "unset" as ConditionStatus, remarks: "" },
     
     // 3. POWER TRANSFORMER
-    { id: uuidv4(), category: "transformer", name: "General outlook, No corrosion of fans, radiators", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Transformer bushing (check for flashover or dirt)", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Oil Level gauge", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Oil leakage", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Themometer ok", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Gas presure indicator working", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Silica gel OK", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Trafo body earthed/grounded", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Neutral point earthed/grounded", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Fans operating correctly", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "OLTC Oil level", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Any leakage OLTC OK", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "transformer", name: "Heaters in OLTC, Marshalling box working", status: "" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "transformer", name: "General outlook, No corrosion of fans, radiators", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "transformer", name: "Transformer bushing (check for flashover or dirt)", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "transformer", name: "Oil Level gauge", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "transformer", name: "Oil leakage", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "transformer", name: "Themometer ok", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "transformer", name: "Gas presure indicator working", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "transformer", name: "Silica gel OK", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "transformer", name: "Trafo body earthed/grounded", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "transformer", name: "Neutral point earthed/grounded", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "transformer", name: "Fans operating correctly", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "transformer", name: "OLTC Oil level", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "transformer", name: "Any leakage OLTC OK", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "transformer", name: "Heaters in OLTC, Marshalling box working", status: "unset" as ConditionStatus, remarks: "" },
     
     // 4. OUTDOOR EQUIPMENT
-    { id: uuidv4(), category: "outdoor", name: "Disconnect switch properly closed/open", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Disconnect switch (check latching allignmet)", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Disconnect switch porcelain (check for dirt or flashover)", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Disconnect switch motor mechanism functioning", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Disconnect switch operating handle damage", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Heaters in Disconnect switch box working", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Lighting/Surge Arrestor porcelain dusty", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Lighting/Surge Arrestor counter functioning", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "CT Bushing (check for dirt or flashover)", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "VT Bushing (check for dirt or flashover)", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "CB check for SF6 gas level", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Check CB Housing for rust", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Heaters in CB Housing working", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Check all Cable termination", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Inspect all Clamps", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "Hissing Noise", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "All equipment and system earthing secured", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "General condition of the station transformer", status: "" as ConditionStatus, remarks: "" },
-    { id: uuidv4(), category: "outdoor", name: "General condition of the NGR/Earthing transformer", status: "" as ConditionStatus, remarks: "" }
+    { id: uuidv4(), category: "outdoor", name: "Disconnect switch properly closed/open", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "outdoor", name: "Disconnect switch (check latching allignmet)", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "outdoor", name: "Disconnect switch porcelain (check for dirt or flashover)", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "outdoor", name: "Disconnect switch motor mechanism functioning", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "outdoor", name: "Disconnect switch operating handle damage", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "outdoor", name: "Heaters in Disconnect switch box working", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "outdoor", name: "Lighting/Surge Arrestor porcelain dusty", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "outdoor", name: "Lighting/Surge Arrestor counter functioning", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "outdoor", name: "CT Bushing (check for dirt or flashover)", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "outdoor", name: "VT Bushing (check for dirt or flashover)", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "outdoor", name: "CB check for SF6 gas level", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "outdoor", name: "Check CB Housing for rust", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "outdoor", name: "Heaters in CB Housing working", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "outdoor", name: "Check all Cable termination", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "outdoor", name: "Inspect all Clamps", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "outdoor", name: "Hissing Noise", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "outdoor", name: "All equipment and system earthing secured", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "outdoor", name: "General condition of the station transformer", status: "unset" as ConditionStatus, remarks: "" },
+    { id: uuidv4(), category: "outdoor", name: "General condition of the NGR/Earthing transformer", status: "unset" as ConditionStatus, remarks: "" }
   ];
 
   const [formData, setFormData] = useState<Partial<SubstationInspectionData>>({
@@ -136,7 +137,7 @@ export default function SubstationInspectionPage() {
     }
     
     // Check if all items have a status
-    const hasEmptyStatus = formData.items?.some(item => item.status === "");
+    const hasEmptyStatus = formData.items?.some(item => item.status === "unset");
     if (hasEmptyStatus) {
       toast.error("Please select a status (Good/Bad) for all inspection items");
       return false;
