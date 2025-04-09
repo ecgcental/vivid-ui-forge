@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { RegionData, DistrictData, OP5Fault, ControlSystemOutage, FaultType, User, SubstationInspectionData, InspectionItem, ConditionStatus } from "@/lib/types";
+import { RegionData, DistrictData, OP5Fault, ControlSystemOutage, FaultType, User } from "@/lib/types";
+import { SubstationInspectionData, InspectionItem, ConditionStatus, VITInspectionData, VITItem } from "@/lib/asset-types";
 import { useAuth } from "./AuthContext";
 import { toast } from "@/components/ui/sonner";
 
@@ -10,6 +11,7 @@ interface DataContextType {
   controlOutages: ControlSystemOutage[];
   loading: boolean;
   savedInspections: SubstationInspectionData[];
+  savedVITInspections: VITInspectionData[];
   addOP5Fault: (fault: Omit<OP5Fault, "id" | "createdBy" | "createdAt" | "status">) => void;
   addControlOutage: (outage: Omit<ControlSystemOutage, "id" | "createdBy" | "createdAt" | "status">) => void;
   updateDistrict: (districtId: string, data: Partial<DistrictData>) => void;
@@ -22,11 +24,17 @@ interface DataContextType {
   canEditFault: (fault: OP5Fault | ControlSystemOutage) => boolean;
   editFault: (id: string, type: "op5" | "control", data: Partial<OP5Fault | ControlSystemOutage>) => void;
   
-  // New methods for inspections
+  // Substation inspection methods
   saveInspection: (inspection: Omit<SubstationInspectionData, "id" | "createdAt" | "createdBy">) => void;
   updateInspection: (id: string, data: Partial<SubstationInspectionData>) => void;
   deleteInspection: (id: string) => void;
   getSavedInspection: (id: string) => SubstationInspectionData | undefined;
+  
+  // VIT inspection methods
+  saveVITInspection: (inspection: Omit<VITInspectionData, "id" | "createdAt" | "createdBy">) => void;
+  updateVITInspection: (id: string, data: Partial<VITInspectionData>) => void;
+  deleteVITInspection: (id: string) => void;
+  getSavedVITInspection: (id: string) => VITInspectionData | undefined;
 }
 
 // Mock data with regionId added to each district
@@ -240,6 +248,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [op5Faults, setOP5Faults] = useState<OP5Fault[]>([]);
   const [controlOutages, setControlOutages] = useState<ControlSystemOutage[]>([]);
   const [savedInspections, setSavedInspections] = useState<SubstationInspectionData[]>([]);
+  const [savedVITInspections, setSavedVITInspections] = useState<VITInspectionData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -259,6 +268,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Generate some sample inspections
     const sampleInspections = generateSampleInspections(regions);
     setSavedInspections(sampleInspections);
+
+    // Generate sample VIT inspections
+    const sampleVITInspections = generateSampleVITInspections(regions);
+    setSavedVITInspections(sampleVITInspections);
     
     setLoading(false);
   }, []);
@@ -300,6 +313,64 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         substationNo: `SUB-${1000 + i}`,
         substationName: `${region.name} Substation ${i + 1}`,
         type: types[Math.floor(Math.random() * types.length)],
+        items,
+        createdAt: new Date().toISOString(),
+        createdBy: 'system'
+      });
+    }
+    
+    return inspections;
+  };
+
+  // Generate sample VIT inspections
+  const generateSampleVITInspections = (regions: RegionData[]): VITInspectionData[] => {
+    const inspections: VITInspectionData[] = [];
+    const voltageLevels: ('11KV' | '33KV')[] = ['11KV', '33KV'];
+    const units = ['RMU', 'Switchgear', 'Recloser', 'Autorecloser'];
+    const statuses = ['Operational', 'Under Maintenance', 'Faulty'];
+    const protections = ['Overcurrent', 'Earth Fault', 'Hybrid'];
+    
+    for (let i = 0; i < 5; i++) {
+      const regionIndex = Math.floor(Math.random() * regions.length);
+      const region = regions[regionIndex];
+      const districtIndex = Math.floor(Math.random() * region.districts.length);
+      const district = region.districts[districtIndex];
+      
+      const items: VITItem[] = [
+        { id: `vit-item-${i}-1`, name: "Rodent/termite encroachments of cubicle", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
+        { id: `vit-item-${i}-2`, name: "Clean and dust free compartments", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
+        { id: `vit-item-${i}-3`, name: "Is protection button enabled", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
+        { id: `vit-item-${i}-4`, name: "Is recloser button enabled", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
+        { id: `vit-item-${i}-5`, name: "Is GROUND/EARTH button enabled", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
+        { id: `vit-item-${i}-6`, name: "Is AC power ON/OFF", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
+        { id: `vit-item-${i}-7`, name: "Is Battery Power Low", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
+        { id: `vit-item-${i}-8`, name: "Is Handle Luck ON", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
+        { id: `vit-item-${i}-9`, name: "Is remote button enabled", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
+        { id: `vit-item-${i}-10`, name: "Is Gas Level Low?", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
+        { id: `vit-item-${i}-11`, name: "Earthling arrangement adequate", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
+        { id: `vit-item-${i}-12`, name: "No fuses blown in control cubicle", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
+        { id: `vit-item-${i}-13`, name: "No damage to bushings or insulators any cub, equipment", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
+        { id: `vit-item-${i}-14`, name: "No damage to H.V.connections i.e., unraveling strands, caging of conductors heating", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
+        { id: `vit-item-${i}-15`, name: "Insulators clean", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
+        { id: `vit-item-${i}-16`, name: "Paintwork adequate", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
+        { id: `vit-item-${i}-17`, name: "PT fuse link intact", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
+        { id: `vit-item-${i}-18`, name: "No corrosion on equipment", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
+        { id: `vit-item-${i}-19`, name: "Condition of silica gel", status: Math.random() > 0.5 ? 'good' : 'bad', remarks: "" },
+        { id: `vit-item-${i}-20`, name: "Check for correct labelling and warning notices", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" }
+      ];
+      
+      inspections.push({
+        id: `vit-inspection-${i + 1}`,
+        region: region.name,
+        district: district.name,
+        date: randomDate(),
+        voltageLevel: voltageLevels[Math.floor(Math.random() * voltageLevels.length)],
+        typeOfUnit: units[Math.floor(Math.random() * units.length)],
+        serialNumber: `SN-${10000 + Math.floor(Math.random() * 90000)}`,
+        location: `${district.name} Area ${i + 1}`,
+        gpsLocation: `${5 + Math.random() * 5}°N, ${-1 - Math.random() * 2}°W`,
+        status: statuses[Math.floor(Math.random() * statuses.length)],
+        protection: protections[Math.floor(Math.random() * protections.length)],
         items,
         createdAt: new Date().toISOString(),
         createdBy: 'system'
@@ -576,6 +647,45 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return savedInspections.find(inspection => inspection.id === id);
   };
   
+  // VIT inspection methods
+  const saveVITInspection = (inspection: Omit<VITInspectionData, "id" | "createdAt" | "createdBy">) => {
+    if (!user) return;
+    
+    const newInspection: VITInspectionData = {
+      ...inspection,
+      id: `vit-inspection-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      createdBy: user.id
+    };
+    
+    setSavedVITInspections(prev => [...prev, newInspection]);
+    toast.success("VIT inspection saved successfully!");
+  };
+
+  // Update an existing VIT inspection
+  const updateVITInspection = (id: string, data: Partial<VITInspectionData>) => {
+    setSavedVITInspections(prev => 
+      prev.map(inspection => 
+        inspection.id === id 
+          ? { ...inspection, ...data }
+          : inspection
+      )
+    );
+    
+    toast.success("VIT inspection updated successfully!");
+  };
+
+  // Delete a VIT inspection
+  const deleteVITInspection = (id: string) => {
+    setSavedVITInspections(prev => prev.filter(inspection => inspection.id !== id));
+    toast.success("VIT inspection deleted successfully!");
+  };
+
+  // Get a specific VIT inspection by ID
+  const getSavedVITInspection = (id: string) => {
+    return savedVITInspections.find(inspection => inspection.id === id);
+  };
+
   return (
     <DataContext.Provider
       value={{
@@ -585,6 +695,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         controlOutages,
         loading,
         savedInspections,
+        savedVITInspections,
         addOP5Fault,
         addControlOutage,
         updateDistrict,
@@ -596,7 +707,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         saveInspection,
         updateInspection,
         deleteInspection,
-        getSavedInspection
+        getSavedInspection,
+        saveVITInspection,
+        updateVITInspection,
+        deleteVITInspection,
+        getSavedVITInspection
       }}
     >
       {children}

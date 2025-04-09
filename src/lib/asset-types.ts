@@ -35,6 +35,8 @@ export interface LoadMonitoringData {
 }
 
 export type ConditionStatus = 'good' | 'bad';
+export type YesNoStatus = 'yes' | 'no';
+export type GoodBadStatus = 'good' | 'bad';
 
 export interface InspectionItem {
   id: string;
@@ -53,6 +55,31 @@ export interface SubstationInspectionData {
   substationName?: string;
   type: 'indoor' | 'outdoor';
   items: InspectionItem[];
+  createdAt: string;
+  createdBy: string;
+}
+
+export interface VITItem {
+  id: string;
+  name: string;
+  status: YesNoStatus | GoodBadStatus;
+  remarks: string;
+}
+
+export interface VITInspectionData {
+  id: string;
+  region: string;
+  district: string;
+  date: string;
+  voltageLevel: '11KV' | '33KV';
+  typeOfUnit: string;
+  serialNumber: string;
+  location: string;
+  gpsLocation: string;
+  status: string;
+  protection: string;
+  photoUrl?: string;
+  items: VITItem[];
   createdAt: string;
   createdBy: string;
 }

@@ -19,6 +19,10 @@ import SubstationInspectionPage from "./pages/asset-management/SubstationInspect
 import InspectionManagementPage from "./pages/asset-management/InspectionManagementPage";
 import InspectionDetailsPage from "./pages/asset-management/InspectionDetailsPage";
 import EditInspectionPage from "./pages/asset-management/EditInspectionPage";
+import VITInspectionPage from "./pages/asset-management/VITInspectionPage";
+import VITInspectionManagementPage from "./pages/asset-management/VITInspectionManagementPage";
+import VITInspectionDetailsPage from "./pages/asset-management/VITInspectionDetailsPage";
+import EditVITInspectionPage from "./pages/asset-management/EditVITInspectionPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +48,10 @@ const App = () => (
               <Route path="/asset-management/inspection-management" element={<InspectionManagementPage />} />
               <Route path="/asset-management/inspection-details/:id" element={<InspectionDetailsPage />} />
               <Route path="/asset-management/edit-inspection/:id" element={<EditInspectionPage />} />
+              <Route path="/asset-management/vit-inspection" element={<VITInspectionPage />} />
+              <Route path="/asset-management/vit-inspection-management" element={<VITInspectionManagementPage />} />
+              <Route path="/asset-management/vit-inspection-details/:id" element={<VITInspectionDetailsPage />} />
+              <Route path="/asset-management/edit-vit-inspection/:id" element={<EditVITInspectionPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
