@@ -1,689 +1,202 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { RegionData, DistrictData, OP5Fault, ControlSystemOutage, FaultType, User } from "@/lib/types";
-import { SubstationInspectionData, InspectionItem, ConditionStatus, VITInspectionData, VITItem } from "@/lib/asset-types";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
+import mockRegionsData from "@/data/regions.json";
+import mockDistrictsData from "@/data/districts.json";
+import mockOP5FaultsData from "@/data/op5-faults.json";
+import mockControlSystemOutagesData from "@/data/control-system-outages.json";
+import mockVITAssetsData from "@/data/vit-assets.json";
+import mockVITInspectionsData from "@/data/vit-inspections.json";
+import { v4 as uuidv4 } from "uuid";
 import { toast } from "@/components/ui/sonner";
-
-interface DataContextType {
-  regions: RegionData[];
-  districts: DistrictData[];
-  op5Faults: OP5Fault[];
-  controlOutages: ControlSystemOutage[];
-  loading: boolean;
-  savedInspections: SubstationInspectionData[];
-  savedVITInspections: VITInspectionData[];
-  addOP5Fault: (fault: Omit<OP5Fault, "id" | "createdBy" | "createdAt" | "status">) => void;
-  addControlOutage: (outage: Omit<ControlSystemOutage, "id" | "createdBy" | "createdAt" | "status">) => void;
-  updateDistrict: (districtId: string, data: Partial<DistrictData>) => void;
-  getFilteredFaults: (regionId?: string, districtId?: string) => {
-    op5Faults: OP5Fault[];
-    controlOutages: ControlSystemOutage[];
-  };
-  resolveFault: (id: string, type: "op5" | "control") => void;
-  deleteFault: (id: string, type: "op5" | "control") => void;
-  canEditFault: (fault: OP5Fault | ControlSystemOutage) => boolean;
-  editFault: (id: string, type: "op5" | "control", data: Partial<OP5Fault | ControlSystemOutage>) => void;
-  
-  // Substation inspection methods
-  saveInspection: (inspection: Omit<SubstationInspectionData, "id" | "createdAt" | "createdBy">) => void;
-  updateInspection: (id: string, data: Partial<SubstationInspectionData>) => void;
-  deleteInspection: (id: string) => void;
-  getSavedInspection: (id: string) => SubstationInspectionData | undefined;
-  
-  // VIT inspection methods
-  saveVITInspection: (inspection: Omit<VITInspectionData, "id" | "createdAt" | "createdBy">) => void;
-  updateVITInspection: (id: string, data: Partial<VITInspectionData>) => void;
-  deleteVITInspection: (id: string) => void;
-  getSavedVITInspection: (id: string) => VITInspectionData | undefined;
-}
-
-// Mock data with regionId added to each district
-const MOCK_REGIONS: RegionData[] = [
-  {
-    id: "1",
-    name: "Greater Accra",
-    districts: [
-      {
-        id: "1",
-        name: "Accra Metro",
-        regionId: "1", // Added regionId
-        population: {
-          rural: 25000,
-          urban: 180000,
-          metro: 950000
-        }
-      },
-      {
-        id: "2",
-        name: "Tema",
-        regionId: "1", // Added regionId
-        population: {
-          rural: 18000,
-          urban: 120000,
-          metro: 480000
-        }
-      }
-    ]
-  },
-  {
-    id: "2",
-    name: "Ashanti",
-    districts: [
-      {
-        id: "3",
-        name: "Kumasi Metro",
-        regionId: "2", // Added regionId
-        population: {
-          rural: 45000,
-          urban: 220000,
-          metro: 820000
-        }
-      },
-      {
-        id: "4",
-        name: "Obuasi",
-        regionId: "2", // Added regionId
-        population: {
-          rural: 35000,
-          urban: 85000,
-          metro: 0
-        }
-      }
-    ]
-  },
-  {
-    id: "3",
-    name: "Western",
-    districts: [
-      {
-        id: "5",
-        name: "Sekondi-Takoradi",
-        regionId: "3", // Added regionId
-        population: {
-          rural: 32000,
-          urban: 105000,
-          metro: 380000
-        }
-      },
-      {
-        id: "6",
-        name: "Tarkwa",
-        regionId: "3", // Added regionId
-        population: {
-          rural: 42000,
-          urban: 78000,
-          metro: 0
-        }
-      }
-    ]
-  }
-];
+import {
+  Region,
+  District,
+  OP5Fault,
+  ControlSystemOutage,
+  DataContextType,
+  VITAsset,
+  VITInspectionChecklist,
+} from "@/lib/types";
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-// Helper to generate random date in the past 30 days
-const randomDate = () => {
-  const date = new Date();
-  date.setDate(date.getDate() - Math.floor(Math.random() * 30));
-  return date.toISOString();
-};
-
-// Helper to generate random date after a given date
-const randomDateAfter = (startDate: string, hoursLater: number = 24) => {
-  const date = new Date(startDate);
-  date.setHours(date.getHours() + Math.floor(Math.random() * hoursLater));
-  return date.toISOString();
-};
-
-// Generate sample faults
-const generateSampleOP5Faults = (): OP5Fault[] => {
-  const faults: OP5Fault[] = [];
-  const faultTypes: FaultType[] = ["Planned", "Unplanned", "Emergency", "Load Shedding"];
-  const statuses: ("active" | "resolved")[] = ["active", "resolved"];
-  const locations = ["Transformer T1", "Distribution Line D45", "Substation S12", "Feeder F23"];
-  
-  for (let i = 0; i < 15; i++) {
-    const regionIndex = Math.floor(Math.random() * MOCK_REGIONS.length);
-    const region = MOCK_REGIONS[regionIndex];
-    const districtIndex = Math.floor(Math.random() * region.districts.length);
-    const district = region.districts[districtIndex];
-    
-    const occurrenceDate = randomDate();
-    const restorationDate = randomDateAfter(occurrenceDate);
-    const duration = Math.floor((new Date(restorationDate).getTime() - new Date(occurrenceDate).getTime()) / (1000 * 60));
-    
-    faults.push({
-      id: `op5-${i+1}`,
-      regionId: region.id,
-      districtId: district.id,
-      occurrenceDate,
-      faultType: faultTypes[Math.floor(Math.random() * faultTypes.length)],
-      faultLocation: locations[Math.floor(Math.random() * locations.length)],
-      restorationDate,
-      affectedPopulation: {
-        rural: Math.floor(Math.random() * district.population.rural * 0.5),
-        urban: Math.floor(Math.random() * district.population.urban * 0.3),
-        metro: Math.floor(Math.random() * (district.population.metro || 0) * 0.2)
-      },
-      createdBy: "system",
-      createdAt: new Date().toISOString(),
-      status: statuses[Math.floor(Math.random() * statuses.length)],
-      outrageDuration: duration,
-      mttr: duration * 0.8,
-      reliabilityIndices: {
-        saidi: Math.random() * 10,
-        saifi: Math.random() * 5,
-        caidi: Math.random() * 3
-      }
-    });
-  }
-  
-  return faults;
-};
-
-const generateSampleControlOutages = (): ControlSystemOutage[] => {
-  const outages: ControlSystemOutage[] = [];
-  const faultTypes: FaultType[] = ["Planned", "Unplanned", "Emergency", "Load Shedding"];
-  const statuses: ("active" | "resolved")[] = ["active", "resolved"];
-  const reasons = [
-    "System overload", 
-    "Equipment failure", 
-    "Scheduled maintenance", 
-    "Weather-related damage"
-  ];
-  const indications = [
-    "Red alarm on panel", 
-    "System voltage drop", 
-    "Circuit breaker trip", 
-    "Communication failure"
-  ];
-  const areas = [
-    "North sector", 
-    "Industrial zone", 
-    "Residential district", 
-    "Commercial area"
-  ];
-  
-  for (let i = 0; i < 15; i++) {
-    const regionIndex = Math.floor(Math.random() * MOCK_REGIONS.length);
-    const region = MOCK_REGIONS[regionIndex];
-    const districtIndex = Math.floor(Math.random() * region.districts.length);
-    const district = region.districts[districtIndex];
-    
-    const occurrenceDate = randomDate();
-    const restorationDate = randomDateAfter(occurrenceDate);
-    const loadMW = Math.floor(Math.random() * 120) + 10;
-    const durationHours = (new Date(restorationDate).getTime() - new Date(occurrenceDate).getTime()) / (1000 * 60 * 60);
-    
-    outages.push({
-      id: `control-${i+1}`,
-      regionId: region.id,
-      districtId: district.id,
-      occurrenceDate,
-      faultType: faultTypes[Math.floor(Math.random() * faultTypes.length)],
-      restorationDate,
-      customersAffected: {
-        rural: Math.floor(Math.random() * district.population.rural * 0.5),
-        urban: Math.floor(Math.random() * district.population.urban * 0.3),
-        metro: Math.floor(Math.random() * (district.population.metro || 0) * 0.2)
-      },
-      reason: reasons[Math.floor(Math.random() * reasons.length)],
-      controlPanelIndications: indications[Math.floor(Math.random() * indications.length)],
-      areaAffected: areas[Math.floor(Math.random() * areas.length)],
-      loadMW,
-      unservedEnergyMWh: loadMW * durationHours,
-      createdBy: "system",
-      createdAt: new Date().toISOString(),
-      status: statuses[Math.floor(Math.random() * statuses.length)]
-    });
-  }
-  
-  return outages;
-};
-
-export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export function DataProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [regions, setRegions] = useState<RegionData[]>(MOCK_REGIONS);
-  const [districts, setDistricts] = useState<DistrictData[]>([]);
+  const [regions, setRegions] = useState<Region[]>([]);
+  const [districts, setDistricts] = useState<District[]>([]);
   const [op5Faults, setOP5Faults] = useState<OP5Fault[]>([]);
   const [controlOutages, setControlOutages] = useState<ControlSystemOutage[]>([]);
-  const [savedInspections, setSavedInspections] = useState<SubstationInspectionData[]>([]);
-  const [savedVITInspections, setSavedVITInspections] = useState<VITInspectionData[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [vitAssets, setVITAssets] = useState<VITAsset[]>([]);
+  const [vitInspections, setVITInspections] = useState<VITInspectionChecklist[]>([]);
 
+  // Initialize data from mock JSON
   useEffect(() => {
-    // Initialize data with regionId
-    const allDistricts = regions.flatMap(region => 
-      region.districts.map(district => ({
-        ...district,
-        regionId: region.id
-      }))
-    );
-    setDistricts(allDistricts);
-    
-    // Load sample faults
-    setOP5Faults(generateSampleOP5Faults());
-    setControlOutages(generateSampleControlOutages());
-    
-    // Generate some sample inspections
-    const sampleInspections = generateSampleInspections(regions);
-    setSavedInspections(sampleInspections);
+    // Load regions and link districts
+    const loadedRegions: Region[] = mockRegionsData.map(region => ({
+      ...region,
+      districts: [],
+    }));
 
-    // Generate sample VIT inspections
-    const sampleVITInspections = generateSampleVITInspections(regions);
-    setSavedVITInspections(sampleVITInspections);
+    // Load districts and link to regions
+    const loadedDistricts: District[] = mockDistrictsData;
+
+    // Associate districts with regions
+    loadedRegions.forEach(region => {
+      region.districts = loadedDistricts.filter(district => district.regionId === region.id);
+    });
+
+    setRegions(loadedRegions);
+    setDistricts(loadedDistricts);
     
-    setLoading(false);
+    // Load fault data
+    setOP5Faults(mockOP5FaultsData);
+    setControlOutages(mockControlSystemOutagesData);
+    
+    // Load VIT assets and inspections
+    setVITAssets(mockVITAssetsData);
+    setVITInspections(mockVITInspectionsData);
   }, []);
 
-  // Generate sample inspections
-  const generateSampleInspections = (regions: RegionData[]): SubstationInspectionData[] => {
-    const inspections: SubstationInspectionData[] = [];
-    
-    for (let i = 0; i < 5; i++) {
-      const regionIndex = Math.floor(Math.random() * regions.length);
-      const region = regions[regionIndex];
-      const districtIndex = Math.floor(Math.random() * region.districts.length);
-      const district = region.districts[districtIndex];
-      
-      const types: ('indoor' | 'outdoor')[] = ['indoor', 'outdoor'];
-      const categories = ['general', 'control', 'transformer', 'outdoor'];
-      
-      const items: InspectionItem[] = [];
-      
-      // Generate 30 random items
-      for (let j = 0; j < 30; j++) {
-        const category = categories[Math.floor(Math.random() * categories.length)];
-        const status: ConditionStatus = Math.random() > 0.8 ? 'bad' : 'good';
-        
-        items.push({
-          id: `item-${i}-${j}`,
-          category,
-          name: `${category.charAt(0).toUpperCase() + category.slice(1)} Item ${j + 1}`,
-          status,
-          remarks: status === 'bad' ? `Issue found with ${category} item ${j + 1}` : ''
-        });
-      }
-      
-      inspections.push({
-        id: `inspection-${i + 1}`,
-        region: region.name,
-        district: district.name,
-        date: randomDate(),
-        substationNo: `SUB-${1000 + i}`,
-        substationName: `${region.name} Substation ${i + 1}`,
-        type: types[Math.floor(Math.random() * types.length)],
-        items,
-        createdAt: new Date().toISOString(),
-        createdBy: 'system'
-      });
-    }
-    
-    return inspections;
-  };
+  // Function to determine if user can edit a fault
+  const canEditFault = (fault: OP5Fault | ControlSystemOutage): boolean => {
+    if (!user) return false;
 
-  // Generate sample VIT inspections
-  const generateSampleVITInspections = (regions: RegionData[]): VITInspectionData[] => {
-    const inspections: VITInspectionData[] = [];
-    const voltageLevels: ('11KV' | '33KV')[] = ['11KV', '33KV'];
-    const units = ['RMU', 'Switchgear', 'Recloser', 'Autorecloser'];
-    const statuses = ['Operational', 'Under Maintenance', 'Faulty'];
-    const protections = ['Overcurrent', 'Earth Fault', 'Hybrid'];
-    
-    for (let i = 0; i < 5; i++) {
-      const regionIndex = Math.floor(Math.random() * regions.length);
-      const region = regions[regionIndex];
-      const districtIndex = Math.floor(Math.random() * region.districts.length);
-      const district = region.districts[districtIndex];
-      
-      const items: VITItem[] = [
-        { id: `vit-item-${i}-1`, name: "Rodent/termite encroachments of cubicle", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
-        { id: `vit-item-${i}-2`, name: "Clean and dust free compartments", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
-        { id: `vit-item-${i}-3`, name: "Is protection button enabled", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
-        { id: `vit-item-${i}-4`, name: "Is recloser button enabled", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
-        { id: `vit-item-${i}-5`, name: "Is GROUND/EARTH button enabled", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
-        { id: `vit-item-${i}-6`, name: "Is AC power ON/OFF", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
-        { id: `vit-item-${i}-7`, name: "Is Battery Power Low", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
-        { id: `vit-item-${i}-8`, name: "Is Handle Luck ON", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
-        { id: `vit-item-${i}-9`, name: "Is remote button enabled", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
-        { id: `vit-item-${i}-10`, name: "Is Gas Level Low?", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
-        { id: `vit-item-${i}-11`, name: "Earthling arrangement adequate", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
-        { id: `vit-item-${i}-12`, name: "No fuses blown in control cubicle", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
-        { id: `vit-item-${i}-13`, name: "No damage to bushings or insulators any cub, equipment", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
-        { id: `vit-item-${i}-14`, name: "No damage to H.V.connections i.e., unraveling strands, caging of conductors heating", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
-        { id: `vit-item-${i}-15`, name: "Insulators clean", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
-        { id: `vit-item-${i}-16`, name: "Paintwork adequate", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
-        { id: `vit-item-${i}-17`, name: "PT fuse link intact", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
-        { id: `vit-item-${i}-18`, name: "No corrosion on equipment", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" },
-        { id: `vit-item-${i}-19`, name: "Condition of silica gel", status: Math.random() > 0.5 ? 'good' : 'bad', remarks: "" },
-        { id: `vit-item-${i}-20`, name: "Check for correct labelling and warning notices", status: Math.random() > 0.5 ? 'yes' : 'no', remarks: "" }
-      ];
-      
-      inspections.push({
-        id: `vit-inspection-${i + 1}`,
-        region: region.name,
-        district: district.name,
-        date: randomDate(),
-        voltageLevel: voltageLevels[Math.floor(Math.random() * voltageLevels.length)],
-        typeOfUnit: units[Math.floor(Math.random() * units.length)],
-        serialNumber: `SN-${10000 + Math.floor(Math.random() * 90000)}`,
-        location: `${district.name} Area ${i + 1}`,
-        gpsLocation: `${5 + Math.random() * 5}°N, ${-1 - Math.random() * 2}°W`,
-        status: statuses[Math.floor(Math.random() * statuses.length)],
-        protection: protections[Math.floor(Math.random() * protections.length)],
-        items,
-        createdAt: new Date().toISOString(),
-        createdBy: 'system'
-      });
-    }
-    
-    return inspections;
-  };
+    // Global engineers can edit any fault
+    if (user.role === "global_engineer") return true;
 
-  const addOP5Fault = (fault: Omit<OP5Fault, "id" | "createdBy" | "createdAt" | "status">) => {
-    if (!user) return;
-    
+    // Regional engineers can only edit faults in their region
+    if (user.role === "regional_engineer") {
+      if (!user.region) return false;
+      const faultRegion = regions.find(r => r.id === fault.regionId);
+      return faultRegion?.name === user.region;
+    }
+
+    // District engineers can only edit faults in their district
+    if (user.role === "district_engineer") {
+      if (!user.district) return false;
+      const faultDistrict = districts.find(d => d.id === fault.districtId);
+      return faultDistrict?.name === user.district;
+    }
+
+    return false;
+  };
+  
+  // CRUD functions for OP5 faults
+  const addOP5Fault = (fault: Omit<OP5Fault, "id" | "status">) => {
     const newFault: OP5Fault = {
       ...fault,
-      id: `op5-${Date.now()}`,
-      createdBy: user.id,
-      createdAt: new Date().toISOString(),
-      status: "active"
+      id: uuidv4(),
+      status: "active",
     };
     
     setOP5Faults(prev => [...prev, newFault]);
-    toast.success("OP5 fault reported successfully!");
+    toast.success("OP5 Fault report submitted successfully");
   };
 
-  const addControlOutage = (outage: Omit<ControlSystemOutage, "id" | "createdBy" | "createdAt" | "status">) => {
-    if (!user) return;
-    
+  // CRUD functions for Control System Outages
+  const addControlOutage = (outage: Omit<ControlSystemOutage, "id" | "status">) => {
     const newOutage: ControlSystemOutage = {
       ...outage,
-      id: `control-${Date.now()}`,
-      createdBy: user.id,
-      createdAt: new Date().toISOString(),
-      status: "active"
+      id: uuidv4(),
+      status: "active",
     };
     
     setControlOutages(prev => [...prev, newOutage]);
-    toast.success("Control system outage reported successfully!");
+    toast.success("Control System Outage report submitted successfully");
   };
 
-  const updateDistrict = (districtId: string, data: Partial<DistrictData>) => {
-    setRegions(prev => 
-      prev.map(region => ({
-        ...region,
-        districts: region.districts.map(district => 
-          district.id === districtId 
-            ? { ...district, ...data }
-            : district
+  // Function to resolve a fault (shared for both types)
+  const resolveFault = (id: string, type: "op5" | "control") => {
+    const currentDate = new Date().toISOString();
+    
+    if (type === "op5") {
+      setOP5Faults(prev =>
+        prev.map(fault =>
+          fault.id === id
+            ? { ...fault, status: "resolved", restorationDate: currentDate }
+            : fault
         )
-      }))
-    );
-    
-    setDistricts(prev => 
-      prev.map(district => 
-        district.id === districtId 
-          ? { ...district, ...data }
-          : district
-      )
-    );
-    
-    toast.success("District information updated successfully!");
+      );
+    } else {
+      setControlOutages(prev =>
+        prev.map(outage =>
+          outage.id === id
+            ? { ...outage, status: "resolved", restorationDate: currentDate }
+            : outage
+        )
+      );
+    }
   };
 
-  const canEditFault = (fault: OP5Fault | ControlSystemOutage): boolean => {
-    if (!user) return false;
-    
-    // Check if the fault belongs to the user's district/region
-    const district = districts.find(d => d.id === fault.districtId);
-    const region = regions.find(r => r.id === fault.regionId);
-    
-    // District engineers can only edit faults in their district
-    if (user.role === "district_engineer") {
-      return user.district === district?.name;
-    }
-    
-    // Regional engineers can edit faults in their region
-    if (user.role === "regional_engineer") {
-      return user.region === region?.name;
-    }
-    
-    // Global engineers can edit faults anywhere
-    return user.role === "global_engineer";
-  };
-
+  // Function to delete a fault
   const deleteFault = (id: string, type: "op5" | "control") => {
     if (type === "op5") {
-      const faultToDelete = op5Faults.find(fault => fault.id === id);
-      if (!faultToDelete) {
-        toast.error("Fault not found");
-        return;
-      }
-      
-      // Check if user has permission to delete this fault
-      if (canEditFault(faultToDelete)) {
-        setOP5Faults(prev => prev.filter(fault => fault.id !== id));
-        toast.success("Fault deleted successfully");
-      } else {
-        toast.error("You don't have permission to delete this fault");
-      }
+      setOP5Faults(prev => prev.filter(fault => fault.id !== id));
     } else {
-      const outageToDelete = controlOutages.find(outage => outage.id === id);
-      if (!outageToDelete) {
-        toast.error("Outage not found");
-        return;
-      }
-      
-      // Check if user has permission to delete this outage
-      if (canEditFault(outageToDelete)) {
-        setControlOutages(prev => prev.filter(outage => outage.id !== id));
-        toast.success("Outage deleted successfully");
-      } else {
-        toast.error("You don't have permission to delete this outage");
-      }
+      setControlOutages(prev => prev.filter(outage => outage.id !== id));
     }
-  };
-
-  const editFault = (id: string, type: "op5" | "control", data: Partial<OP5Fault | ControlSystemOutage>) => {
-    if (type === "op5") {
-      const faultToEdit = op5Faults.find(fault => fault.id === id);
-      if (!faultToEdit) {
-        toast.error("Fault not found");
-        return;
-      }
-      
-      // Check if user has permission to edit this fault
-      if (canEditFault(faultToEdit)) {
-        setOP5Faults(prev => 
-          prev.map(fault => 
-            fault.id === id 
-              ? { ...fault, ...data, lastUpdatedAt: new Date().toISOString() }
-              : fault
-          )
-        );
-        toast.success("Fault updated successfully");
-      } else {
-        toast.error("You don't have permission to edit this fault");
-      }
-    } else {
-      const outageToEdit = controlOutages.find(outage => outage.id === id);
-      if (!outageToEdit) {
-        toast.error("Outage not found");
-        return;
-      }
-      
-      // Check if user has permission to edit this outage
-      if (canEditFault(outageToEdit)) {
-        setControlOutages(prev => 
-          prev.map(outage => 
-            outage.id === id 
-              ? { ...outage, ...data, lastUpdatedAt: new Date().toISOString() }
-              : outage
-          )
-        );
-        toast.success("Outage updated successfully");
-      } else {
-        toast.error("You don't have permission to edit this outage");
-      }
-    }
-  };
-
-  const getFilteredFaults = (regionId?: string, districtId?: string) => {
-    let filteredOP5 = op5Faults;
-    let filteredControl = controlOutages;
-    
-    if (regionId) {
-      filteredOP5 = filteredOP5.filter(fault => fault.regionId === regionId);
-      filteredControl = filteredControl.filter(outage => outage.regionId === regionId);
-    }
-    
-    if (districtId) {
-      filteredOP5 = filteredOP5.filter(fault => fault.districtId === districtId);
-      filteredControl = filteredControl.filter(outage => outage.districtId === districtId);
-    }
-    
-    // If the user is a district engineer, restrict to their district
-    if (user?.role === "district_engineer" && user.district) {
-      const userDistrict = districts.find(d => d.name === user.district);
-      if (userDistrict) {
-        filteredOP5 = filteredOP5.filter(fault => fault.districtId === userDistrict.id);
-        filteredControl = filteredControl.filter(outage => outage.districtId === userDistrict.id);
-      }
-    }
-    
-    // If the user is a regional engineer, restrict to their region
-    if (user?.role === "regional_engineer" && user.region && !regionId) {
-      const userRegion = regions.find(r => r.name === user.region);
-      if (userRegion) {
-        filteredOP5 = filteredOP5.filter(fault => fault.regionId === userRegion.id);
-        filteredControl = filteredControl.filter(outage => outage.regionId === userRegion.id);
-      }
-    }
-    
-    return { op5Faults: filteredOP5, controlOutages: filteredControl };
-  };
-
-  const resolveFault = (id: string, type: "op5" | "control") => {
-    if (type === "op5") {
-      const faultToResolve = op5Faults.find(fault => fault.id === id);
-      if (!faultToResolve) {
-        toast.error("Fault not found");
-        return;
-      }
-      
-      // Check if user has permission to resolve this fault
-      if (canEditFault(faultToResolve)) {
-        setOP5Faults(prev => 
-          prev.map(fault => 
-            fault.id === id 
-              ? { ...fault, status: "resolved", restorationDate: new Date().toISOString() }
-              : fault
-          )
-        );
-        toast.success("Fault marked as resolved!");
-      } else {
-        toast.error("You don't have permission to resolve this fault");
-      }
-    } else {
-      const outageToResolve = controlOutages.find(outage => outage.id === id);
-      if (!outageToResolve) {
-        toast.error("Outage not found");
-        return;
-      }
-      
-      // Check if user has permission to resolve this outage
-      if (canEditFault(outageToResolve)) {
-        setControlOutages(prev => 
-          prev.map(outage => 
-            outage.id === id 
-              ? { ...outage, status: "resolved", restorationDate: new Date().toISOString() }
-              : outage
-          )
-        );
-        toast.success("Outage marked as resolved!");
-      } else {
-        toast.error("You don't have permission to resolve this outage");
-      }
-    }
-  };
-
-  // Add a new inspection
-  const saveInspection = (inspection: Omit<SubstationInspectionData, "id" | "createdAt" | "createdBy">) => {
-    if (!user) return;
-    
-    const newInspection: SubstationInspectionData = {
-      ...inspection,
-      id: `inspection-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      createdBy: user.id
-    };
-    
-    setSavedInspections(prev => [...prev, newInspection]);
-    toast.success("Inspection saved successfully!");
-  };
-
-  // Update an existing inspection
-  const updateInspection = (id: string, data: Partial<SubstationInspectionData>) => {
-    setSavedInspections(prev => 
-      prev.map(inspection => 
-        inspection.id === id 
-          ? { ...inspection, ...data }
-          : inspection
-      )
-    );
-    
-    toast.success("Inspection updated successfully!");
-  };
-
-  // Delete an inspection
-  const deleteInspection = (id: string) => {
-    setSavedInspections(prev => prev.filter(inspection => inspection.id !== id));
-  };
-
-  // Get a specific inspection by ID
-  const getSavedInspection = (id: string) => {
-    return savedInspections.find(inspection => inspection.id === id);
   };
   
-  // VIT inspection methods
-  const saveVITInspection = (inspection: Omit<VITInspectionData, "id" | "createdAt" | "createdBy">) => {
-    if (!user) return;
-    
-    const newInspection: VITInspectionData = {
-      ...inspection,
-      id: `vit-inspection-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-      createdBy: user.id
+  // CRUD functions for VIT assets
+  const addVITAsset = (asset: Omit<VITAsset, "id" | "createdAt" | "updatedAt">) => {
+    const now = new Date().toISOString();
+    const newAsset: VITAsset = {
+      ...asset,
+      id: uuidv4(),
+      createdAt: now,
+      updatedAt: now
     };
     
-    setSavedVITInspections(prev => [...prev, newInspection]);
-    toast.success("VIT inspection saved successfully!");
+    setVITAssets(prev => [...prev, newAsset]);
+    toast.success("VIT Asset added successfully");
   };
-
-  // Update an existing VIT inspection
-  const updateVITInspection = (id: string, data: Partial<VITInspectionData>) => {
-    setSavedVITInspections(prev => 
-      prev.map(inspection => 
-        inspection.id === id 
-          ? { ...inspection, ...data }
-          : inspection
+  
+  const updateVITAsset = (id: string, asset: Partial<VITAsset>) => {
+    setVITAssets(prev => 
+      prev.map(item => 
+        item.id === id 
+          ? { ...item, ...asset, updatedAt: new Date().toISOString() } 
+          : item
       )
     );
+    toast.success("VIT Asset updated successfully");
+  };
+  
+  const deleteVITAsset = (id: string) => {
+    // Delete the asset
+    setVITAssets(prev => prev.filter(asset => asset.id !== id));
     
-    toast.success("VIT inspection updated successfully!");
+    // Delete associated inspections
+    setVITInspections(prev => prev.filter(inspection => inspection.vitAssetId !== id));
+    toast.success("VIT Asset deleted successfully");
   };
-
-  // Delete a VIT inspection
+  
+  // CRUD functions for VIT inspections
+  const addVITInspection = (inspection: Omit<VITInspectionChecklist, "id">) => {
+    const newInspection: VITInspectionChecklist = {
+      ...inspection,
+      id: uuidv4(),
+    };
+    
+    setVITInspections(prev => [...prev, newInspection]);
+    toast.success("VIT Inspection added successfully");
+  };
+  
+  const updateVITInspection = (id: string, inspection: Partial<VITInspectionChecklist>) => {
+    setVITInspections(prev => 
+      prev.map(item => 
+        item.id === id 
+          ? { ...item, ...inspection } 
+          : item
+      )
+    );
+    toast.success("VIT Inspection updated successfully");
+  };
+  
   const deleteVITInspection = (id: string) => {
-    setSavedVITInspections(prev => prev.filter(inspection => inspection.id !== id));
-    toast.success("VIT inspection deleted successfully!");
-  };
-
-  // Get a specific VIT inspection by ID
-  const getSavedVITInspection = (id: string) => {
-    return savedVITInspections.find(inspection => inspection.id === id);
+    setVITInspections(prev => prev.filter(inspection => inspection.id !== id));
+    toast.success("VIT Inspection deleted successfully");
   };
 
   return (
@@ -693,36 +206,30 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         districts,
         op5Faults,
         controlOutages,
-        loading,
-        savedInspections,
-        savedVITInspections,
+        vitAssets,
+        vitInspections,
         addOP5Fault,
         addControlOutage,
-        updateDistrict,
-        getFilteredFaults,
         resolveFault,
         deleteFault,
         canEditFault,
-        editFault,
-        saveInspection,
-        updateInspection,
-        deleteInspection,
-        getSavedInspection,
-        saveVITInspection,
+        addVITAsset,
+        updateVITAsset,
+        deleteVITAsset,
+        addVITInspection,
         updateVITInspection,
         deleteVITInspection,
-        getSavedVITInspection
       }}
     >
       {children}
     </DataContext.Provider>
   );
-};
+}
 
-export const useData = () => {
+export function useData() {
   const context = useContext(DataContext);
   if (context === undefined) {
     throw new Error("useData must be used within a DataProvider");
   }
   return context;
-};
+}

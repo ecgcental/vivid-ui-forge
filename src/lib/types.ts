@@ -1,106 +1,161 @@
 
+import { type ClassValue } from "clsx";
+
 export type UserRole = "district_engineer" | "regional_engineer" | "global_engineer" | null;
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: UserRole;
-  region?: string;
-  district?: string;
-}
-
-export type RegionData = {
-  id: string;
-  name: string;
-  districts: DistrictData[];
+export type RegionPopulation = {
+  rural: number;
+  urban: number;
+  metro: number;
 };
 
-export type DistrictData = {
+export type Region = {
   id: string;
   name: string;
-  regionId: string; // Added regionId field
-  population: {
-    rural: number;
-    urban: number;
-    metro: number;
-  }
+  districts: District[];
+};
+
+export type District = {
+  id: string;
+  regionId: string;
+  name: string;
+  population: RegionPopulation;
 };
 
 export type FaultType = "Planned" | "Unplanned" | "Emergency" | "Load Shedding";
 
-export interface FaultBase {
+export type StatsOverviewProps = {
+  op5Faults: OP5Fault[];
+  controlOutages: ControlSystemOutage[];
+};
+
+export type FilterBarProps = {
+  setFilterRegion: (regionId: string) => void;
+  setFilterDistrict: (districtId: string) => void;
+  setFilterStatus: (status: "all" | "active" | "resolved") => void;
+  filterStatus: "all" | "active" | "resolved";
+  onRefresh: () => void;
+  isRefreshing: boolean;
+};
+
+export type OP5Fault = {
   id: string;
   regionId: string;
   districtId: string;
   occurrenceDate: string;
-  faultType: FaultType;
   restorationDate: string;
-  createdBy: string;
-  createdAt: string;
-  status: "active" | "resolved";
-}
-
-export interface OP5Fault extends FaultBase {
+  faultType: FaultType;
   faultLocation: string;
-  affectedPopulation: {
-    rural: number;
-    urban: number;
-    metro: number;
-  };
+  status: "active" | "resolved";
   outrageDuration?: number; // in minutes
-  mttr?: number; // Mean Time To Repair in minutes
+  mttr?: number; // Mean Time To Repair (in minutes)
+  affectedPopulation: RegionPopulation;
   reliabilityIndices?: {
-    saidi?: number; // System Average Interruption Duration Index
-    saifi?: number; // System Average Interruption Frequency Index
-    caidi?: number; // Customer Average Interruption Duration Index
+    saidi: number; // System Average Interruption Duration Index
+    saifi: number; // System Average Interruption Frequency Index
+    caidi: number; // Customer Average Interruption Duration Index
   };
-}
+};
 
-export interface ControlSystemOutage extends FaultBase {
-  customersAffected: {
-    rural: number;
-    urban: number;
-    metro: number;
-  };
-  reason: string;
-  controlPanelIndications: string;
-  areaAffected: string;
+export type ControlSystemOutage = {
+  id: string;
+  regionId: string;
+  districtId: string;
+  occurrenceDate: string;
+  restorationDate: string;
+  faultType: FaultType;
+  status: "active" | "resolved";
+  reason?: string;
+  controlPanelIndications?: string;
+  areaAffected?: string;
   loadMW: number;
-  unservedEnergyMWh?: number;
+  unservedEnergyMWh: number;
+  customersAffected: RegionPopulation;
+};
+
+// VIT Asset Types
+export type VoltageLevel = "11KV" | "33KV";
+
+export type VITStatus = "Operational" | "Under Maintenance" | "Faulty" | "Decommissioned";
+
+export type YesNoOption = "Yes" | "No";
+
+export type GoodBadOption = "Good" | "Bad";
+
+export type VITAsset = {
+  id: string;
+  regionId: string;
+  districtId: string;
+  voltageLevel: VoltageLevel;
+  typeOfUnit: string;
+  serialNumber: string;
+  location: string;
+  gpsCoordinates: string;
+  status: VITStatus;
+  protection: string;
+  photoUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type VITInspectionChecklist = {
+  id: string;
+  vitAssetId: string;
+  inspectionDate: string;
+  inspectedBy: string;
+  rodentTermiteEncroachment: YesNoOption;
+  cleanDustFree: YesNoOption;
+  protectionButtonEnabled: YesNoOption;
+  recloserButtonEnabled: YesNoOption;
+  groundEarthButtonEnabled: YesNoOption;
+  acPowerOn: YesNoOption;
+  batteryPowerLow: YesNoOption;
+  handleLockOn: YesNoOption;
+  remoteButtonEnabled: YesNoOption;
+  gasLevelLow: YesNoOption;
+  earthingArrangementAdequate: YesNoOption;
+  noFusesBlown: YesNoOption;
+  noDamageToBushings: YesNoOption;
+  noDamageToHVConnections: YesNoOption;
+  insulatorsClean: YesNoOption;
+  paintworkAdequate: YesNoOption;
+  ptFuseLinkIntact: YesNoOption;
+  noCorrosion: YesNoOption;
+  silicaGelCondition: GoodBadOption;
+  correctLabelling: YesNoOption;
+  remarks: string;
+};
+
+export interface AuthContextType {
+  user: {
+    name: string;
+    email: string;
+    role: UserRole;
+    region?: string;
+    district?: string;
+  } | null;
+  isAuthenticated: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, name: string, role: UserRole, region?: string, district?: string) => Promise<void>;
+  logout: () => void;
 }
 
-// Add StatsOverviewProps interface to fix the DashboardPage typing issue
-export interface StatsOverviewProps {
+export interface DataContextType {
+  regions: Region[];
+  districts: District[];
   op5Faults: OP5Fault[];
   controlOutages: ControlSystemOutage[];
-}
-
-// Add FilterBarProps interface to fix the FilterBar typing issue
-export interface FilterBarProps {
-  setFilterRegion: React.Dispatch<React.SetStateAction<string | undefined>>;
-  setFilterDistrict: React.Dispatch<React.SetStateAction<string | undefined>>;
-  setFilterStatus: React.Dispatch<React.SetStateAction<"active" | "resolved" | "all">>;
-  filterStatus: "active" | "resolved" | "all";
-  onRefresh: () => void;
-  isRefreshing: boolean;
-}
-
-// Add DateRange type for the calendar component
-export interface DateRange {
-  from: Date | undefined;
-  to: Date | undefined;
-}
-
-// Add AnalyticsChartProps interface for the analytics charts component
-export interface AnalyticsChartProps {
-  filteredFaults: (OP5Fault | ControlSystemOutage)[];
-  timeRange?: string;
-  chartType?: 'bar' | 'line' | 'pie';
-}
-
-// Add new interface for OP5Form and ControlSystemOutageForm props
-export interface FaultFormProps {
-  defaultRegionId?: string;
-  defaultDistrictId?: string;
+  vitAssets: VITAsset[];
+  vitInspections: VITInspectionChecklist[];
+  addOP5Fault: (fault: Omit<OP5Fault, "id" | "status">) => void;
+  addControlOutage: (outage: Omit<ControlSystemOutage, "id" | "status">) => void;
+  resolveFault: (id: string, type: "op5" | "control") => void;
+  deleteFault: (id: string, type: "op5" | "control") => void;
+  canEditFault: (fault: OP5Fault | ControlSystemOutage) => boolean;
+  addVITAsset: (asset: Omit<VITAsset, "id" | "createdAt" | "updatedAt">) => void;
+  updateVITAsset: (id: string, asset: Partial<VITAsset>) => void;
+  deleteVITAsset: (id: string) => void;
+  addVITInspection: (inspection: Omit<VITInspectionChecklist, "id">) => void;
+  updateVITInspection: (id: string, inspection: Partial<VITInspectionChecklist>) => void;
+  deleteVITInspection: (id: string) => void;
 }
