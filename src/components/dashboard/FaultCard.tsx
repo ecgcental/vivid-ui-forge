@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { OP5Fault, ControlSystemOutage } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -91,6 +90,8 @@ export function FaultCard({ fault, type }: FaultCardProps) {
 
   const canEdit = canEditFault(fault);
   
+  const affectedPopulation = op5Fault?.affectedPopulation || { rural: 0, urban: 0, metro: 0 };
+  
   return (
     <Card className="h-full flex flex-col">
       <CardHeader className="pb-2">
@@ -141,10 +142,7 @@ export function FaultCard({ fault, type }: FaultCardProps) {
           <div className="flex items-center gap-1 text-sm">
             <Users size={14} className="text-muted-foreground" />
             <span className="font-medium">Affected:</span>{" "}
-            {isOP5 
-              ? op5Fault?.affectedPopulation.rural + op5Fault?.affectedPopulation.urban + op5Fault?.affectedPopulation.metro 
-              : controlOutage?.customersAffected.rural + controlOutage?.customersAffected.urban + controlOutage?.customersAffected.metro
-            } customers
+            {affectedPopulation.rural + affectedPopulation.urban + affectedPopulation.metro} customers
           </div>
           
           <Accordion type="single" collapsible className="w-full">
