@@ -65,6 +65,7 @@ export default function VITInspectionManagementPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("assets");
   const [isAssetFormOpen, setIsAssetFormOpen] = useState(false);
+  const [isInspectionFormOpen, setIsInspectionFormOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<VITAsset | null>(null);
   const [selectedAssetId, setSelectedAssetId] = useState<string>("");
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
@@ -93,6 +94,7 @@ export default function VITInspectionManagementPage() {
 
   const handleCloseInspectionForm = () => {
     setIsInspectionFormOpen(false);
+    setIsEditInspectionOpen(false);
     setSelectedAssetId("");
     setSelectedInspection(null);
   };
