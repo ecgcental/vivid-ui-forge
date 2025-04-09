@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -52,6 +51,7 @@ const App = () => (
               <Route path="/asset-management/vit-inspection-management" element={<VITInspectionManagementPage />} />
               <Route path="/asset-management/vit-inspection-details/:id" element={<VITInspectionDetailsPage />} />
               <Route path="/asset-management/edit-vit-inspection/:id" element={<EditVITInspectionPage />} />
+              <Route path="/asset-management/vit-inspection-form/:id" element={<VITInspectionPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
