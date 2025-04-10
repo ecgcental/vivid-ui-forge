@@ -93,481 +93,237 @@ export const exportInspectionToCsv = (inspection: VITInspectionChecklist, asset:
  * Generate comprehensive PDF report for VIT inspection
  */
 export const exportInspectionToPDF = async (inspection: VITInspectionChecklist, asset: VITAsset | null, getRegionName: (id: string) => string, getDistrictName: (id: string) => string) => {
-  if (!asset) return;
-
-  const region = getRegionName(asset.regionId);
-  const district = getDistrictName(asset.districtId);
-  
-  // Create PDF document
-  const pdfDoc = await PDFDocument.create();
-  
-  // Add title and logo
-  const titlePage = pdfDoc.addPage([600, 400]);
-  const { width, height } = titlePage.getSize();
-  const fontSize = 30;
-
-  titlePage.drawText('VIT Inspection Report', {
-    x: 50,
-    y: height - 4 * fontSize,
-    size: fontSize,
-    color: rgb(0, 0.53, 0.71),
-  });
-  
-  // Add date and inspector info
-  const datePage = pdfDoc.addPage([600, 400]);
-  datePage.drawText(`Date: ${formatDate(inspection.inspectionDate)}`, {
-    x: 50,
-    y: height - 3 * fontSize,
-    size: fontSize,
-    color: rgb(0, 0, 0),
-  });
-
-  const inspectorPage = pdfDoc.addPage([600, 400]);
-  inspectorPage.drawText(`Inspector: ${inspection.inspectedBy}`, {
-    x: 50,
-    y: height - 2 * fontSize,
-    size: fontSize,
-    color: rgb(0, 0, 0),
-  });
-  
-  // Add asset information
-  const assetInfoPage = pdfDoc.addPage([600, 400]);
-  assetInfoPage.drawText("Asset Information", {
-    x: 50,
-    y: 300,
-    size: 20,
-    color: rgb(0, 0.2, 0.4),
-  });
-
-  assetInfoPage.drawText(`Serial Number: ${asset.serialNumber}`, {
-    x: 50,
-    y: 250,
-    size: 14,
-    color: rgb(0, 0, 0),
-  });
-  assetInfoPage.drawText(`Type of Unit: ${asset.typeOfUnit}`, {
-    x: 50,
-    y: 230,
-    size: 14,
-    color: rgb(0, 0, 0),
-  });
-  assetInfoPage.drawText(`Voltage Level: ${asset.voltageLevel}`, {
-    x: 50,
-    y: 210,
-    size: 14,
-    color: rgb(0, 0, 0),
-  });
-  assetInfoPage.drawText(`Region: ${region}`, {
-    x: 300,
-    y: 250,
-    size: 14,
-    color: rgb(0, 0, 0),
-  });
-  assetInfoPage.drawText(`District: ${district}`, {
-    x: 300,
-    y: 230,
-    size: 14,
-    color: rgb(0, 0, 0),
-  });
-  assetInfoPage.drawText(`Location: ${asset.location}`, {
-    x: 300,
-    y: 210,
-    size: 14,
-    color: rgb(0, 0, 0),
-  });
-  assetInfoPage.drawText(`Status: ${asset.status}`, {
-    x: 300,
-    y: 190,
-    size: 14,
-    color: rgb(0, 0, 0),
-  });
-  
-  // Add inspection checklist - General Condition
-  const generalConditionPage = pdfDoc.addPage([600, 400]);
-  generalConditionPage.drawText("General Condition", {
-    x: 50,
-    y: 300,
-    size: 20,
-    color: rgb(0, 0.2, 0.4),
-  });
-
-  // Draw table header
-  generalConditionPage.drawText("Item", {
-    x: 50,
-    y: 250,
-    size: 12,
-    color: rgb(1, 1, 1),
-  });
-  
-  generalConditionPage.drawText("Status", {
-    x: 300,
-    y: 250,
-    size: 12,
-    color: rgb(1, 1, 1),
-  });
-  
-  // Draw header background
-  generalConditionPage.drawRectangle({
-    x: 50,
-    y: 250,
-    width: 500,
-    height: 20,
-    color: rgb(0, 0.2, 0.4),
-  });
-
-  // Draw table rows
-  let yPosition = 230;
-  const generalConditionItems = [
-    ["Rodent/Termite Encroachment", inspection.rodentTermiteEncroachment],
-    ["Clean and Dust Free", inspection.cleanDustFree],
-    ["Silica Gel Condition", inspection.silicaGelCondition],
-    ["No Corrosion", inspection.noCorrosion],
-    ["Paintwork Adequate", inspection.paintworkAdequate]
-  ];
-  
-  generalConditionItems.forEach((item, index) => {
-    // Draw row background (alternating colors)
-    if (index % 2 === 0) {
-      generalConditionPage.drawRectangle({
-        x: 50,
-        y: yPosition - 15,
-        width: 500,
-        height: 20,
-        color: rgb(0.95, 0.95, 0.95),
-      });
+  try {
+    if (!asset) {
+      throw new Error("Asset information is required to generate the report");
     }
-    
-    // Draw item name
-    generalConditionPage.drawText(item[0], {
-      x: 50,
-      y: yPosition,
-      size: 10,
-      color: rgb(0, 0, 0),
-    });
-    
-    // Draw status
-    generalConditionPage.drawText(item[1], {
-      x: 300,
-      y: yPosition,
-      size: 10,
-      color: rgb(0, 0, 0),
-    });
-    
-    yPosition -= 20;
-  });
-  
-  // Add inspection checklist - Operational Status
-  const operationalPage = pdfDoc.addPage([600, 400]);
-  operationalPage.drawText("Operational Status", {
-    x: 50,
-    y: 300,
-    size: 20,
-    color: rgb(0, 0.2, 0.4),
-  });
 
-  // Draw table header
-  operationalPage.drawText("Item", {
-    x: 50,
-    y: 250,
-    size: 12,
-    color: rgb(1, 1, 1),
-  });
-  
-  operationalPage.drawText("Status", {
-    x: 300,
-    y: 250,
-    size: 12,
-    color: rgb(1, 1, 1),
-  });
-  
-  // Draw header background
-  operationalPage.drawRectangle({
-    x: 50,
-    y: 250,
-    width: 500,
-    height: 20,
-    color: rgb(0, 0.2, 0.4),
-  });
-
-  // Draw table rows
-  yPosition = 230;
-  const operationalItems = [
-    ["Protection Button Enabled", inspection.protectionButtonEnabled],
-    ["Recloser Button Enabled", inspection.recloserButtonEnabled],
-    ["AC Power On", inspection.acPowerOn],
-    ["Battery Power Low", inspection.batteryPowerLow],
-    ["Remote Button Enabled", inspection.remoteButtonEnabled]
-  ];
-  
-  operationalItems.forEach((item, index) => {
-    // Draw row background (alternating colors)
-    if (index % 2 === 0) {
-      operationalPage.drawRectangle({
-        x: 50,
-        y: yPosition - 15,
-        width: 500,
-        height: 20,
-        color: rgb(0.95, 0.95, 0.95),
-      });
-    }
+    const region = getRegionName(asset.regionId);
+    const district = getDistrictName(asset.districtId);
     
-    // Draw item name
-    operationalPage.drawText(item[0], {
-      x: 50,
-      y: yPosition,
-      size: 10,
-      color: rgb(0, 0, 0),
-    });
-    
-    // Draw status
-    operationalPage.drawText(item[1], {
-      x: 300,
-      y: yPosition,
-      size: 10,
-      color: rgb(0, 0, 0),
-    });
-    
-    yPosition -= 20;
-  });
-  
-  // Add inspection checklist - Safety & Protection
-  const safetyPage = pdfDoc.addPage([600, 400]);
-  safetyPage.drawText("Safety & Protection", {
-    x: 50,
-    y: 300,
-    size: 20,
-    color: rgb(0, 0.2, 0.4),
-  });
-
-  // Draw table header
-  safetyPage.drawText("Item", {
-    x: 50,
-    y: 250,
-    size: 12,
-    color: rgb(1, 1, 1),
-  });
-  
-  safetyPage.drawText("Status", {
-    x: 300,
-    y: 250,
-    size: 12,
-    color: rgb(1, 1, 1),
-  });
-  
-  // Draw header background
-  safetyPage.drawRectangle({
-    x: 50,
-    y: 250,
-    width: 500,
-    height: 20,
-    color: rgb(0, 0.2, 0.4),
-  });
-
-  // Draw table rows
-  yPosition = 230;
-  const safetyItems = [
-    ["Ground/Earth Button Enabled", inspection.groundEarthButtonEnabled],
-    ["Handle Lock On", inspection.handleLockOn],
-    ["Earthing Arrangement Adequate", inspection.earthingArrangementAdequate],
-    ["Gas Level Low", inspection.gasLevelLow],
-    ["Correct Labelling", inspection.correctLabelling]
-  ];
-  
-  safetyItems.forEach((item, index) => {
-    // Draw row background (alternating colors)
-    if (index % 2 === 0) {
-      safetyPage.drawRectangle({
-        x: 50,
-        y: yPosition - 15,
-        width: 500,
-        height: 20,
-        color: rgb(0.95, 0.95, 0.95),
-      });
-    }
-    
-    // Draw item name
-    safetyPage.drawText(item[0], {
-      x: 50,
-      y: yPosition,
-      size: 10,
-      color: rgb(0, 0, 0),
-    });
-    
-    // Draw status
-    safetyPage.drawText(item[1], {
-      x: 300,
-      y: yPosition,
-      size: 10,
-      color: rgb(0, 0, 0),
-    });
-    
-    yPosition -= 20;
-  });
-  
-  // Component Condition
-  const componentPage = pdfDoc.addPage([600, 400]);
-  componentPage.drawText("Component Condition", {
-    x: 50,
-    y: 300,
-    size: 20,
-    color: rgb(0, 0.2, 0.4),
-  });
-
-  // Draw table header
-  componentPage.drawText("Item", {
-    x: 50,
-    y: 250,
-    size: 12,
-    color: rgb(1, 1, 1),
-  });
-  
-  componentPage.drawText("Status", {
-    x: 300,
-    y: 250,
-    size: 12,
-    color: rgb(1, 1, 1),
-  });
-  
-  // Draw header background
-  componentPage.drawRectangle({
-    x: 50,
-    y: 250,
-    width: 500,
-    height: 20,
-    color: rgb(0, 0.2, 0.4),
-  });
-
-  // Draw table rows
-  yPosition = 230;
-  const componentItems = [
-    ["No Fuses Blown", inspection.noFusesBlown],
-    ["No Damage to Bushings", inspection.noDamageToBushings],
-    ["No Damage to HV Connections", inspection.noDamageToHVConnections],
-    ["Insulators Clean", inspection.insulatorsClean],
-    ["PT Fuse Link Intact", inspection.ptFuseLinkIntact]
-  ];
-  
-  componentItems.forEach((item, index) => {
-    // Draw row background (alternating colors)
-    if (index % 2 === 0) {
-      componentPage.drawRectangle({
-        x: 50,
-        y: yPosition - 15,
-        width: 500,
-        height: 20,
-        color: rgb(0.95, 0.95, 0.95),
-      });
-    }
-    
-    // Draw item name
-    componentPage.drawText(item[0], {
-      x: 50,
-      y: yPosition,
-      size: 10,
-      color: rgb(0, 0, 0),
-    });
-    
-    // Draw status
-    componentPage.drawText(item[1], {
-      x: 300,
-      y: yPosition,
-      size: 10,
-      color: rgb(0, 0, 0),
-    });
-    
-    yPosition -= 20;
-  });
-  
-  // Remarks
-  const remarksPage = pdfDoc.addPage([600, 400]);
-  remarksPage.drawText("Remarks", {
-    x: 50,
-    y: 300,
-    size: 20,
-    color: rgb(0, 0.2, 0.4),
-  });
-
-  if (inspection.remarks) {
-    remarksPage.drawText(inspection.remarks, {
-      x: 50,
-      y: 250,
-      size: 14,
-      color: rgb(0, 0, 0),
-      maxWidth: 500,
-    });
-  }
-  
-  // Summary of Issues
-  const issuesCount = Object.entries(inspection).reduce((count, [key, value]) => {
-    if (key === 'rodentTermiteEncroachment' && value === 'Yes') return count + 1;
-    if (key === 'batteryPowerLow' && value === 'Yes') return count + 1;
-    if (key === 'gasLevelLow' && value === 'Yes') return count + 1;
-    if (key === 'silicaGelCondition' && value === 'Bad') return count + 1;
-    
-    if (
-      ['cleanDustFree', 'protectionButtonEnabled', 'recloserButtonEnabled', 
-       'groundEarthButtonEnabled', 'acPowerOn', 'handleLockOn', 'remoteButtonEnabled', 
-       'earthingArrangementAdequate', 'noFusesBlown', 'noDamageToBushings', 
-       'noDamageToHVConnections', 'insulatorsClean', 'paintworkAdequate', 
-       'ptFuseLinkIntact', 'noCorrosion', 'correctLabelling'].includes(key) && 
-      value === 'No'
-    ) {
-      return count + 1;
-    }
-    
-    return count;
-  }, 0);
-  
-  // Summary section
-  const summaryPage = pdfDoc.addPage([600, 400]);
-  summaryPage.drawText("Inspection Summary", {
-    x: 50,
-    y: 300,
-    size: 20,
-    color: rgb(0, 0.2, 0.4),
-  });
-
-  summaryPage.drawText(`Total issues found: ${issuesCount}`, {
-    x: 50,
-    y: 250,
-    size: 14,
-    color: rgb(0, 0, 0),
-  });
-  summaryPage.drawText(`Overall assessment: ${issuesCount === 0 ? 'No issues found' : issuesCount < 3 ? 'Minor issues found' : issuesCount < 7 ? 'Moderate issues found' : 'Major issues found'}`, {
-    x: 50,
-    y: 230,
-    size: 14,
-    color: rgb(0, 0, 0),
-  });
-  
-  // Add timestamp and page numbers
-  const totalPages = pdfDoc.getPages().length;
-  for (let i = 0; i < totalPages; i++) {
-    const page = pdfDoc.getPage(i);
+    // Create PDF document with A4 size
+    const pdfDoc = await PDFDocument.create();
+    const page = pdfDoc.addPage([595.28, 841.89]); // A4 size in points
     const { width, height } = page.getSize();
-    page.drawText(`Generated: ${new Date().toLocaleString()}`, {
+
+    // Add header with company logo and title
+    const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    page.drawText('VIT INSPECTION REPORT', {
       x: 50,
-      y: height - 10,
-      size: 8,
-      color: rgb(0.5, 0.5, 0.5),
+      y: height - 50,
+      size: 24,
+      color: rgb(0, 0.2, 0.4),
+      font: boldFont,
     });
-    page.drawText(`Page ${i + 1} of ${totalPages}`, {
-      x: width - 100,
-      y: height - 10,
-      size: 8,
-      color: rgb(0.5, 0.5, 0.5),
+
+    // Add report metadata
+    const inspectionDate = new Date(inspection.inspectionDate);
+    page.drawText(`Report Date: ${format(inspectionDate, 'dd/MM/yyyy')}`, {
+      x: 50,
+      y: height - 80,
+      size: 12,
+      color: rgb(0.2, 0.2, 0.2),
     });
+
+    page.drawText(`Inspector: ${inspection.inspectedBy}`, {
+      x: 50,
+      y: height - 100,
+      size: 12,
+      color: rgb(0.2, 0.2, 0.2),
+    });
+
+    // Add asset information section
+    page.drawText('Asset Information', {
+      x: 50,
+      y: height - 150,
+      size: 16,
+      color: rgb(0, 0.2, 0.4),
+      font: boldFont,
+    });
+
+    // Draw asset info table
+    const assetInfo = [
+      ['Serial Number', asset.serialNumber],
+      ['Type of Unit', asset.typeOfUnit],
+      ['Voltage Level', asset.voltageLevel],
+      ['Region', region],
+      ['District', district],
+      ['Location', asset.location],
+      ['Status', asset.status],
+    ];
+
+    let y = height - 180;
+    assetInfo.forEach(([label, value]) => {
+      page.drawText(`${label}:`, {
+        x: 50,
+        y,
+        size: 12,
+        color: rgb(0.2, 0.2, 0.2),
+      });
+      page.drawText(value, {
+        x: 200,
+        y,
+        size: 12,
+        color: rgb(0, 0, 0),
+      });
+      y -= 20;
+    });
+
+    // Add inspection summary
+    page.drawText('Inspection Summary', {
+      x: 50,
+      y: y - 30,
+      size: 16,
+      color: rgb(0, 0.2, 0.4),
+      font: boldFont,
+    });
+
+    // Calculate summary statistics
+    const inspectionItems = [
+      { name: 'Rodent/Termite Encroachment', status: inspection.rodentTermiteEncroachment },
+      { name: 'Clean and Dust Free', status: inspection.cleanDustFree },
+      { name: 'Protection Button Enabled', status: inspection.protectionButtonEnabled },
+      { name: 'Recloser Button Enabled', status: inspection.recloserButtonEnabled },
+      { name: 'Ground/Earth Button Enabled', status: inspection.groundEarthButtonEnabled },
+      { name: 'AC Power On', status: inspection.acPowerOn },
+      { name: 'Battery Power Low', status: inspection.batteryPowerLow },
+      { name: 'Handle Lock On', status: inspection.handleLockOn },
+      { name: 'Remote Button Enabled', status: inspection.remoteButtonEnabled },
+      { name: 'Gas Level Low', status: inspection.gasLevelLow },
+      { name: 'Earthing Arrangement Adequate', status: inspection.earthingArrangementAdequate },
+      { name: 'No Fuses Blown', status: inspection.noFusesBlown },
+      { name: 'No Damage to Bushings', status: inspection.noDamageToBushings },
+      { name: 'No Damage to HV Connections', status: inspection.noDamageToHVConnections },
+      { name: 'Insulators Clean', status: inspection.insulatorsClean },
+      { name: 'Paintwork Adequate', status: inspection.paintworkAdequate },
+      { name: 'PT Fuse Link Intact', status: inspection.ptFuseLinkIntact },
+      { name: 'No Corrosion', status: inspection.noCorrosion },
+      { name: 'Silica Gel Condition', status: inspection.silicaGelCondition },
+      { name: 'Correct Labelling', status: inspection.correctLabelling },
+    ];
+
+    const totalItems = inspectionItems.length;
+    const goodItems = inspectionItems.filter(item => item.status === 'Yes' || item.status === 'Good').length;
+    const badItems = totalItems - goodItems;
+    const goodPercentage = ((goodItems / totalItems) * 100).toFixed(1);
+
+    const summaryInfo = [
+      ['Total Items Inspected', totalItems.toString()],
+      ['Items in Good Condition', `${goodItems} (${goodPercentage}%)`],
+      ['Items Requiring Attention', badItems.toString()],
+    ];
+
+    y -= 60;
+    summaryInfo.forEach(([label, value]) => {
+      page.drawText(`${label}:`, {
+        x: 50,
+        y,
+        size: 12,
+        color: rgb(0.2, 0.2, 0.2),
+      });
+      page.drawText(value, {
+        x: 200,
+        y,
+        size: 12,
+        color: rgb(0, 0, 0),
+      });
+      y -= 20;
+    });
+
+    // Add detailed inspection results
+    const resultsPage = pdfDoc.addPage([595.28, 841.89]);
+    resultsPage.drawText('Detailed Inspection Results', {
+      x: 50,
+      y: height - 50,
+      size: 16,
+      color: rgb(0, 0.2, 0.4),
+      font: boldFont,
+    });
+
+    // Draw inspection items table
+    y = height - 80;
+    inspectionItems.forEach((item, index) => {
+      if (y < 100) {
+        // Add new page if running out of space
+        const newPage = pdfDoc.addPage([595.28, 841.89]);
+        y = height - 50;
+        resultsPage.drawText('Detailed Inspection Results (Continued)', {
+          x: 50,
+          y,
+          size: 16,
+          color: rgb(0, 0.2, 0.4),
+          font: boldFont,
+        });
+        y -= 30;
+      }
+
+      // Draw item details
+      resultsPage.drawText(`${index + 1}. ${item.name}`, {
+        x: 50,
+        y,
+        size: 12,
+        color: rgb(0, 0, 0),
+      });
+
+      const statusText = item.status === 'Yes' || item.status === 'Good' ? '[OK] Good' : '[X] Requires Attention';
+      const statusColor = item.status === 'Yes' || item.status === 'Good' ? rgb(0, 0.5, 0) : rgb(0.8, 0, 0);
+
+      resultsPage.drawText(`Status: ${statusText}`, {
+        x: 300,
+        y,
+        size: 12,
+        color: statusColor,
+      });
+
+      y -= 30;
+    });
+
+    // Add remarks if any
+    if (inspection.remarks) {
+      const remarksPage = pdfDoc.addPage([595.28, 841.89]);
+      remarksPage.drawText('Additional Remarks', {
+        x: 50,
+        y: height - 50,
+        size: 16,
+        color: rgb(0, 0.2, 0.4),
+        font: boldFont,
+      });
+
+      remarksPage.drawText(inspection.remarks, {
+        x: 50,
+        y: height - 100,
+        size: 12,
+        color: rgb(0.3, 0.3, 0.3),
+        maxWidth: width - 100,
+      });
+    }
+
+    // Add footer with page numbers
+    const pages = pdfDoc.getPages();
+    pages.forEach((page, index) => {
+      page.drawText(`Page ${index + 1} of ${pages.length}`, {
+        x: width - 100,
+        y: 30,
+        size: 10,
+        color: rgb(0.5, 0.5, 0.5),
+      });
+    });
+
+    // Save the PDF
+    const pdfBytes = await pdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `vit-inspection-${asset.serialNumber}-${format(inspectionDate, 'yyyy-MM-dd')}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error("Error generating PDF:", error);
+    throw error;
   }
-  
-  // Save PDF
-  const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `vit-inspection-${asset.serialNumber}-${inspection.inspectionDate.split('T')[0]}.pdf`;
-  link.click();
-  return link.download;
 };
 
 /**

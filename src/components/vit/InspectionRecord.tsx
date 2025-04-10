@@ -1,4 +1,3 @@
-
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Edit, Download, FileText, MoreHorizontal, Trash2 } from "lucide-react";
@@ -30,10 +29,13 @@ export const InspectionRecord = ({
     exportInspectionToCsv(inspection, asset, getRegionName, getDistrictName);
   };
   
-  const handleExportToPdf = () => {
-    const filename = exportInspectionToPDF(inspection, asset, getRegionName, getDistrictName);
-    if (filename) {
+  const handleExportToPdf = async () => {
+    try {
+      await exportInspectionToPDF(inspection, asset, getRegionName, getDistrictName);
       toast.success("Comprehensive report generated successfully");
+    } catch (error) {
+      toast.error("Failed to generate PDF report");
+      console.error("Error generating PDF:", error);
     }
   };
   
