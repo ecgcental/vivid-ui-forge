@@ -29,6 +29,44 @@ export default function InspectionDetailsPage() {
     }
   }, [id, getSavedInspection, navigate]);
 
+  const getItemsByCategory = (categoryName: string) => {
+    if (!inspection?.items) return [];
+    return inspection.items.filter(item => item.category.toLowerCase() === categoryName.toLowerCase());
+  };
+
+  const getStatusSummary = () => {
+    if (!inspection?.items) return { good: 0, requiresAttention: 0 };
+    
+    return inspection.items.reduce((acc: { good: number; requiresAttention: number }, item) => {
+      if (item.status === 'good') {
+        acc.good++;
+      } else {
+        acc.requiresAttention++;
+      }
+      return acc;
+    }, { good: 0, requiresAttention: 0 });
+  };
+
+  // Debug function to log inspection data
+  useEffect(() => {
+    if (inspection) {
+      console.log('Inspection Data:', inspection);
+      console.log('Items:', inspection.items);
+      if (inspection.items) {
+        const categories = [...new Set(inspection.items.map(item => item.category))];
+        categories.forEach(category => {
+          const categoryItems = inspection.items.filter(item => item.category === category);
+          console.log(`Category: ${category}`, {
+            items: categoryItems,
+            count: categoryItems.length,
+            goodItems: categoryItems.filter(item => item.status === "good").length,
+            badItems: categoryItems.filter(item => item.status === "bad").length
+          });
+        });
+      }
+    }
+  }, [inspection]);
+
   if (!inspection) {
     return (
       <Layout>
@@ -42,11 +80,6 @@ export default function InspectionDetailsPage() {
       </Layout>
     );
   }
-
-  const getItemsByCategory = (categoryName: string) => {
-    const category = inspection.items.find(cat => cat.category === categoryName);
-    return category ? category.items : [];
-  };
 
   return (
     <Layout>
@@ -117,13 +150,25 @@ export default function InspectionDetailsPage() {
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Status Summary</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    {inspection.items.flatMap(category => category.items).filter(item => item.status === "good").length} good
-                  </span>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                    {inspection.items.flatMap(category => category.items).filter(item => item.status === "bad").length} bad
-                  </span>
+                <div className="flex items-center gap-4 mt-2">
+                  <div className="flex flex-col items-center p-3 bg-green-50 rounded-lg border border-green-100">
+                    <span className="text-2xl font-bold text-green-700">
+                      {inspection.items?.filter(item => item.status === "good").length || 0}
+                    </span>
+                    <span className="text-sm text-green-600">Good Items</span>
+                  </div>
+                  <div className="flex flex-col items-center p-3 bg-red-50 rounded-lg border border-red-100">
+                    <span className="text-2xl font-bold text-red-700">
+                      {inspection.items?.filter(item => item.status === "bad").length || 0}
+                    </span>
+                    <span className="text-sm text-red-600">Items Requiring Attention</span>
+                  </div>
+                  <div className="flex flex-col items-center p-3 bg-blue-50 rounded-lg border border-blue-100">
+                    <span className="text-2xl font-bold text-blue-700">
+                      {inspection.items?.length || 0}
+                    </span>
+                    <span className="text-sm text-blue-600">Total Items</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -148,23 +193,23 @@ export default function InspectionDetailsPage() {
 
               <TabsContent value="general">
                 <div className="space-y-4">
-                  {getItemsByCategory("general building").map((item) => (
-                    <div key={item.id} className="border rounded-lg p-4">
+                  {getItemsByCategory("General Building").map((item) => (
+                    <div key={item.id} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
                       <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-medium">{item.name}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {item.remarks || "No remarks"}
+                        <div className="flex-1">
+                          <h3 className="font-medium text-lg mb-2">{item.name}</h3>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                              item.status === "good" 
+                                ? "bg-green-100 text-green-800" 
+                                : "bg-red-100 text-red-800"
+                            }`}>
+                              {item.status === "good" ? "Good" : "Requires Attention"}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground bg-gray-50 p-3 rounded-md">
+                            {item.remarks || "No remarks provided"}
                           </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            item.status === "good" 
-                              ? "bg-green-100 text-green-800" 
-                              : "bg-red-100 text-red-800"
-                          }`}>
-                            {item.status === "good" ? "Good" : "Bad"}
-                          </span>
                         </div>
                       </div>
                     </div>
@@ -174,23 +219,23 @@ export default function InspectionDetailsPage() {
 
               <TabsContent value="control">
                 <div className="space-y-4">
-                  {getItemsByCategory("control equipment").map((item) => (
-                    <div key={item.id} className="border rounded-lg p-4">
+                  {getItemsByCategory("Control Equipment").map((item) => (
+                    <div key={item.id} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
                       <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-medium">{item.name}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {item.remarks || "No remarks"}
+                        <div className="flex-1">
+                          <h3 className="font-medium text-lg mb-2">{item.name}</h3>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                              item.status === "good" 
+                                ? "bg-green-100 text-green-800" 
+                                : "bg-red-100 text-red-800"
+                            }`}>
+                              {item.status === "good" ? "Good" : "Requires Attention"}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground bg-gray-50 p-3 rounded-md">
+                            {item.remarks || "No remarks provided"}
                           </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            item.status === "good" 
-                              ? "bg-green-100 text-green-800" 
-                              : "bg-red-100 text-red-800"
-                          }`}>
-                            {item.status === "good" ? "Good" : "Bad"}
-                          </span>
                         </div>
                       </div>
                     </div>
@@ -200,23 +245,23 @@ export default function InspectionDetailsPage() {
 
               <TabsContent value="transformer">
                 <div className="space-y-4">
-                  {getItemsByCategory("power transformer").map((item) => (
-                    <div key={item.id} className="border rounded-lg p-4">
+                  {getItemsByCategory("Power Transformer").map((item) => (
+                    <div key={item.id} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
                       <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-medium">{item.name}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {item.remarks || "No remarks"}
+                        <div className="flex-1">
+                          <h3 className="font-medium text-lg mb-2">{item.name}</h3>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                              item.status === "good" 
+                                ? "bg-green-100 text-green-800" 
+                                : "bg-red-100 text-red-800"
+                            }`}>
+                              {item.status === "good" ? "Good" : "Requires Attention"}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground bg-gray-50 p-3 rounded-md">
+                            {item.remarks || "No remarks provided"}
                           </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            item.status === "good" 
-                              ? "bg-green-100 text-green-800" 
-                              : "bg-red-100 text-red-800"
-                          }`}>
-                            {item.status === "good" ? "Good" : "Bad"}
-                          </span>
                         </div>
                       </div>
                     </div>
@@ -226,23 +271,23 @@ export default function InspectionDetailsPage() {
 
               <TabsContent value="outdoor">
                 <div className="space-y-4">
-                  {getItemsByCategory("outdoor equipment").map((item) => (
-                    <div key={item.id} className="border rounded-lg p-4">
+                  {getItemsByCategory("Outdoor Equipment").map((item) => (
+                    <div key={item.id} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
                       <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-medium">{item.name}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {item.remarks || "No remarks"}
+                        <div className="flex-1">
+                          <h3 className="font-medium text-lg mb-2">{item.name}</h3>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                              item.status === "good" 
+                                ? "bg-green-100 text-green-800" 
+                                : "bg-red-100 text-red-800"
+                            }`}>
+                              {item.status === "good" ? "Good" : "Requires Attention"}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground bg-gray-50 p-3 rounded-md">
+                            {item.remarks || "No remarks provided"}
                           </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            item.status === "good" 
-                              ? "bg-green-100 text-green-800" 
-                              : "bg-red-100 text-red-800"
-                          }`}>
-                            {item.status === "good" ? "Good" : "Bad"}
-                          </span>
                         </div>
                       </div>
                     </div>

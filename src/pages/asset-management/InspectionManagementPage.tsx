@@ -102,9 +102,9 @@ export default function InspectionManagementPage() {
             <TableBody>
               {filteredInspections.length > 0 ? (
                 filteredInspections.map((inspection) => {
-                  const allItems = inspection.items.flatMap(category => category.items || []);
-                  const goodItems = allItems.filter(item => item?.status === "good").length;
-                  const badItems = allItems.filter(item => item?.status === "bad").length;
+                  // Calculate counts directly from inspection.items, handling undefined
+                  const goodItems = inspection.items ? inspection.items.filter(item => item?.status === "good").length : 0;
+                  const badItems = inspection.items ? inspection.items.filter(item => item?.status === "bad").length : 0;
                   
                   return (
                     <TableRow key={inspection.id}>

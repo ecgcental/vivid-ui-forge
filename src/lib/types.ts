@@ -164,7 +164,7 @@ export interface SubstationInspection {
   date: string;
   substationNo: string;
   type: 'indoor' | 'outdoor';
-  items: InspectionCategory[];
+  items: InspectionItem[];
   createdAt?: string;
   createdBy?: string;
 }
