@@ -1,4 +1,5 @@
 import { type ClassValue } from "clsx";
+import { LoadMonitoringData } from "./asset-types";
 
 export type UserRole = "district_engineer" | "regional_engineer" | "global_engineer" | null;
 
@@ -191,6 +192,7 @@ export interface DataContextType {
   vitAssets: VITAsset[];
   vitInspections: VITInspectionChecklist[];
   savedInspections?: SubstationInspection[];
+  loadMonitoringRecords?: LoadMonitoringData[];
   addOP5Fault: (fault: Omit<OP5Fault, "id" | "status">) => void;
   addControlOutage: (outage: Omit<ControlSystemOutage, "id" | "status">) => void;
   resolveFault: (id: string, type: "op5" | "control") => void;
@@ -208,4 +210,8 @@ export interface DataContextType {
   updateInspection?: (id: string, data: Partial<SubstationInspection>) => void;
   saveInspection?: (data: Omit<SubstationInspection, "id">) => string;
   deleteInspection?: (id: string) => void;
+  saveLoadMonitoringRecord?: (data: Omit<LoadMonitoringData, "id">) => string;
+  getLoadMonitoringRecord?: (id: string) => LoadMonitoringData | undefined;
+  updateLoadMonitoringRecord?: (id: string, data: Partial<LoadMonitoringData>) => void;
+  deleteLoadMonitoringRecord?: (id: string) => void;
 }

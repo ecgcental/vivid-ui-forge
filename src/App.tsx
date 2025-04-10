@@ -2,9 +2,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useParams } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { DataProvider } from "@/contexts/DataContext";
+import { Layout } from "@/components/layout/Layout";
 
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
@@ -24,6 +25,9 @@ import VITInspectionDetailsPage from "./pages/asset-management/VITInspectionDeta
 import EditVITInspectionPage from "./pages/asset-management/EditVITInspectionPage";
 import VITInspectionFormPage from "./pages/asset-management/VITInspectionFormPage";
 import NotFound from "./pages/NotFound";
+import CreateLoadMonitoringPage from "./pages/asset-management/CreateLoadMonitoringPage";
+import EditLoadMonitoringPage from "./pages/asset-management/EditLoadMonitoringPage";
+import LoadMonitoringDetailsPage from "./pages/asset-management/LoadMonitoringDetailsPage";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +48,9 @@ const App = () => (
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/user-management" element={<UserManagementPage />} />
               <Route path="/asset-management/load-monitoring" element={<LoadMonitoringPage />} />
+              <Route path="/asset-management/create-load-monitoring" element={<CreateLoadMonitoringPage />} />
+              <Route path="/asset-management/edit-load-monitoring/:id" element={<EditLoadMonitoringPage />} />
+              <Route path="/asset-management/load-monitoring-details/:id" element={<LoadMonitoringDetailsPage />} />
               <Route path="/asset-management/substation-inspection" element={<SubstationInspectionPage />} />
               <Route path="/asset-management/inspection-management" element={<InspectionManagementPage />} />
               <Route path="/asset-management/inspection-details/:id" element={<InspectionDetailsPage />} />

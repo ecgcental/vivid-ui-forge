@@ -9,6 +9,7 @@ export interface FeederLeg {
 }
 
 export interface LoadMonitoringData {
+  id: string;
   date: string;
   time: string;
   region: string;

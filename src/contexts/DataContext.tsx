@@ -24,6 +24,7 @@ import {
   FaultType,
   InspectionItem
 } from "@/lib/types";
+import { LoadMonitoringData } from "@/lib/asset-types";
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
@@ -71,6 +72,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     const saved = localStorage.getItem('savedInspections');
     return saved ? JSON.parse(saved) : [];
   });
+  const [loadMonitoringRecords, setLoadMonitoringRecords] = useState<LoadMonitoringData[]>(() => {
+    const saved = localStorage.getItem('loadMonitoringRecords');
+    return saved ? JSON.parse(saved) : [];
+  });
 
   // Save data to localStorage whenever it changes
   useEffect(() => {
@@ -84,6 +89,10 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     localStorage.setItem('vitInspections', JSON.stringify(vitInspections));
   }, [vitInspections]);
+
+  useEffect(() => {
+    localStorage.setItem('loadMonitoringRecords', JSON.stringify(loadMonitoringRecords));
+  }, [loadMonitoringRecords]);
 
   // Initialize data from mock JSON
   useEffect(() => {
@@ -325,6 +334,38 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     toast.success("Inspection deleted successfully");
   };
   
+  // --- Add CRUD functions for Load Monitoring Data ---
+  const saveLoadMonitoringRecord = (data: Omit<LoadMonitoringData, "id">) => {
+    const newRecord: LoadMonitoringData = {
+      ...data,
+      id: uuidv4()
+    };
+    setLoadMonitoringRecords(prev => [...prev, newRecord]);
+    toast.success("Load monitoring record saved successfully");
+    return newRecord.id;
+  };
+
+  const getLoadMonitoringRecord = (id: string) => {
+    return loadMonitoringRecords.find(record => record.id === id);
+  };
+
+  const updateLoadMonitoringRecord = (id: string, data: Partial<LoadMonitoringData>) => {
+    setLoadMonitoringRecords(prev =>
+      prev.map(item =>
+        item.id === id
+          ? { ...item, ...data }
+          : item
+      )
+    );
+    toast.success("Load monitoring record updated successfully");
+  };
+
+  const deleteLoadMonitoringRecord = (id: string) => {
+    setLoadMonitoringRecords(prev => prev.filter(item => item.id !== id));
+    toast.success("Load monitoring record deleted successfully");
+  };
+  // --- End Load Monitoring Data functions ---
+
   return (
     <DataContext.Provider
       value={{
@@ -335,6 +376,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         vitAssets,
         vitInspections,
         savedInspections,
+        loadMonitoringRecords,
+        saveLoadMonitoringRecord,
+        getLoadMonitoringRecord,
+        updateLoadMonitoringRecord,
+        deleteLoadMonitoringRecord,
         addOP5Fault,
         addControlOutage,
         resolveFault,
