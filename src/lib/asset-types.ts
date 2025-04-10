@@ -1,3 +1,4 @@
+import { InspectionItem } from './types';
 
 export interface FeederLeg {
   id: string;
@@ -38,14 +39,6 @@ export type ConditionStatus = 'good' | 'bad';
 export type YesNoStatus = 'yes' | 'no';
 export type GoodBadStatus = 'good' | 'bad';
 
-export interface InspectionItem {
-  id: string;
-  category: string;
-  name: string;
-  status: ConditionStatus;
-  remarks: string;
-}
-
 export interface SubstationInspectionData {
   id: string;
   region: string;
@@ -83,3 +76,18 @@ export interface VITInspectionData {
   createdAt: string;
   createdBy: string;
 }
+
+export type SubstationInspection = {
+  id: string;
+  regionId: string;
+  districtId: string;
+  inspectionDate: string;
+  inspectedBy: string;
+  generalBuilding: InspectionItem[];
+  controlEquipment: InspectionItem[];
+  powerTransformer: InspectionItem[];
+  outdoorEquipment: InspectionItem[];
+  remarks: string;
+  createdBy: string;
+  createdAt: string;
+};

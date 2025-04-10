@@ -35,9 +35,9 @@ export default function SubstationInspectionPage() {
   const { user } = useAuth();
   const { regions, districts, saveInspection } = useData();
   const navigate = useNavigate();
+  const [regionId, setRegionId] = useState("");
+  const [districtId, setDistrictId] = useState("");
   const [formData, setFormData] = useState<Partial<SubstationInspection>>({
-    region: user?.region || "",
-    district: user?.district || "",
     date: new Date().toISOString().split('T')[0],
     type: "indoor",
   });
@@ -46,47 +46,100 @@ export default function SubstationInspectionPage() {
       id: uuidv4(),
       name: "General Building",
       items: [
-        { id: uuidv4(), name: "Building Structure", status: "good", remarks: "" },
-        { id: uuidv4(), name: "Cleanliness", status: "good", remarks: "" },
-        { id: uuidv4(), name: "Lighting", status: "good", remarks: "" },
-        { id: uuidv4(), name: "Ventilation", status: "good", remarks: "" },
-        { id: uuidv4(), name: "Fire Safety", status: "good", remarks: "" },
+        { id: uuidv4(), name: "Building Structure", status: "" as ConditionStatus, remarks: "" },
+        { id: uuidv4(), name: "Cleanliness", status: "" as ConditionStatus, remarks: "" },
+        { id: uuidv4(), name: "Lighting", status: "" as ConditionStatus, remarks: "" },
+        { id: uuidv4(), name: "Ventilation", status: "" as ConditionStatus, remarks: "" },
+        { id: uuidv4(), name: "Fire Safety", status: "" as ConditionStatus, remarks: "" },
       ],
     },
     {
       id: uuidv4(),
       name: "Control Equipment",
       items: [
-        { id: uuidv4(), name: "Control Panels", status: "good", remarks: "" },
-        { id: uuidv4(), name: "Wiring", status: "good", remarks: "" },
-        { id: uuidv4(), name: "Relays", status: "good", remarks: "" },
-        { id: uuidv4(), name: "Batteries", status: "good", remarks: "" },
-        { id: uuidv4(), name: "Communication Systems", status: "good", remarks: "" },
+        { id: uuidv4(), name: "Control Panels", status: "" as ConditionStatus, remarks: "" },
+        { id: uuidv4(), name: "Wiring", status: "" as ConditionStatus, remarks: "" },
+        { id: uuidv4(), name: "Relays", status: "" as ConditionStatus, remarks: "" },
+        { id: uuidv4(), name: "Batteries", status: "" as ConditionStatus, remarks: "" },
+        { id: uuidv4(), name: "Communication Systems", status: "" as ConditionStatus, remarks: "" },
       ],
     },
     {
       id: uuidv4(),
       name: "Power Transformer",
       items: [
-        { id: uuidv4(), name: "Oil Level", status: "good", remarks: "" },
-        { id: uuidv4(), name: "Bushings", status: "good", remarks: "" },
-        { id: uuidv4(), name: "Cooling System", status: "good", remarks: "" },
-        { id: uuidv4(), name: "Insulation", status: "good", remarks: "" },
-        { id: uuidv4(), name: "Load Tap Changer", status: "good", remarks: "" },
+        { id: uuidv4(), name: "Oil Level", status: "" as ConditionStatus, remarks: "" },
+        { id: uuidv4(), name: "Bushings", status: "" as ConditionStatus, remarks: "" },
+        { id: uuidv4(), name: "Cooling System", status: "" as ConditionStatus, remarks: "" },
+        { id: uuidv4(), name: "Insulation", status: "" as ConditionStatus, remarks: "" },
+        { id: uuidv4(), name: "Load Tap Changer", status: "" as ConditionStatus, remarks: "" },
       ],
     },
     {
       id: uuidv4(),
       name: "Outdoor Equipment",
       items: [
-        { id: uuidv4(), name: "Circuit Breakers", status: "good", remarks: "" },
-        { id: uuidv4(), name: "Disconnect Switches", status: "good", remarks: "" },
-        { id: uuidv4(), name: "Surge Arresters", status: "good", remarks: "" },
-        { id: uuidv4(), name: "Grounding System", status: "good", remarks: "" },
-        { id: uuidv4(), name: "Fencing", status: "good", remarks: "" },
+        { id: uuidv4(), name: "Circuit Breakers", status: "" as ConditionStatus, remarks: "" },
+        { id: uuidv4(), name: "Disconnect Switches", status: "" as ConditionStatus, remarks: "" },
+        { id: uuidv4(), name: "Surge Arresters", status: "" as ConditionStatus, remarks: "" },
+        { id: uuidv4(), name: "Grounding System", status: "" as ConditionStatus, remarks: "" },
+        { id: uuidv4(), name: "Fencing", status: "" as ConditionStatus, remarks: "" },
       ],
     },
   ]);
+
+  // Initialize region and district based on user role
+  useEffect(() => {
+    if (user) {
+      if (user.role === "district_engineer" || user.role === "regional_engineer") {
+        const userRegion = regions.find(r => r.name === user.region);
+        if (userRegion) {
+          setRegionId(userRegion.id);
+          setFormData(prev => ({ ...prev, region: userRegion.name }));
+          
+          if (user.role === "district_engineer" && user.district) {
+            const userDistrict = districts.find(d => d.name === user.district);
+            if (userDistrict) {
+              setDistrictId(userDistrict.id);
+              setFormData(prev => ({ ...prev, district: userDistrict.name }));
+            }
+          }
+        }
+      }
+    }
+  }, [user, regions, districts]);
+
+  // Filter regions and districts based on user role
+  const filteredRegions = user?.role === "global_engineer"
+    ? regions
+    : regions.filter(r => user?.region ? r.name === user.region : true);
+  
+  const filteredDistricts = regionId
+    ? districts.filter(d => {
+        const region = regions.find(r => r.id === regionId);
+        return region?.districts.some(rd => rd.id === d.id) && (
+          user?.role === "district_engineer" 
+            ? user.district === d.name 
+            : true
+        );
+      })
+    : [];
+
+  // Handle region change
+  const handleRegionChange = (value: string) => {
+    setRegionId(value);
+    const region = regions.find(r => r.id === value);
+    setFormData(prev => ({ ...prev, region: region?.name || "" }));
+    setDistrictId("");
+    setFormData(prev => ({ ...prev, district: "" }));
+  };
+
+  // Handle district change
+  const handleDistrictChange = (value: string) => {
+    setDistrictId(value);
+    const district = districts.find(d => d.id === value);
+    setFormData(prev => ({ ...prev, district: district?.name || "" }));
+  };
 
   // Handle generic form input changes
   const handleInputChange = (field: keyof SubstationInspection, value: any) => {
@@ -138,13 +191,15 @@ export default function SubstationInspectionPage() {
     const districtId = districtFound?.id || "";
     
     const inspectionItems: InspectionItem[] = categories.flatMap(category =>
-      category.items.map(item => ({
-        id: item.id,
-        category: category.name.toLowerCase(),
-        name: item.name,
-        status: item.status || "good",
-        remarks: item.remarks,
-      }))
+      category.items
+        .filter(item => item.status) // Only include items that have a status selected
+        .map(item => ({
+          id: item.id,
+          category: category.name.toLowerCase(),
+          name: item.name,
+          status: item.status,
+          remarks: item.remarks || "",
+        }))
     );
     
     const inspectionData: Omit<SubstationInspection, "id"> = {
@@ -154,93 +209,97 @@ export default function SubstationInspectionPage() {
       district: district,
       date: formData.date || new Date().toISOString().split('T')[0],
       substationNo: formData.substationNo || "",
-      substationName: formData.substationName,
+      substationName: formData.substationName || "",
       type: formData.type || "indoor",
       items: inspectionItems,
+      createdBy: user?.name || "Unknown",
+      createdAt: new Date().toISOString(),
     };
     
     const id = saveInspection(inspectionData);
-    navigate(`/asset-management/inspection-details/${id}`);
+    toast.success("Inspection saved successfully");
+    navigate("/asset-management/inspection-management");
   };
 
   return (
     <Layout>
-      <div className="container mx-auto py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">New Substation Inspection</h1>
-          <p className="text-muted-foreground mt-2">
-            Record a new inspection for a substation
-          </p>
+      <div className="container py-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">New Substation Inspection</h1>
+            <p className="text-muted-foreground mt-1">
+              Record a new inspection for a substation
+            </p>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid gap-8">
-          {/* Basic Information */}
+        <form onSubmit={handleSubmit} className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Inspection Details</CardTitle>
-              <CardDescription>
-                Basic information about the inspection
-              </CardDescription>
+              <CardDescription>Enter the basic information about the inspection</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="region">Region</Label>
-                  <Input
-                    id="region"
-                    type="text"
-                    value={formData.region}
-                    onChange={(e) => handleInputChange('region', e.target.value)}
-                    required
-                  />
+                  <Select
+                    value={regionId}
+                    onValueChange={handleRegionChange}
+                    disabled={user?.role === "district_engineer" || user?.role === "regional_engineer"}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select region" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filteredRegions.map((region) => (
+                        <SelectItem key={region.id} value={region.id}>
+                          {region.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="district">District</Label>
-                  <Input
-                    id="district"
-                    type="text"
-                    value={formData.district}
-                    onChange={(e) => handleInputChange('district', e.target.value)}
-                    required
-                  />
+                  <Select
+                    value={districtId}
+                    onValueChange={handleDistrictChange}
+                    disabled={user?.role === "district_engineer" || !regionId}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select district" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filteredDistricts.map((district) => (
+                        <SelectItem key={district.id} value={district.id}>
+                          {district.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="date">Date</Label>
                   <Input
                     id="date"
                     type="date"
                     value={formData.date}
-                    onChange={(e) => handleInputChange('date', e.target.value)}
+                    onChange={(e) => handleInputChange("date", e.target.value)}
                     required
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="substationNo">Substation Number</Label>
-                  <Input
-                    id="substationNo"
-                    type="text"
-                    value={formData.substationNo || ''}
-                    onChange={(e) => handleInputChange('substationNo', e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="substationName">Substation Name (Optional)</Label>
-                  <Input
-                    id="substationName"
-                    type="text"
-                    value={formData.substationName || ''}
-                    onChange={(e) => handleInputChange('substationName', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="type">Substation Type</Label>
+                  <Label htmlFor="type">Type</Label>
                   <Select
                     value={formData.type}
-                    onValueChange={(value) => handleInputChange('type', value as 'indoor' | 'outdoor')}
+                    onValueChange={(value) => handleInputChange("type", value)}
                   >
-                    <SelectTrigger id="type">
-                      <SelectValue placeholder="Select substation type" />
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="indoor">Indoor</SelectItem>

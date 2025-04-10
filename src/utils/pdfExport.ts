@@ -1,6 +1,7 @@
-import { PDFDocument, rgb } from 'pdf-lib';
-import { VITAsset, VITInspectionChecklist } from "@/lib/types";
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { VITAsset, VITInspectionChecklist, SubstationInspection } from "@/lib/types";
 import { formatDate } from "@/utils/calculations";
+import { format } from 'date-fns';
 
 // Add type declaration for jsPDF with autotable extensions
 declare module "jspdf" {
@@ -10,11 +11,16 @@ declare module "jspdf" {
     };
     autoTable: (options: any) => jsPDF;
     internal: {
+      events: PubSub;
+      scaleFactor: number;
       pageSize: {
         width: number;
+        getWidth: () => number;
         height: number;
+        getHeight: () => number;
       };
-      pages: any[];
+      pages: number[];
+      getEncryptor: (objectId: number) => (data: string) => string;
     };
     setPage: (pageNumber: number) => jsPDF;
   }
@@ -96,11 +102,11 @@ export const exportInspectionToPDF = async (inspection: VITInspectionChecklist, 
   const pdfDoc = await PDFDocument.create();
   
   // Add title and logo
-  const page = pdfDoc.addPage([600, 400]);
-  const { width, height } = page.getSize();
+  const titlePage = pdfDoc.addPage([600, 400]);
+  const { width, height } = titlePage.getSize();
   const fontSize = 30;
 
-  page.drawText('VIT Inspection Report', {
+  titlePage.drawText('VIT Inspection Report', {
     x: 50,
     y: height - 4 * fontSize,
     size: fontSize,
@@ -108,14 +114,16 @@ export const exportInspectionToPDF = async (inspection: VITInspectionChecklist, 
   });
   
   // Add date and inspector info
-  page.drawText(`Date: ${formatDate(inspection.inspectionDate)}`, {
+  const datePage = pdfDoc.addPage([600, 400]);
+  datePage.drawText(`Date: ${formatDate(inspection.inspectionDate)}`, {
     x: 50,
     y: height - 3 * fontSize,
     size: fontSize,
     color: rgb(0, 0, 0),
   });
 
-  page.drawText(`Inspector: ${inspection.inspectedBy}`, {
+  const inspectorPage = pdfDoc.addPage([600, 400]);
+  inspectorPage.drawText(`Inspector: ${inspection.inspectedBy}`, {
     x: 50,
     y: height - 2 * fontSize,
     size: fontSize,
@@ -560,4 +568,229 @@ export const exportInspectionToPDF = async (inspection: VITInspectionChecklist, 
   link.download = `vit-inspection-${asset.serialNumber}-${inspection.inspectionDate.split('T')[0]}.pdf`;
   link.click();
   return link.download;
+};
+
+/**
+ * Generate comprehensive PDF report for Substation inspection
+ */
+export const exportSubstationInspectionToPDF = async (inspection: SubstationInspection) => {
+  const doc = await PDFDocument.create();
+  const page = doc.addPage([595.28, 841.89]); // A4 size
+  const { width, height } = page.getSize();
+  const fontSize = 12;
+  const lineHeight = fontSize * 1.5;
+  let y = height - 50;
+
+  // Embed font once for reuse
+  const boldFont = await doc.embedFont(StandardFonts.HelveticaBold);
+
+  // Add title
+  page.drawText("Substation Inspection Report", {
+    x: 50,
+    y,
+    size: 16,
+    color: rgb(0, 0, 0),
+    font: boldFont,
+  });
+  y -= lineHeight * 2;
+
+  // Add inspection details
+  page.drawText(`Substation: ${inspection.substationNo}`, {
+    x: 50,
+    y,
+    size: fontSize,
+    color: rgb(0, 0, 0),
+  });
+  y -= lineHeight;
+
+  page.drawText(`Region: ${inspection.region}`, {
+    x: 50,
+    y,
+    size: fontSize,
+    color: rgb(0, 0, 0),
+  });
+  y -= lineHeight;
+
+  page.drawText(`District: ${inspection.district}`, {
+    x: 50,
+    y,
+    size: fontSize,
+    color: rgb(0, 0, 0),
+  });
+  y -= lineHeight;
+
+  page.drawText(`Date: ${formatDate(inspection.date)}`, {
+    x: 50,
+    y,
+    size: fontSize,
+    color: rgb(0, 0, 0),
+  });
+  y -= lineHeight;
+
+  page.drawText(`Type: ${inspection.type}`, {
+    x: 50,
+    y,
+    size: fontSize,
+    color: rgb(0, 0, 0),
+  });
+  y -= lineHeight * 2;
+
+  // Add inspection items by category
+  if (inspection.items && Array.isArray(inspection.items)) {
+    for (const category of inspection.items) {
+      if (!category || !category.items) continue;
+
+      // Check if we need a new page
+      if (y < 100) {
+        const newPage = doc.addPage([595.28, 841.89]);
+        y = height - 50;
+      }
+
+      // Add category header
+      page.drawText(category.category, {
+        x: 50,
+        y,
+        size: fontSize,
+        color: rgb(0, 0, 0),
+        font: boldFont,
+      });
+      y -= lineHeight;
+
+      // Add items in this category
+      for (const item of category.items) {
+        if (!item) continue;
+
+        // Check if we need a new page
+        if (y < 100) {
+          const newPage = doc.addPage([595.28, 841.89]);
+          y = height - 50;
+        }
+
+        const statusText = item.status === "good" ? "✓" : "✗";
+        const statusColor = item.status === "good" ? rgb(0, 0.5, 0) : rgb(0.8, 0, 0);
+        
+        // Draw status symbol
+        page.drawText(statusText, {
+          x: 70,
+          y,
+          size: fontSize,
+          color: statusColor,
+        });
+
+        // Draw item name
+        page.drawText(item.name, {
+          x: 90,
+          y,
+          size: fontSize,
+          color: rgb(0, 0, 0),
+        });
+        y -= lineHeight;
+
+        if (item.remarks) {
+          // Check if we need a new page for remarks
+          if (y < 100) {
+            const newPage = doc.addPage([595.28, 841.89]);
+            y = height - 50;
+          }
+
+          page.drawText(`   Remarks: ${item.remarks}`, {
+            x: 90,
+            y,
+            size: fontSize,
+            color: rgb(0, 0, 0),
+          });
+          y -= lineHeight;
+        }
+      }
+      y -= lineHeight;
+    }
+  }
+
+  // Add summary section
+  if (y < 150) {
+    const newPage = doc.addPage([595.28, 841.89]);
+    y = height - 50;
+  }
+
+  // Calculate summary statistics
+  const totalItems = inspection.items.reduce((count, category) => 
+    count + (category.items?.length || 0), 0);
+  const goodItems = inspection.items.reduce((count, category) => 
+    count + (category.items?.filter(item => item.status === "good").length || 0), 0);
+  const badItems = totalItems - goodItems;
+  const percentageGood = totalItems > 0 ? (goodItems / totalItems) * 100 : 0;
+
+  // Add summary header
+  page.drawText("Inspection Summary", {
+    x: 50,
+    y,
+    size: fontSize,
+    color: rgb(0, 0, 0),
+    font: boldFont,
+  });
+  y -= lineHeight * 2;
+
+  // Add summary details
+  page.drawText(`Total Items Checked: ${totalItems}`, {
+    x: 70,
+    y,
+    size: fontSize,
+    color: rgb(0, 0, 0),
+  });
+  y -= lineHeight;
+
+  page.drawText(`Items in Good Condition: ${goodItems}`, {
+    x: 70,
+    y,
+    size: fontSize,
+    color: rgb(0, 0.5, 0),
+  });
+  y -= lineHeight;
+
+  page.drawText(`Items Requiring Attention: ${badItems}`, {
+    x: 70,
+    y,
+    size: fontSize,
+    color: rgb(0.8, 0, 0),
+  });
+  y -= lineHeight;
+
+  page.drawText(`Overall Condition: ${percentageGood >= 90 ? "Excellent" : 
+    percentageGood >= 75 ? "Good" : 
+    percentageGood >= 60 ? "Fair" : "Poor"}`, {
+    x: 70,
+    y,
+    size: fontSize,
+    color: rgb(0, 0, 0),
+    font: boldFont,
+  });
+
+  // Add timestamp and page numbers
+  const totalPages = doc.getPages().length;
+  for (let i = 0; i < totalPages; i++) {
+    const currentPage = doc.getPage(i);
+    const { width, height } = currentPage.getSize();
+    currentPage.drawText(`Generated: ${new Date().toLocaleString()}`, {
+      x: 50,
+      y: 30,
+      size: 8,
+      color: rgb(0.5, 0.5, 0.5),
+    });
+    currentPage.drawText(`Page ${i + 1} of ${totalPages}`, {
+      x: width - 100,
+      y: 30,
+      size: 8,
+      color: rgb(0.5, 0.5, 0.5),
+    });
+  }
+
+  // Save the PDF
+  const pdfBytes = await doc.save();
+  const blob = new Blob([pdfBytes], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `substation-inspection-${formatDate(inspection.date)}.pdf`;
+  link.click();
+  URL.revokeObjectURL(url);
 };

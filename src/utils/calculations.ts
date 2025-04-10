@@ -1,4 +1,3 @@
-
 // Outage Duration Calculation (in minutes)
 export const calculateOutageDuration = (occurrenceDate: string, restorationDate: string): number => {
   const start = new Date(occurrenceDate).getTime();
@@ -65,15 +64,11 @@ export const calculateDurationHours = (occurrenceDate: string, restorationDate: 
 };
 
 // Format a date object to a readable string
-export const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  return date.toLocaleString("en-GB", {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+export const formatDate = (date: string | Date): string => {
+  if (date instanceof Date) {
+    return date.toISOString().split('T')[0];
+  }
+  return date;
 };
 
 // Format duration in minutes to hours and minutes

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import mockRegionsData from "@/data/regions.json";
@@ -34,9 +33,57 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [districts, setDistricts] = useState<District[]>([]);
   const [op5Faults, setOP5Faults] = useState<OP5Fault[]>([]);
   const [controlOutages, setControlOutages] = useState<ControlSystemOutage[]>([]);
-  const [vitAssets, setVITAssets] = useState<VITAsset[]>([]);
-  const [vitInspections, setVITInspections] = useState<VITInspectionChecklist[]>([]);
-  const [savedInspections, setSavedInspections] = useState<SubstationInspection[]>([]);
+  const [vitAssets, setVITAssets] = useState<VITAsset[]>(() => {
+    const saved = localStorage.getItem('vitAssets');
+    return saved ? JSON.parse(saved) : mockVITAssetsData.map(asset => ({
+      ...asset,
+      voltageLevel: asset.voltageLevel as VoltageLevel,
+      status: asset.status as VITStatus
+    }));
+  });
+  const [vitInspections, setVITInspections] = useState<VITInspectionChecklist[]>(() => {
+    const saved = localStorage.getItem('vitInspections');
+    return saved ? JSON.parse(saved) : mockVITInspectionsData.map(inspection => ({
+      ...inspection,
+      rodentTermiteEncroachment: inspection.rodentTermiteEncroachment as YesNoOption,
+      cleanDustFree: inspection.cleanDustFree as YesNoOption,
+      protectionButtonEnabled: inspection.protectionButtonEnabled as YesNoOption,
+      recloserButtonEnabled: inspection.recloserButtonEnabled as YesNoOption,
+      groundEarthButtonEnabled: inspection.groundEarthButtonEnabled as YesNoOption,
+      acPowerOn: inspection.acPowerOn as YesNoOption,
+      batteryPowerLow: inspection.batteryPowerLow as YesNoOption,
+      handleLockOn: inspection.handleLockOn as YesNoOption,
+      remoteButtonEnabled: inspection.remoteButtonEnabled as YesNoOption,
+      gasLevelLow: inspection.gasLevelLow as YesNoOption,
+      earthingArrangementAdequate: inspection.earthingArrangementAdequate as YesNoOption,
+      noFusesBlown: inspection.noFusesBlown as YesNoOption,
+      noDamageToBushings: inspection.noDamageToBushings as YesNoOption,
+      noDamageToHVConnections: inspection.noDamageToHVConnections as YesNoOption,
+      insulatorsClean: inspection.insulatorsClean as YesNoOption,
+      paintworkAdequate: inspection.paintworkAdequate as YesNoOption,
+      ptFuseLinkIntact: inspection.ptFuseLinkIntact as YesNoOption,
+      noCorrosion: inspection.noCorrosion as YesNoOption,
+      silicaGelCondition: inspection.silicaGelCondition as GoodBadOption,
+      correctLabelling: inspection.correctLabelling as YesNoOption
+    }));
+  });
+  const [savedInspections, setSavedInspections] = useState<SubstationInspection[]>(() => {
+    const saved = localStorage.getItem('savedInspections');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  // Save data to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('savedInspections', JSON.stringify(savedInspections));
+  }, [savedInspections]);
+
+  useEffect(() => {
+    localStorage.setItem('vitAssets', JSON.stringify(vitAssets));
+  }, [vitAssets]);
+
+  useEffect(() => {
+    localStorage.setItem('vitInspections', JSON.stringify(vitInspections));
+  }, [vitInspections]);
 
   // Initialize data from mock JSON
   useEffect(() => {
@@ -61,44 +108,17 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     setOP5Faults(mockOP5FaultsData.map(fault => ({
       ...fault,
       faultType: fault.faultType as FaultType,
-      status: fault.status as "active" | "resolved"
+      status: fault.status as "active" | "resolved",
+      createdBy: "System",
+      createdAt: new Date().toISOString()
     })));
     
     setControlOutages(mockControlSystemOutagesData.map(outage => ({
       ...outage,
       faultType: outage.faultType as FaultType,
-      status: outage.status as "active" | "resolved"
-    })));
-    
-    // Load VIT assets and inspections with proper type casting
-    setVITAssets(mockVITAssetsData.map(asset => ({
-      ...asset,
-      voltageLevel: asset.voltageLevel as VoltageLevel,
-      status: asset.status as VITStatus
-    })));
-    
-    setVITInspections(mockVITInspectionsData.map(inspection => ({
-      ...inspection,
-      rodentTermiteEncroachment: inspection.rodentTermiteEncroachment as YesNoOption,
-      cleanDustFree: inspection.cleanDustFree as YesNoOption,
-      protectionButtonEnabled: inspection.protectionButtonEnabled as YesNoOption,
-      recloserButtonEnabled: inspection.recloserButtonEnabled as YesNoOption,
-      groundEarthButtonEnabled: inspection.groundEarthButtonEnabled as YesNoOption,
-      acPowerOn: inspection.acPowerOn as YesNoOption,
-      batteryPowerLow: inspection.batteryPowerLow as YesNoOption,
-      handleLockOn: inspection.handleLockOn as YesNoOption,
-      remoteButtonEnabled: inspection.remoteButtonEnabled as YesNoOption,
-      gasLevelLow: inspection.gasLevelLow as YesNoOption,
-      earthingArrangementAdequate: inspection.earthingArrangementAdequate as YesNoOption,
-      noFusesBlown: inspection.noFusesBlown as YesNoOption,
-      noDamageToBushings: inspection.noDamageToBushings as YesNoOption,
-      noDamageToHVConnections: inspection.noDamageToHVConnections as YesNoOption,
-      insulatorsClean: inspection.insulatorsClean as YesNoOption,
-      paintworkAdequate: inspection.paintworkAdequate as YesNoOption,
-      ptFuseLinkIntact: inspection.ptFuseLinkIntact as YesNoOption,
-      noCorrosion: inspection.noCorrosion as YesNoOption,
-      silicaGelCondition: inspection.silicaGelCondition as GoodBadOption,
-      correctLabelling: inspection.correctLabelling as YesNoOption
+      status: outage.status as "active" | "resolved",
+      createdBy: "System",
+      createdAt: new Date().toISOString()
     })));
   }, []);
 

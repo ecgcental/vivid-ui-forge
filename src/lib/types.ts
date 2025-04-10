@@ -1,4 +1,3 @@
-
 import { type ClassValue } from "clsx";
 
 export type UserRole = "district_engineer" | "regional_engineer" | "global_engineer" | null;
@@ -64,6 +63,8 @@ export type OP5Fault = {
     saifi: number; // System Average Interruption Frequency Index
     caidi: number; // Customer Average Interruption Duration Index
   };
+  createdBy: string;
+  createdAt: string;
 };
 
 export type ControlSystemOutage = {
@@ -80,6 +81,8 @@ export type ControlSystemOutage = {
   loadMW: number;
   unservedEnergyMWh: number;
   customersAffected: RegionPopulation;
+  createdBy: string;
+  createdAt: string;
 };
 
 // VIT Asset Types
@@ -107,6 +110,7 @@ export type VITAsset = {
   photoUrl?: string;
   createdAt: string;
   updatedAt: string;
+  createdBy: string;
 };
 
 export type VITInspectionChecklist = {
@@ -135,31 +139,35 @@ export type VITInspectionChecklist = {
   silicaGelCondition: GoodBadOption;
   correctLabelling: YesNoOption;
   remarks: string;
+  createdBy: string;
+  createdAt: string;
 };
 
 // Updated to match with asset-types
-export type InspectionItem = {
+export interface InspectionItem {
   id: string;
   category: string;
   name: string;
   status: ConditionStatus;
-  remarks: string;
-};
+  remarks?: string;
+}
 
-export type SubstationInspection = {
+export interface InspectionCategory {
+  category: string;
+  items: InspectionItem[];
+}
+
+export interface SubstationInspection {
   id: string;
-  regionId: string;
-  districtId: string;
   region: string;
   district: string;
   date: string;
   substationNo: string;
-  substationName?: string;
   type: 'indoor' | 'outdoor';
-  items: InspectionItem[];
+  items: InspectionCategory[];
   createdAt?: string;
   createdBy?: string;
-};
+}
 
 export interface AuthContextType {
   user: {

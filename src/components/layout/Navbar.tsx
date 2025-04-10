@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate, useLocation } from "react-router-dom";
@@ -83,10 +82,10 @@ export function Navbar() {
                       <li>
                         <NavigationMenuLink asChild>
                           <Link
-                            to="/asset-management/substation-inspection"
+                            to="/asset-management/inspection-management"
                             className={cn(
                               "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-                              isActiveRoute("/asset-management/substation-inspection") && "bg-accent"
+                              isActiveRoute("/asset-management/inspection-management") && "bg-accent"
                             )}
                           >
                             <div className="text-sm font-medium leading-none">Substation Inspection</div>
@@ -194,7 +193,7 @@ export function Navbar() {
                         Load Monitoring
                       </Link>
                       <Link 
-                        to="/asset-management/substation-inspection" 
+                        to="/asset-management/inspection-management" 
                         className="block text-sm text-muted-foreground hover:text-foreground"
                       >
                         Substation Inspection

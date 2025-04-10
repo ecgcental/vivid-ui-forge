@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useData } from "@/contexts/DataContext";
 import { Button } from "@/components/ui/button";
@@ -53,65 +52,65 @@ export function VITInspectionForm({
   );
 
   // Checklist items
-  const [rodentTermiteEncroachment, setRodentTermiteEncroachment] = useState<YesNoOption>(
-    inspectionData?.rodentTermiteEncroachment || "No"
+  const [rodentTermiteEncroachment, setRodentTermiteEncroachment] = useState<YesNoOption | undefined>(
+    inspectionData?.rodentTermiteEncroachment
   );
-  const [cleanDustFree, setCleanDustFree] = useState<YesNoOption>(
-    inspectionData?.cleanDustFree || "Yes"
+  const [cleanDustFree, setCleanDustFree] = useState<YesNoOption | undefined>(
+    inspectionData?.cleanDustFree
   );
-  const [protectionButtonEnabled, setProtectionButtonEnabled] = useState<YesNoOption>(
-    inspectionData?.protectionButtonEnabled || "Yes"
+  const [protectionButtonEnabled, setProtectionButtonEnabled] = useState<YesNoOption | undefined>(
+    inspectionData?.protectionButtonEnabled
   );
-  const [recloserButtonEnabled, setRecloserButtonEnabled] = useState<YesNoOption>(
-    inspectionData?.recloserButtonEnabled || "Yes"
+  const [recloserButtonEnabled, setRecloserButtonEnabled] = useState<YesNoOption | undefined>(
+    inspectionData?.recloserButtonEnabled
   );
-  const [groundEarthButtonEnabled, setGroundEarthButtonEnabled] = useState<YesNoOption>(
-    inspectionData?.groundEarthButtonEnabled || "Yes"
+  const [groundEarthButtonEnabled, setGroundEarthButtonEnabled] = useState<YesNoOption | undefined>(
+    inspectionData?.groundEarthButtonEnabled
   );
-  const [acPowerOn, setAcPowerOn] = useState<YesNoOption>(
-    inspectionData?.acPowerOn || "Yes"
+  const [acPowerOn, setAcPowerOn] = useState<YesNoOption | undefined>(
+    inspectionData?.acPowerOn
   );
-  const [batteryPowerLow, setBatteryPowerLow] = useState<YesNoOption>(
-    inspectionData?.batteryPowerLow || "No"
+  const [batteryPowerLow, setBatteryPowerLow] = useState<YesNoOption | undefined>(
+    inspectionData?.batteryPowerLow
   );
-  const [handleLockOn, setHandleLockOn] = useState<YesNoOption>(
-    inspectionData?.handleLockOn || "Yes"
+  const [handleLockOn, setHandleLockOn] = useState<YesNoOption | undefined>(
+    inspectionData?.handleLockOn
   );
-  const [remoteButtonEnabled, setRemoteButtonEnabled] = useState<YesNoOption>(
-    inspectionData?.remoteButtonEnabled || "Yes"
+  const [remoteButtonEnabled, setRemoteButtonEnabled] = useState<YesNoOption | undefined>(
+    inspectionData?.remoteButtonEnabled
   );
-  const [gasLevelLow, setGasLevelLow] = useState<YesNoOption>(
-    inspectionData?.gasLevelLow || "No"
+  const [gasLevelLow, setGasLevelLow] = useState<YesNoOption | undefined>(
+    inspectionData?.gasLevelLow
   );
-  const [earthingArrangementAdequate, setEarthingArrangementAdequate] = useState<YesNoOption>(
-    inspectionData?.earthingArrangementAdequate || "Yes"
+  const [earthingArrangementAdequate, setEarthingArrangementAdequate] = useState<YesNoOption | undefined>(
+    inspectionData?.earthingArrangementAdequate
   );
-  const [noFusesBlown, setNoFusesBlown] = useState<YesNoOption>(
-    inspectionData?.noFusesBlown || "Yes"
+  const [noFusesBlown, setNoFusesBlown] = useState<YesNoOption | undefined>(
+    inspectionData?.noFusesBlown
   );
-  const [noDamageToBushings, setNoDamageToBushings] = useState<YesNoOption>(
-    inspectionData?.noDamageToBushings || "Yes"
+  const [noDamageToBushings, setNoDamageToBushings] = useState<YesNoOption | undefined>(
+    inspectionData?.noDamageToBushings
   );
-  const [noDamageToHVConnections, setNoDamageToHVConnections] = useState<YesNoOption>(
-    inspectionData?.noDamageToHVConnections || "Yes"
+  const [noDamageToHVConnections, setNoDamageToHVConnections] = useState<YesNoOption | undefined>(
+    inspectionData?.noDamageToHVConnections
   );
-  const [insulatorsClean, setInsulatorsClean] = useState<YesNoOption>(
-    inspectionData?.insulatorsClean || "Yes"
+  const [insulatorsClean, setInsulatorsClean] = useState<YesNoOption | undefined>(
+    inspectionData?.insulatorsClean
   );
-  const [paintworkAdequate, setPaintworkAdequate] = useState<YesNoOption>(
-    inspectionData?.paintworkAdequate || "Yes"
+  const [paintworkAdequate, setPaintworkAdequate] = useState<YesNoOption | undefined>(
+    inspectionData?.paintworkAdequate
   );
-  const [ptFuseLinkIntact, setPtFuseLinkIntact] = useState<YesNoOption>(
-    inspectionData?.ptFuseLinkIntact || "Yes"
+  const [ptFuseLinkIntact, setPtFuseLinkIntact] = useState<YesNoOption | undefined>(
+    inspectionData?.ptFuseLinkIntact
   );
-  const [noCorrosion, setNoCorrosion] = useState<YesNoOption>(
-    inspectionData?.noCorrosion || "Yes"
+  const [noCorrosion, setNoCorrosion] = useState<YesNoOption | undefined>(
+    inspectionData?.noCorrosion
   );
-  const [silicaGelCondition, setSilicaGelCondition] = useState<GoodBadOption>(
-    inspectionData?.silicaGelCondition || "Good"
+  const [silicaGelCondition, setSilicaGelCondition] = useState<GoodBadOption | undefined>(
+    inspectionData?.silicaGelCondition
   );
-  const [correctLabelling, setCorrectLabelling] = useState<YesNoOption>(
-    inspectionData?.correctLabelling || "Yes"
+  const [correctLabelling, setCorrectLabelling] = useState<YesNoOption | undefined>(
+    inspectionData?.correctLabelling
   );
   const [remarks, setRemarks] = useState(inspectionData?.remarks || "");
 
@@ -171,27 +170,29 @@ export function VITInspectionForm({
         vitAssetId: selectedAssetId,
         inspectionDate: new Date(inspectionDate).toISOString(),
         inspectedBy,
-        rodentTermiteEncroachment,
-        cleanDustFree,
-        protectionButtonEnabled,
-        recloserButtonEnabled,
-        groundEarthButtonEnabled,
-        acPowerOn,
-        batteryPowerLow,
-        handleLockOn,
-        remoteButtonEnabled,
-        gasLevelLow,
-        earthingArrangementAdequate,
-        noFusesBlown,
-        noDamageToBushings,
-        noDamageToHVConnections,
-        insulatorsClean,
-        paintworkAdequate,
-        ptFuseLinkIntact,
-        noCorrosion,
-        silicaGelCondition,
-        correctLabelling,
-        remarks
+        rodentTermiteEncroachment: rodentTermiteEncroachment || "No",
+        cleanDustFree: cleanDustFree || "No",
+        protectionButtonEnabled: protectionButtonEnabled || "No",
+        recloserButtonEnabled: recloserButtonEnabled || "No",
+        groundEarthButtonEnabled: groundEarthButtonEnabled || "No",
+        acPowerOn: acPowerOn || "No",
+        batteryPowerLow: batteryPowerLow || "No",
+        handleLockOn: handleLockOn || "No",
+        remoteButtonEnabled: remoteButtonEnabled || "No",
+        gasLevelLow: gasLevelLow || "No",
+        earthingArrangementAdequate: earthingArrangementAdequate || "No",
+        noFusesBlown: noFusesBlown || "No",
+        noDamageToBushings: noDamageToBushings || "No",
+        noDamageToHVConnections: noDamageToHVConnections || "No",
+        insulatorsClean: insulatorsClean || "No",
+        paintworkAdequate: paintworkAdequate || "No",
+        ptFuseLinkIntact: ptFuseLinkIntact || "No",
+        noCorrosion: noCorrosion || "No",
+        silicaGelCondition: silicaGelCondition || "Good",
+        correctLabelling: correctLabelling || "No",
+        remarks,
+        createdBy: user?.id || "",
+        createdAt: new Date().toISOString()
       };
       
       if (inspectionData?.id) {
@@ -319,6 +320,9 @@ export function VITInspectionForm({
                         <Label htmlFor="rodent-no" className="text-green-500 font-medium">No (OK)</Label>
                       </div>
                     </RadioGroup>
+                    {rodentTermiteEncroachment === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -337,6 +341,9 @@ export function VITInspectionForm({
                         <Label htmlFor="clean-no" className="text-red-500 font-medium">No (Issue)</Label>
                       </div>
                     </RadioGroup>
+                    {cleanDustFree === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -355,6 +362,9 @@ export function VITInspectionForm({
                         <Label htmlFor="protection-no" className="text-red-500 font-medium">No (Issue)</Label>
                       </div>
                     </RadioGroup>
+                    {protectionButtonEnabled === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -373,6 +383,9 @@ export function VITInspectionForm({
                         <Label htmlFor="recloser-no" className="text-red-500 font-medium">No (Issue)</Label>
                       </div>
                     </RadioGroup>
+                    {recloserButtonEnabled === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -391,6 +404,9 @@ export function VITInspectionForm({
                         <Label htmlFor="ground-no" className="text-red-500 font-medium">No (Issue)</Label>
                       </div>
                     </RadioGroup>
+                    {groundEarthButtonEnabled === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -414,6 +430,9 @@ export function VITInspectionForm({
                         <Label htmlFor="acpower-no" className="text-red-500 font-medium">No (Issue)</Label>
                       </div>
                     </RadioGroup>
+                    {acPowerOn === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -432,6 +451,9 @@ export function VITInspectionForm({
                         <Label htmlFor="battery-no" className="text-green-500 font-medium">No (OK)</Label>
                       </div>
                     </RadioGroup>
+                    {batteryPowerLow === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -450,6 +472,9 @@ export function VITInspectionForm({
                         <Label htmlFor="lock-no" className="text-red-500 font-medium">No (Issue)</Label>
                       </div>
                     </RadioGroup>
+                    {handleLockOn === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -468,6 +493,9 @@ export function VITInspectionForm({
                         <Label htmlFor="remote-no" className="text-red-500 font-medium">No (Issue)</Label>
                       </div>
                     </RadioGroup>
+                    {remoteButtonEnabled === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -486,6 +514,9 @@ export function VITInspectionForm({
                         <Label htmlFor="gas-no" className="text-green-500 font-medium">No (OK)</Label>
                       </div>
                     </RadioGroup>
+                    {gasLevelLow === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -509,6 +540,9 @@ export function VITInspectionForm({
                         <Label htmlFor="earthing-no" className="text-red-500 font-medium">No (Issue)</Label>
                       </div>
                     </RadioGroup>
+                    {earthingArrangementAdequate === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -527,6 +561,9 @@ export function VITInspectionForm({
                         <Label htmlFor="fuses-no" className="text-red-500 font-medium">No (Issue)</Label>
                       </div>
                     </RadioGroup>
+                    {noFusesBlown === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -545,6 +582,9 @@ export function VITInspectionForm({
                         <Label htmlFor="bushings-no" className="text-red-500 font-medium">No (Issue)</Label>
                       </div>
                     </RadioGroup>
+                    {noDamageToBushings === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -563,6 +603,9 @@ export function VITInspectionForm({
                         <Label htmlFor="hvconn-no" className="text-red-500 font-medium">No (Issue)</Label>
                       </div>
                     </RadioGroup>
+                    {noDamageToHVConnections === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -581,6 +624,9 @@ export function VITInspectionForm({
                         <Label htmlFor="insulators-no" className="text-red-500 font-medium">No (Issue)</Label>
                       </div>
                     </RadioGroup>
+                    {insulatorsClean === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
                 </AccordionContent>
               </AccordionItem>
@@ -604,6 +650,9 @@ export function VITInspectionForm({
                         <Label htmlFor="paint-no" className="text-red-500 font-medium">No (Issue)</Label>
                       </div>
                     </RadioGroup>
+                    {paintworkAdequate === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -622,6 +671,9 @@ export function VITInspectionForm({
                         <Label htmlFor="ptfuse-no" className="text-red-500 font-medium">No (Issue)</Label>
                       </div>
                     </RadioGroup>
+                    {ptFuseLinkIntact === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -640,6 +692,9 @@ export function VITInspectionForm({
                         <Label htmlFor="corrosion-no" className="text-red-500 font-medium">No (Issue)</Label>
                       </div>
                     </RadioGroup>
+                    {noCorrosion === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -658,6 +713,9 @@ export function VITInspectionForm({
                         <Label htmlFor="silica-bad" className="text-red-500 font-medium">Bad</Label>
                       </div>
                     </RadioGroup>
+                    {silicaGelCondition === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -676,6 +734,9 @@ export function VITInspectionForm({
                         <Label htmlFor="label-no" className="text-red-500 font-medium">No (Issue)</Label>
                       </div>
                     </RadioGroup>
+                    {correctLabelling === undefined && (
+                      <p className="text-sm text-muted-foreground mt-1">Please select an option</p>
+                    )}
                   </div>
                 </AccordionContent>
               </AccordionItem>

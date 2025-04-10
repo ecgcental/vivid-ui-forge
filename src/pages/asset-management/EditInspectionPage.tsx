@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
@@ -70,7 +69,13 @@ export default function EditInspectionPage() {
 
   // Filter items by category
   const getItemsByCategory = (category: string) => {
-    return formData.items?.filter(item => item.category === category) || [];
+    const categoryMap: { [key: string]: string } = {
+      "general": "general building",
+      "control": "control equipment",
+      "transformer": "power transformer",
+      "outdoor": "outdoor equipment"
+    };
+    return formData.items?.filter(item => item.category === categoryMap[category]) || [];
   };
 
   // Handle form submission
@@ -236,17 +241,18 @@ export default function EditInspectionPage() {
                   </TabsList>
                   
                   {/* General Building */}
-                  <TabsContent value="general" className="space-y-6">
+                  <TabsContent value="general" className="space-y-4">
                     {getItemsByCategory("general").map((item) => (
                       <div key={item.id} className="border rounded-lg p-4">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2 gap-4">
-                          <h3 className="text-base font-medium flex-1">{item.name}</h3>
-                          <div className="flex items-center space-x-6">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-1">
+                            <h4 className="font-medium">{item.name}</h4>
+                            <p className="text-sm text-muted-foreground">{item.description}</p>
+                          </div>
+                          <div className="flex items-center space-x-4">
                             <RadioGroup
                               value={item.status}
-                              onValueChange={(value: ConditionStatus) => 
-                                updateInspectionItem(item.id, 'status', value)
-                              }
+                              onValueChange={(value) => updateInspectionItem(item.id, 'status', value as ConditionStatus)}
                               className="flex items-center space-x-4"
                             >
                               <div className="flex items-center space-x-2">
@@ -304,17 +310,18 @@ export default function EditInspectionPage() {
                   </TabsContent>
                   
                   {/* Control Equipment */}
-                  <TabsContent value="control" className="space-y-6">
+                  <TabsContent value="control" className="space-y-4">
                     {getItemsByCategory("control").map((item) => (
                       <div key={item.id} className="border rounded-lg p-4">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2 gap-4">
-                          <h3 className="text-base font-medium flex-1">{item.name}</h3>
-                          <div className="flex items-center space-x-6">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-1">
+                            <h4 className="font-medium">{item.name}</h4>
+                            <p className="text-sm text-muted-foreground">{item.description}</p>
+                          </div>
+                          <div className="flex items-center space-x-4">
                             <RadioGroup
                               value={item.status}
-                              onValueChange={(value: ConditionStatus) => 
-                                updateInspectionItem(item.id, 'status', value)
-                              }
+                              onValueChange={(value) => updateInspectionItem(item.id, 'status', value as ConditionStatus)}
                               className="flex items-center space-x-4"
                             >
                               <div className="flex items-center space-x-2">
@@ -378,17 +385,18 @@ export default function EditInspectionPage() {
                   </TabsContent>
                   
                   {/* Power Transformer */}
-                  <TabsContent value="transformer" className="space-y-6">
+                  <TabsContent value="transformer" className="space-y-4">
                     {getItemsByCategory("transformer").map((item) => (
                       <div key={item.id} className="border rounded-lg p-4">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2 gap-4">
-                          <h3 className="text-base font-medium flex-1">{item.name}</h3>
-                          <div className="flex items-center space-x-6">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-1">
+                            <h4 className="font-medium">{item.name}</h4>
+                            <p className="text-sm text-muted-foreground">{item.description}</p>
+                          </div>
+                          <div className="flex items-center space-x-4">
                             <RadioGroup
                               value={item.status}
-                              onValueChange={(value: ConditionStatus) => 
-                                updateInspectionItem(item.id, 'status', value)
-                              }
+                              onValueChange={(value) => updateInspectionItem(item.id, 'status', value as ConditionStatus)}
                               className="flex items-center space-x-4"
                             >
                               <div className="flex items-center space-x-2">
@@ -452,17 +460,18 @@ export default function EditInspectionPage() {
                   </TabsContent>
                   
                   {/* Outdoor Equipment */}
-                  <TabsContent value="outdoor" className="space-y-6">
+                  <TabsContent value="outdoor" className="space-y-4">
                     {getItemsByCategory("outdoor").map((item) => (
                       <div key={item.id} className="border rounded-lg p-4">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-2 gap-4">
-                          <h3 className="text-base font-medium flex-1">{item.name}</h3>
-                          <div className="flex items-center space-x-6">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-1">
+                            <h4 className="font-medium">{item.name}</h4>
+                            <p className="text-sm text-muted-foreground">{item.description}</p>
+                          </div>
+                          <div className="flex items-center space-x-4">
                             <RadioGroup
                               value={item.status}
-                              onValueChange={(value: ConditionStatus) => 
-                                updateInspectionItem(item.id, 'status', value)
-                              }
+                              onValueChange={(value) => updateInspectionItem(item.id, 'status', value as ConditionStatus)}
                               className="flex items-center space-x-4"
                             >
                               <div className="flex items-center space-x-2">

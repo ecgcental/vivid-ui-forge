@@ -22,6 +22,7 @@ import VITInspectionPage from "./pages/asset-management/VITInspectionPage";
 import VITInspectionManagementPage from "./pages/asset-management/VITInspectionManagementPage";
 import VITInspectionDetailsPage from "./pages/asset-management/VITInspectionDetailsPage";
 import EditVITInspectionPage from "./pages/asset-management/EditVITInspectionPage";
+import VITInspectionFormPage from "./pages/asset-management/VITInspectionFormPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,7 +52,7 @@ const App = () => (
               <Route path="/asset-management/vit-inspection-management" element={<VITInspectionManagementPage />} />
               <Route path="/asset-management/vit-inspection-details/:id" element={<VITInspectionDetailsPage />} />
               <Route path="/asset-management/edit-vit-inspection/:id" element={<EditVITInspectionPage />} />
-              <Route path="/asset-management/vit-inspection-form/:id" element={<VITInspectionPage />} />
+              <Route path="/asset-management/vit-inspection-form/:id" element={<VITInspectionFormPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

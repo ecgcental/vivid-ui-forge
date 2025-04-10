@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { useNavigate } from "react-router-dom";
 import {
@@ -16,11 +16,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SubstationInspection } from "@/lib/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/components/ui/sonner";
-import { Eye, FileText, Pencil, Trash2, Download } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { useData } from "@/contexts/DataContext";
-import { format } from "date-fns";
-import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import { formatDate } from "@/utils/calculations";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function InspectionManagementPage() {
   const { user } = useAuth();
@@ -50,156 +56,12 @@ export default function InspectionManagementPage() {
     }
   };
 
-  const exportToPDF = (inspection: SubstationInspection) => {
-    const doc = new jsPDF();
-    
-    // Add title
-    doc.setFontSize(18);
-    doc.text("Substation Inspection Report", 14, 20);
-    
-    // Add metadata
-    doc.setFontSize(12);
-    doc.text(`Substation: ${inspection.substationNo}`, 14, 30);
-    doc.text(`Region: ${inspection.region}`, 14, 36);
-    doc.text(`District: ${inspection.district}`, 14, 42);
-    doc.text(`Date: ${format(new Date(inspection.date), "PPP")}`, 14, 48);
-    doc.text(`Type: ${inspection.type}`, 14, 54);
-    
-    // Group items by category
-    const itemsByCategory = inspection.items.reduce((acc, item) => {
-      if (!acc[item.category]) {
-        acc[item.category] = [];
-      }
-      acc[item.category].push(item);
-      return acc;
-    }, {} as Record<string, typeof inspection.items>);
-    
-    let yPos = 64;
-    
-    // Add items by category
-    Object.entries(itemsByCategory).forEach(([category, items]) => {
-      // Add category title
-      yPos += 10;
-      doc.setFontSize(14);
-      doc.text(category.charAt(0).toUpperCase() + category.slice(1), 14, yPos);
-      yPos += 6;
-      
-      // Add table for this category
-      // @ts-ignore - jsPDF types are not complete
-      doc.autoTable({
-        startY: yPos,
-        head: [["Item", "Status", "Remarks"]],
-        body: items.map(item => [
-          item.name,
-          item.status === "good" ? "Good" : "Bad",
-          item.remarks || "-"
-        ]),
-        margin: { left: 14 },
-        styles: { overflow: 'linebreak' },
-        columnStyles: {
-          0: { cellWidth: 80 },
-          1: { cellWidth: 30 },
-          2: { cellWidth: 70 }
-        }
-      });
-      
-      // @ts-ignore - jsPDF types are not complete
-      yPos = doc.lastAutoTable.finalY + 10;
-      
-      // Add new page if needed
-      if (yPos > 270) {
-        doc.addPage();
-        yPos = 20;
-      }
-    });
-    
-    // Save PDF
-    doc.save(`inspection-${inspection.substationNo}-${inspection.date}.pdf`);
-  };
-
-  const exportToCSV = (inspection: SubstationInspection) => {
-    // Prepare CSV content
-    const headers = ["Category", "Item", "Status", "Remarks"];
-    const rows = inspection.items.map(item => [
-      item.category,
-      item.name,
-      item.status,
-      item.remarks
-    ]);
-    
-    // Convert to CSV
-    const csvContent = [
-      headers.join(","),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
-    ].join("\n");
-    
-    // Create download link
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `inspection-${inspection.substationNo}-${inspection.date}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-  
-  const exportAllToCSV = () => {
-    if (!savedInspections || savedInspections.length === 0) {
-      toast.error("No inspections to export");
-      return;
-    }
-    
-    // Prepare CSV content
-    const headers = ["ID", "Date", "Region", "District", "Substation No", "Type", "Items Count", "Status Summary"];
-    const rows = savedInspections.map(inspection => {
-      const goodItems = inspection.items.filter(item => item.status === "good").length;
-      const badItems = inspection.items.filter(item => item.status === "bad").length;
-      const statusSummary = `${goodItems} good, ${badItems} bad`;
-      
-      return [
-        inspection.id,
-        inspection.date,
-        inspection.region,
-        inspection.district,
-        inspection.substationNo,
-        inspection.type,
-        inspection.items.length,
-        statusSummary
-      ];
-    });
-    
-    // Convert to CSV
-    const csvContent = [
-      headers.join(","),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
-    ].join("\n");
-    
-    // Create download link
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `all-inspections-${format(new Date(), "yyyy-MM-dd")}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   return (
     <Layout>
       <div className="container mx-auto py-8">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold tracking-tight">Substation Inspections</h1>
           <div className="flex space-x-4">
-            <Button 
-              onClick={exportAllToCSV}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <Download size={16} />
-              Export All to CSV
-            </Button>
             <Button 
               onClick={() => navigate("/asset-management/substation-inspection")}
               variant="default"
@@ -240,13 +102,14 @@ export default function InspectionManagementPage() {
             <TableBody>
               {filteredInspections.length > 0 ? (
                 filteredInspections.map((inspection) => {
-                  const goodItems = inspection.items.filter(item => item.status === "good").length;
-                  const badItems = inspection.items.filter(item => item.status === "bad").length;
+                  const allItems = inspection.items.flatMap(category => category.items || []);
+                  const goodItems = allItems.filter(item => item?.status === "good").length;
+                  const badItems = allItems.filter(item => item?.status === "bad").length;
                   
                   return (
                     <TableRow key={inspection.id}>
                       <TableCell>
-                        {format(new Date(inspection.date), "PPP")}
+                        {formatDate(inspection.date)}
                       </TableCell>
                       <TableCell className="font-medium">{inspection.substationNo}</TableCell>
                       <TableCell>{inspection.region}</TableCell>
@@ -265,49 +128,49 @@ export default function InspectionManagementPage() {
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleView(inspection.id)}
-                            title="View"
-                          >
-                            <Eye size={16} />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleEdit(inspection.id)}
-                            title="Edit"
-                          >
-                            <Pencil size={16} />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => exportToPDF(inspection)}
-                            title="Export to PDF"
-                          >
-                            <FileText size={16} />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => exportToCSV(inspection)}
-                            title="Export to CSV"
-                          >
-                            <Download size={16} />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => handleDelete(inspection.id)}
-                            className="text-red-500 hover:text-red-700"
-                            title="Delete"
-                          >
-                            <Trash2 size={16} />
-                          </Button>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="h-4 w-4"
+                              >
+                                <circle cx="12" cy="12" r="1" />
+                                <circle cx="19" cy="12" r="1" />
+                                <circle cx="5" cy="12" r="1" />
+                              </svg>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleView(inspection.id)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEdit(inspection.id)}>
+                              <Pencil className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              className="text-red-600" 
+                              onClick={() => handleDelete(inspection.id)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   );
