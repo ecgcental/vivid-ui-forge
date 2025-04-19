@@ -1,24 +1,56 @@
-# FaultMaster - Power Distribution Fault Management System
+# FaultMaster - Power Distribution Asset Management System
 
 ## Overview
-FaultMaster is a comprehensive fault management and analytics system designed for power distribution networks. It provides real-time fault tracking, advanced analytics, and detailed reporting capabilities for utility companies and power distribution operators.
+FaultMaster is a comprehensive asset management and fault tracking system designed for power distribution networks. It provides real-time asset inspection, fault tracking, advanced analytics, and detailed reporting capabilities for utility companies and power distribution operators.
 
 ## Key Features
+
+### Asset Management
+- **Overhead Line Inspections**
+  - Comprehensive pole condition assessment
+  - Stay, cross arm, and insulator condition tracking
+  - Conductor and lightning arrester inspection
+  - Detailed condition reporting with images
+  - PDF and CSV export capabilities
+
+- **Substation Inspections**
+  - Transformer condition monitoring
+  - Switchgear and protection device inspection
+  - Detailed equipment condition reporting
+
+- **Load Monitoring**
+  - Real-time load tracking
+  - Peak demand analysis
+  - Load balancing recommendations
+
+### Fault Management
 - Real-time fault tracking and management
 - Advanced analytics and reporting
 - MTTR (Mean Time To Repair) analysis
 - Reliability indices calculation (SAIDI, SAIFI, CAIDI)
+
+### User Management
 - Multi-level user roles and permissions
 - Geographic region and district management
-- Detailed reporting and export capabilities
+- User activity tracking and audit logs
+
+### Reporting
+- Detailed inspection reports
+- Fault analysis reports
+- Performance metrics
+- Export to PDF and CSV formats
+- Custom report generation
 
 ## Technical Stack
-- Frontend: React, TypeScript, Tailwind CSS
-- State Management: React Context
-- UI Components: Shadcn UI
-- Charts: Recharts
-- PDF Generation: jsPDF
-- Date Handling: date-fns
+- **Frontend**: React, TypeScript, Tailwind CSS
+- **State Management**: React Context
+- **UI Components**: Shadcn UI
+- **Charts**: Recharts
+- **PDF Generation**: jsPDF, jspdf-autotable
+- **Date Handling**: date-fns
+- **Form Handling**: React Hook Form
+- **Data Validation**: Zod
+- **Icons**: Lucide React
 
 ## System Requirements
 - Node.js 16.x or higher
@@ -26,24 +58,40 @@ FaultMaster is a comprehensive fault management and analytics system designed fo
 - Modern web browser (Chrome, Firefox, Safari, Edge)
 
 ## Installation
-1. Clone the repository
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/ECGOPS/OMS.git
+   cd OMS
+   ```
+
 2. Install dependencies:
    ```bash
    npm install
    ```
+
 3. Start the development server:
    ```bash
    npm run dev
    ```
 
+4. Build for production:
+   ```bash
+   npm run build
+   ```
+
 ## Project Structure
 ```
 src/
-├── components/     # Reusable UI components
-├── contexts/       # React contexts for state management
-├── lib/           # Utility functions and types
-├── pages/         # Application pages
-└── utils/         # Helper functions
+├── components/          # Reusable UI components
+│   ├── overhead-line/  # Overhead line inspection components
+│   ├── substation/     # Substation inspection components
+│   ├── load-monitoring/# Load monitoring components
+│   └── shared/         # Shared components
+├── contexts/           # React contexts for state management
+├── lib/               # Utility functions and types
+├── pages/             # Application pages
+├── utils/             # Helper functions
+└── data/              # JSON data files
 ```
 
 ## Documentation
@@ -52,10 +100,17 @@ src/
 - [API Documentation](docs/api.md)
 - [Deployment Guide](docs/deployment.md)
 
+## Contributing
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
 ## License
 Proprietary - All rights reserved
 
 ## Support
 For support and inquiries, please contact:
-- Email: support@faultmaster.com
-- Phone: +1 (555) 123-4567
+- Email: afiifi@ecggh.com
+- Phone: +233245003731
