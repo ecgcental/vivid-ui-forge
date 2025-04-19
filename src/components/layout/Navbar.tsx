@@ -134,6 +134,19 @@ export function Navbar() {
             </NavigationMenu>
           </div>
           
+          {/* District Population Menu */}
+          {user && (user.role === "global_engineer" || user.role === "district_engineer" || user.role === "regional_engineer") && (
+            <Link 
+              to="/district-population" 
+              className={cn(
+                "text-foreground hover:text-primary transition-colors",
+                isActiveRoute("/district-population") && "text-primary"
+              )}
+            >
+              District Population
+            </Link>
+          )}
+          
           {/* Only show User Management for global and regional engineers */}
           {user && (user.role === "global_engineer" || user.role === "regional_engineer") && (
             <Link to="/user-management" className="text-foreground hover:text-primary transition-colors">

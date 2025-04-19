@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -224,6 +223,7 @@ export function FilterBar({
                     <SelectItem value="Unplanned">Unplanned</SelectItem>
                     <SelectItem value="Emergency">Emergency</SelectItem>
                     <SelectItem value="Load Shedding">Load Shedding</SelectItem>
+                    <SelectItem value="GridCo Outages">GridCo Outages</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

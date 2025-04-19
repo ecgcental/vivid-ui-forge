@@ -59,8 +59,10 @@ export default function AnalyticsPage() {
   const [filteredFaults, setFilteredFaults] = useState([]);
   const [filterRegion, setFilterRegion] = useState<string | undefined>(undefined);
   const [filterDistrict, setFilterDistrict] = useState<string | undefined>(undefined);
+  const [filterFaultType, setFilterFaultType] = useState<string | undefined>(undefined);
   const [selectedRegion, setSelectedRegion] = useState<string>("");
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
+  const [selectedFaultType, setSelectedFaultType] = useState<string>("all");
   const [selectedFault, setSelectedFault] = useState<any>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [dateRange, setDateRange] = useState<string>("all");
@@ -126,18 +128,20 @@ export default function AnalyticsPage() {
       console.log('[DataLoadEffect] Loading data with filters:', {
         filterRegion,
         filterDistrict,
+        filterFaultType,
         dateRange,
         startDate,
         endDate
       });
       loadData();
     }
-  }, [isAuthenticated, filterRegion, filterDistrict, dateRange, startDate, endDate]);
+  }, [isAuthenticated, filterRegion, filterDistrict, filterFaultType, dateRange, startDate, endDate]);
 
   const loadData = () => {
     console.log('[loadData] Starting with filters:', {
       filterRegion,
       filterDistrict,
+      filterFaultType,
       dateRange,
       startDate,
       endDate,
@@ -156,6 +160,16 @@ export default function AnalyticsPage() {
     
     // Apply date range filter
     let filteredByDate = [...op5Faults, ...controlOutages];
+
+    // Apply fault type filter if needed
+    if (filterFaultType && filterFaultType !== "all") {
+      filteredByDate = filteredByDate.filter(fault => {
+        if ('faultType' in fault) {
+          return fault.faultType === filterFaultType;
+        }
+        return false;
+      });
+    }
 
     // Apply date range filter if needed
     if (dateRange !== "all") {
@@ -426,6 +440,17 @@ export default function AnalyticsPage() {
     if (date && startWeek && endWeek) {
       loadData();
     }
+  };
+  
+  const handleFaultTypeChange = (value: string) => {
+    console.log('[handleFaultTypeChange] New fault type:', value);
+    
+    if (value === "all") {
+      setFilterFaultType(undefined);
+    } else {
+      setFilterFaultType(value);
+    }
+    setSelectedFaultType(value);
   };
   
   // Add useEffect to watch for date range changes
@@ -964,41 +989,68 @@ export default function AnalyticsPage() {
         </div>
         
         <div className="flex flex-col gap-4 mb-4 sm:mb-8">
-          <div className="flex flex-wrap items-center gap-2">
-            {canChangeFilters && (
-              <>
-                <Select value={selectedRegion} onValueChange={handleRegionChange} disabled={user?.role === "district_engineer"}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <SelectValue placeholder="Filter by Region" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Regions</SelectItem>
-                    {regions.map(region => (
-                      <SelectItem key={region.id} value={region.id}>
-                        {region.name}
+          <div className="flex flex-wrap gap-4">
+            <div className="flex-1 min-w-[200px]">
+              <Select
+                value={selectedRegion}
+                onValueChange={handleRegionChange}
+                disabled={user?.role === "district_engineer" || user?.role === "regional_engineer"}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Region" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Regions</SelectItem>
+                  {regions.map((region) => (
+                    <SelectItem key={region.id} value={region.id}>
+                      {region.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1 min-w-[200px]">
+              <Select
+                value={selectedDistrict}
+                onValueChange={handleDistrictChange}
+                disabled={!selectedRegion || user?.role === "district_engineer"}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select District" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Districts</SelectItem>
+                  {districts
+                    .filter((d) => !selectedRegion || d.regionId === selectedRegion)
+                    .map((district) => (
+                      <SelectItem key={district.id} value={district.id}>
+                        {district.name}
                       </SelectItem>
                     ))}
-                  </SelectContent>
-                </Select>
-                
-                {selectedRegion && selectedRegion !== "all" && (
-                  <Select value={selectedDistrict} onValueChange={handleDistrictChange} disabled={user?.role === "district_engineer"}>
-                    <SelectTrigger className="w-full sm:w-[180px]">
-                      <SelectValue placeholder="Filter by District" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Districts</SelectItem>
-                      {availableDistricts.map(district => (
-                        <SelectItem key={district.id} value={district.id}>
-                          {district.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </>
-            )}
-            
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1 min-w-[200px]">
+              <Select
+                value={selectedFaultType}
+                onValueChange={handleFaultTypeChange}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Fault Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Fault Types</SelectItem>
+                  <SelectItem value="Planned">Planned</SelectItem>
+                  <SelectItem value="Unplanned">Unplanned</SelectItem>
+                  <SelectItem value="Emergency">Emergency</SelectItem>
+                  <SelectItem value="Load Shedding">Load Shedding</SelectItem>
+                  <SelectItem value="GridCo Outage">GridCo Outage</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-2">
             <Select value={dateRange} onValueChange={handleDateRangeChange}>
               <SelectTrigger className="w-full sm:w-[180px]">
                 <SelectValue placeholder="Filter by Date Range">

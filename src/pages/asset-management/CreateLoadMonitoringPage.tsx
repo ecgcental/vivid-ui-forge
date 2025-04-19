@@ -355,10 +355,10 @@ export default function CreateLoadMonitoringPage() {
                   <div className="space-y-2">
                     <Label htmlFor="region">Region</Label>
                     <Select
-                      value={formData.regionId || ""} // Use ID directly
-                      onValueChange={handleRegionChange} // Use custom handler
+                      value={formData.regionId || ""}
+                      onValueChange={handleRegionChange}
                       required
-                      disabled={user?.role === "district_engineer"} // Disable for district engineers
+                      disabled={user?.role === "district_engineer" || user?.role === "regional_engineer"}
                     >
                       <SelectTrigger id="region">
                         <SelectValue placeholder="Select Region" />

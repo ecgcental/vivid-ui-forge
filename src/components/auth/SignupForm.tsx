@@ -54,8 +54,23 @@ export function SignupForm() {
       return false;
     }
     
-    if (password.length < 6) {
-      setPasswordError("Password must be at least 6 characters");
+    if (password.length < 8) {
+      setPasswordError("Password must be at least 8 characters long");
+      return false;
+    }
+    
+    if (!/[A-Za-z]/.test(password)) {
+      setPasswordError("Password must contain at least one letter");
+      return false;
+    }
+    
+    if (!/[0-9]/.test(password)) {
+      setPasswordError("Password must contain at least one number");
+      return false;
+    }
+    
+    if (!/^[A-Za-z0-9]+$/.test(password)) {
+      setPasswordError("Password can only contain letters and numbers");
       return false;
     }
     
@@ -142,6 +157,9 @@ export function SignupForm() {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
+            <p className="text-xs text-muted-foreground">
+              Password must be at least 8 characters long and contain at least one letter and one number
+            </p>
           </div>
           
           <div className="space-y-2">

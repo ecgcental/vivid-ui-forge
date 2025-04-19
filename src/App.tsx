@@ -40,9 +40,9 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <DataProvider>
-          <QueryClientProvider client={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <DataProvider>
             <TooltipProvider>
               <Routes>
                 {/* Public routes */}
@@ -73,6 +73,14 @@ function App() {
                 <Route path="/user-management" element={
                   <ProtectedRoute requiredRole="global_engineer">
                     <UserManagementPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/district-population" element={
+                  <ProtectedRoute>
+                    <AccessControlWrapper type="asset">
+                      <UserManagementPage />
+                    </AccessControlWrapper>
                   </ProtectedRoute>
                 } />
 
@@ -187,9 +195,9 @@ function App() {
               <Toaster />
               <Sonner />
             </TooltipProvider>
-          </QueryClientProvider>
-        </DataProvider>
-      </AuthProvider>
+          </DataProvider>
+        </AuthProvider>
+      </QueryClientProvider>
     </BrowserRouter>
   );
 }

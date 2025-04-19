@@ -19,6 +19,7 @@ import { Loader2, MapPin } from "lucide-react";
 import { OverheadLineInspection } from "@/lib/types";
 import { getRegions, getDistricts } from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
+import { showNotification, showServiceWorkerNotification } from '@/utils/notifications';
 
 interface OverheadLineInspectionFormProps {
   inspection?: OverheadLineInspection | null;
@@ -277,6 +278,25 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
     );
   }, [toast]);
 
+  const handleStatusChange = (status: ConditionStatus) => {
+    setFormData(prev => ({
+      ...prev,
+      status
+    }));
+
+    // Show notification for status change
+    const notificationTitle = 'Inspection Status Updated';
+    const notificationBody = `Status changed to ${status}`;
+    
+    // Try service worker notification first, fallback to regular notification
+    showServiceWorkerNotification(notificationTitle, {
+      body: notificationBody,
+      data: { url: window.location.href }
+    }).catch(() => {
+      showNotification(notificationTitle, notificationBody);
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -284,6 +304,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
     try {
       const submissionData = {
         ...formData,
+        status: formData.status || "pending",
         poleCondition: {
           tilted: formData.poleCondition?.tilted || false,
           rotten: formData.poleCondition?.rotten || false,
@@ -461,6 +482,23 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
       <CardContent className="p-6">
         <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select
+              value={formData.status}
+              onValueChange={handleStatusChange}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="in-progress">In Progress</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="failed">Failed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="region">Region *</Label>
             <Select

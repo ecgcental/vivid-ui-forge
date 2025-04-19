@@ -35,7 +35,19 @@ export type District = {
   population: RegionPopulation;
 };
 
-export type FaultType = "Planned" | "Unplanned" | "Emergency" | "Load Shedding";
+export type FaultType = "Planned" | "Unplanned" | "Emergency" | "Load Shedding" | "GridCo Outages";
+
+export type GridCoOutageType =
+  | "TRANSMISSION LINE FAULT"
+  | "SUBSTATION EQUIPMENT FAILURE"
+  | "PLANNED MAINTENANCE"
+  | "SYSTEM DISTURBANCE"
+  | "GENERATION SHORTFALL"
+  | "TRANSMISSION CONSTRAINT"
+  | "PROTECTION SYSTEM OPERATION"
+  | "WEATHER RELATED"
+  | "THIRD PARTY DAMAGE"
+  | "OTHER";
 
 export type UnplannedFaultType = 
   | "JUMPER CUT"

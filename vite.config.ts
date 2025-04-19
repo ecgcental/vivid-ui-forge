@@ -18,27 +18,27 @@ export default defineConfig(({ mode }) => ({
     componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: ['favicon.ico', 'lovable-uploads/ecg-logo.png'],
       manifest: {
-        name: 'ECG Asset Management System',
-        short_name: 'ECG AMS',
-        description: 'Asset Management System for ECG',
+        name: 'ECG Outage Management System',
+        short_name: 'ECG OMS',
+        description: 'Outage Management System for ECG',
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
         icons: [
           {
-            src: '/icons/icon-192x192.png',
+            src: '/lovable-uploads/ecg-logo.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: '/icons/icon-512x512.png',
+            src: '/lovable-uploads/ecg-logo.png',
             sizes: '512x512',
             type: 'image/png'
           },
           {
-            src: '/icons/icon-512x512.png',
+            src: '/lovable-uploads/ecg-logo.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'

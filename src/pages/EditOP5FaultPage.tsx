@@ -547,6 +547,7 @@ export default function EditOP5FaultPage() {
                         <SelectItem value="Unplanned">Unplanned</SelectItem>
                         <SelectItem value="Emergency">Emergency</SelectItem>
                         <SelectItem value="Load Shedding">Load Shedding</SelectItem>
+                        <SelectItem value="GridCo Outages">GridCo Outages</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

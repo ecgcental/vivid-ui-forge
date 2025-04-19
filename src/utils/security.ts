@@ -15,7 +15,11 @@ export interface SessionToken {
 // Input validation schemas
 export const userSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(8).regex(/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/),
+  password: z.string()
+    .min(8, "Password must be at least 8 characters long")
+    .regex(/[A-Za-z]/, "Password must contain at least one letter")
+    .regex(/[0-9]/, "Password must contain at least one number")
+    .regex(/^[A-Za-z0-9]+$/, "Password can only contain letters and numbers"),
   name: z.string().min(2),
   role: z.enum(['district_engineer', 'regional_engineer', 'global_engineer']),
   region: z.string().optional(),
@@ -24,6 +28,7 @@ export const userSchema = z.object({
 
 // Password hashing
 export const hashPassword = (password: string): string => {
+  // Compute MD5 hash of the password
   return SHA256(password).toString();
 };
 

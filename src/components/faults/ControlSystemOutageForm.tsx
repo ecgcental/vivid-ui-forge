@@ -29,6 +29,7 @@ import {
   calculateUnservedEnergy
 } from "@/utils/calculations";
 import { toast } from "@/components/ui/sonner";
+import { showNotification, showServiceWorkerNotification } from '@/utils/notifications';
 
 interface ControlSystemOutageFormProps {
   defaultRegionId?: string;
@@ -103,6 +104,17 @@ export function ControlSystemOutageForm({ defaultRegionId = "", defaultDistrictI
     }
   }, [occurrenceDate, restorationDate, loadMW]);
   
+  // Add these helper functions before the handleSubmit function
+  const getRegionName = (regionId: string) => {
+    const region = regions.find(r => r.id === regionId);
+    return region?.name || regionId;
+  };
+
+  const getDistrictName = (districtId: string) => {
+    const district = districts.find(d => d.id === districtId);
+    return district?.name || districtId;
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -132,31 +144,50 @@ export function ControlSystemOutageForm({ defaultRegionId = "", defaultDistrictI
     setIsSubmitting(true);
     
     try {
-      addControlOutage({
-        regionId,
-        districtId,
-        occurrenceDate,
-        faultType,
-        specificFaultType: faultType === "Unplanned" ? specificFaultType : undefined,
-        restorationDate: restorationDate || null,
+      // Format dates
+      const formattedOccurrenceDate = new Date(occurrenceDate).toISOString();
+      const formattedRestorationDate = restorationDate ? new Date(restorationDate).toISOString() : null;
+
+      const formDataToSubmit: Omit<ControlSystemOutage, "id" | "status"> = {
+        regionId: regionId || "",
+        districtId: districtId || "",
+        occurrenceDate: formattedOccurrenceDate,
+        faultType: faultType,
+        specificFaultType: specificFaultType || "",
         customersAffected: {
-          rural: ruralAffected,
-          urban: urbanAffected,
-          metro: metroAffected
+          rural: ruralAffected || 0,
+          urban: urbanAffected || 0,
+          metro: metroAffected || 0
         },
-        reason,
-        controlPanelIndications: indications,
-        areaAffected,
-        loadMW,
+        restorationDate: formattedRestorationDate,
+        reason: reason || "",
+        controlPanelIndications: indications || "",
+        areaAffected: areaAffected || "",
+        loadMW: loadMW || 0,
         unservedEnergyMWh: unservedEnergyMWh || 0,
         createdBy: user?.id || 'unknown',
         createdAt: new Date().toISOString()
+      };
+
+      await addControlOutage(formDataToSubmit);
+      
+      // Show notification for successful outage creation
+      const notificationTitle = 'Control System Outage Created';
+      const notificationBody = `New ${faultType} outage created in ${getRegionName(regionId)} - ${getDistrictName(districtId)}`;
+      
+      // Show both types of notifications
+      showServiceWorkerNotification(notificationTitle, {
+        body: notificationBody,
+        data: { url: window.location.href }
       });
       
+      showNotification(notificationTitle, notificationBody);
+      
+      toast.success("Control system outage created successfully");
       navigate("/dashboard");
     } catch (error) {
-      console.error("Error submitting control system outage:", error);
-      toast.error("Failed to submit outage report");
+      console.error("Error creating control system outage:", error);
+      toast.error("Failed to create control system outage");
     } finally {
       setIsSubmitting(false);
     }
@@ -250,6 +281,7 @@ export function ControlSystemOutageForm({ defaultRegionId = "", defaultDistrictI
                   <SelectItem value="Unplanned">Unplanned</SelectItem>
                   <SelectItem value="Emergency">Emergency</SelectItem>
                   <SelectItem value="Load Shedding">Load Shedding</SelectItem>
+                  <SelectItem value="GridCo Outages">GridCo Outages</SelectItem>
                 </SelectContent>
               </Select>
             </div>

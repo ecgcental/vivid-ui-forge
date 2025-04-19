@@ -28,59 +28,11 @@ import { useData } from "@/contexts/DataContext";
 import { EditIcon, PlusCircle, Trash2, Copy } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 import { validateUserRoleAssignment, getFilteredRegionsAndDistricts } from "@/utils/user-utils";
-
-// Mock list of users
-const MOCK_USERS: User[] = [
-  {
-    id: "1",
-    email: "district@ecg.com",
-    name: "District Engineer",
-    role: "district_engineer",
-    region: "ACCRA EAST REGION",
-    district: "MAKOLA"
-  },
-  {
-    id: "2",
-    email: "regional@ecg.com",
-    name: "Regional Engineer",
-    role: "regional_engineer",
-    region: "ACCRA EAST REGION"
-  },
-  {
-    id: "3",
-    email: "global@ecg.com",
-    name: "Global Engineer",
-    role: "global_engineer"
-  },
-  {
-    id: "4",
-    email: "district2@ecg.com",
-    name: "Tema District Engineer",
-    role: "district_engineer",
-    region: "TEMA REGION",
-    district: "TEMA NORTH"
-  },
-  {
-    id: "5",
-    email: "district3@ecg.com",
-    name: "Kumasi District Engineer",
-    role: "district_engineer",
-    region: "ASHANTI EAST REGION",
-    district: "KUMASI EAST"
-  },
-  {
-    id: "6",
-    email: "regional2@ecg.com",
-    name: "Ashanti Regional Engineer",
-    role: "regional_engineer",
-    region: "ASHANTI EAST REGION"
-  }
-];
+import { hashPassword } from "@/utils/security";
 
 export function UsersList() {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, users, setUsers } = useAuth();
   const { regions, districts } = useData();
-  const [users, setUsers] = useState<User[]>(MOCK_USERS);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -150,19 +102,19 @@ export function UsersList() {
     setTempPassword(tempPass);
     
     const newUser: User = {
-      id: (users.length + 1).toString(),
+      id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       name: newName,
       email: newEmail,
       role: newRole,
       region: newRole !== "global_engineer" ? newRegion : undefined,
       district: newRole === "district_engineer" ? newDistrict : undefined,
-      tempPassword: tempPass,
-      mustChangePassword: true
+      tempPassword: tempPass, // Store the temporary password
+      mustChangePassword: true,
+      password: hashPassword(tempPass) // Hash the temporary password
     };
     
-    // Add to both local state and MOCK_USERS
-    setUsers([...users, newUser]);
-    MOCK_USERS.push(newUser);
+    // Add to users state
+    setUsers(prevUsers => [...prevUsers, newUser]);
     
     resetForm();
     setIsAddDialogOpen(false);
@@ -184,7 +136,8 @@ export function UsersList() {
       return;
     }
     
-    const updatedUsers = users.map(user => 
+    // Update user in state
+    setUsers(prevUsers => prevUsers.map(user => 
       user.id === selectedUser.id
         ? {
             ...user,
@@ -195,9 +148,8 @@ export function UsersList() {
             district: newRole === "district_engineer" ? newDistrict : undefined
           }
         : user
-    );
+    ));
     
-    setUsers(updatedUsers);
     resetForm();
     setIsEditDialogOpen(false);
     toast.success("User updated successfully");
@@ -206,8 +158,8 @@ export function UsersList() {
   const handleDeleteUser = () => {
     if (!selectedUser) return;
     
-    const updatedUsers = users.filter(user => user.id !== selectedUser.id);
-    setUsers(updatedUsers);
+    // Remove user from state
+    setUsers(prevUsers => prevUsers.filter(user => user.id !== selectedUser.id));
     setSelectedUser(null);
     setIsDeleteDialogOpen(false);
     toast.success("User deleted successfully");
@@ -369,7 +321,7 @@ export function UsersList() {
               <Input
                 id="email"
                 type="email"
-                placeholder="john@example.com"
+                placeholder="name@example.com"
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
               />

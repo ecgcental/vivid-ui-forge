@@ -10,6 +10,7 @@ import {
   validateUserInput,
   SessionToken
 } from "@/utils/security";
+import { SHA256 } from "crypto-js";
 
 // Export the interface
 export interface AuthContextType {
@@ -19,12 +20,15 @@ export interface AuthContextType {
   signup: (email: string, password: string, name: string, role: UserRole, region?: string, district?: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  users: User[];
+  setUsers: React.Dispatch<React.SetStateAction<User[]>>;
+  resetUserPassword: (email: string, newPassword: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Mock users with hashed passwords
-const MOCK_USERS: User[] = [
+const INITIAL_MOCK_USERS: User[] = [
   {
     id: "1",
     email: "district@ecg.com",
@@ -32,7 +36,7 @@ const MOCK_USERS: User[] = [
     role: "district_engineer",
     region: "ACCRA EAST REGION",
     district: "MAKOLA",
-    password: hashPassword("password")
+    password: SHA256("password").toString()
   },
   {
     id: "2",
@@ -40,14 +44,14 @@ const MOCK_USERS: User[] = [
     name: "Regional Engineer",
     role: "regional_engineer",
     region: "ACCRA EAST REGION",
-    password: hashPassword("password")
+    password: SHA256("password").toString()
   },
   {
     id: "3",
     email: "global@ecg.com",
     name: "Global Engineer",
     role: "global_engineer",
-    password: hashPassword("password")
+    password: SHA256("password").toString()
   },
   {
     id: "4",
@@ -56,7 +60,7 @@ const MOCK_USERS: User[] = [
     role: "district_engineer",
     region: "TEMA REGION",
     district: "TEMA NORTH",
-    password: hashPassword("password")
+    password: SHA256("password").toString()
   },
   {
     id: "5",
@@ -65,7 +69,7 @@ const MOCK_USERS: User[] = [
     role: "district_engineer",
     region: "ASHANTI EAST REGION",
     district: "KUMASI EAST",
-    password: hashPassword("password")
+    password: SHA256("password").toString()
   },
   {
     id: "6",
@@ -73,7 +77,7 @@ const MOCK_USERS: User[] = [
     name: "Ashanti Regional Engineer",
     role: "regional_engineer",
     region: "ASHANTI EAST REGION",
-    password: hashPassword("password")
+    password: SHA256("password").toString()
   }
 ];
 
@@ -81,6 +85,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [loginAttempts, setLoginAttempts] = useState<{ [key: string]: { count: number; lastAttempt: number } }>({});
+  const [users, setUsers] = useState<User[]>(() => {
+    // Try to load users from localStorage
+    const storedUsers = localStorage.getItem("ecg_users");
+    if (storedUsers) {
+      try {
+        return JSON.parse(storedUsers);
+      } catch (error) {
+        console.error("Error parsing stored users:", error);
+        return INITIAL_MOCK_USERS;
+      }
+    }
+    return INITIAL_MOCK_USERS;
+  });
+
+  // Save users to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("ecg_users", JSON.stringify(users));
+  }, [users]);
 
   useEffect(() => {
     // Check if session is valid
@@ -89,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const session: SessionToken = JSON.parse(sessionData);
         if (validateSessionToken(session)) {
-          const storedUser = MOCK_USERS.find(u => u.id === session.userId);
+          const storedUser = users.find(u => u.id === session.userId);
           if (storedUser) {
             const { password, ...userWithoutPassword } = storedUser;
             setUser(userWithoutPassword);
@@ -104,7 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
     setLoading(false);
-  }, []);
+  }, [users]);
 
   const checkLoginAttempts = (email: string): boolean => {
     const now = Date.now();
@@ -138,37 +160,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Sanitize inputs
       const sanitizedEmail = sanitizeInput(email);
+      console.log("Attempting login for email:", sanitizedEmail);
+      console.log("Input password:", password);
       
       // Check login attempts
       if (!checkLoginAttempts(sanitizedEmail)) {
         throw new Error("Too many login attempts. Please try again in 15 minutes.");
       }
 
-      // Simulate API call with timeout
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Find user
+      const foundUser = users.find(u => u.email === sanitizedEmail);
+      console.log("Found user:", foundUser ? { 
+        ...foundUser, 
+        password: "***", 
+        tempPassword: "***",
+        hashedInputPassword: hashPassword(password)
+      } : "Not found");
       
-      // Find user and verify password
-      const foundUser = MOCK_USERS.find(u => u.email === sanitizedEmail);
+      if (!foundUser) {
+        console.log("User not found");
+        throw new Error("Invalid email or password");
+      }
+
+      // First check temporary password if it exists
+      if (foundUser.tempPassword && password === foundUser.tempPassword) {
+        console.log("Login successful with temporary password");
+        // Create session
+        const session = generateSessionToken(foundUser.id);
+        storeSession(session);
+        localStorage.setItem("ecg_session", JSON.stringify(session));
+        
+        // Set user without password
+        const { password: _, tempPassword: __, ...userWithoutPassword } = foundUser;
+        setUser(userWithoutPassword);
+        toast.success("Login successful! Please change your password.");
+        return;
+      }
+
+      // Check regular password
+      const hashedPassword = hashPassword(password);
+      console.log("Hashed input password:", hashedPassword);
+      console.log("Stored hashed password:", foundUser.password);
       
-      if (foundUser) {
-        const hashedPassword = hashPassword(password);
-        if (hashedPassword === foundUser.password) {
-          // Create session
-          const session = generateSessionToken(foundUser.id);
-          storeSession(session);
-          localStorage.setItem("ecg_session", JSON.stringify(session));
-          
-          // Set user without password
-          const { password: _, ...userWithoutPassword } = foundUser;
-          setUser(userWithoutPassword);
-          toast.success("Login successful!");
-        } else {
-          throw new Error("Invalid email or password");
-        }
+      if (hashedPassword === foundUser.password) {
+        console.log("Login successful with regular password");
+        // Create session
+        const session = generateSessionToken(foundUser.id);
+        storeSession(session);
+        localStorage.setItem("ecg_session", JSON.stringify(session));
+        
+        // Set user without password
+        const { password: _, tempPassword: __, ...userWithoutPassword } = foundUser;
+        setUser(userWithoutPassword);
+        toast.success("Login successful!");
       } else {
+        console.log("Password mismatch");
         throw new Error("Invalid email or password");
       }
     } catch (error) {
+      console.error("Login error:", error);
       toast.error("Login failed: " + (error as Error).message);
       throw error;
     } finally {
@@ -200,19 +250,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       // Check if user exists
-      if (MOCK_USERS.some(u => u.email === sanitizedInput.email)) {
+      if (users.some(u => u.email === sanitizedInput.email)) {
         throw new Error("User already exists");
       }
       
       // Create new user with hashed password
       const newUser: User = {
-        id: crypto.randomUUID(),
+        id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         ...sanitizedInput,
         password: hashPassword(sanitizedInput.password)
       };
       
-      // In a real app, we would add to database
-      MOCK_USERS.push(newUser);
+      // Add new user to state
+      setUsers(prevUsers => [...prevUsers, newUser]);
       
       // Create session
       const session = generateSessionToken(newUser.id);
@@ -239,6 +289,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success("Logged out successfully!");
   };
 
+  const resetUserPassword = (email: string, newPassword: string) => {
+    setUsers(prevUsers => 
+      prevUsers.map(user => {
+        if (user.email === email) {
+          return {
+            ...user,
+            password: hashPassword(newPassword),
+            tempPassword: undefined,
+            mustChangePassword: false
+          };
+        }
+        return user;
+      })
+    );
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -247,7 +313,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         signup,
         logout,
-        isAuthenticated: !!user
+        isAuthenticated: !!user,
+        users,
+        setUsers,
+        resetUserPassword
       }}
     >
       {children}

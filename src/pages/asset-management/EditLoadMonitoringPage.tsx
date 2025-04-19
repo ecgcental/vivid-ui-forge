@@ -351,7 +351,7 @@ export default function EditLoadMonitoringPage() {
                       value={formData.regionId || ""}
                       onValueChange={handleRegionChange}
                       required
-                      disabled={user?.role === "district_engineer"}
+                      disabled={user?.role === "district_engineer" || user?.role === "regional_engineer"}
                     >
                       <SelectTrigger id="region">
                         <SelectValue placeholder="Select Region" />

@@ -41,6 +41,7 @@ import {
 import { toast } from "@/components/ui/sonner";
 import { formatDuration } from "@/utils/calculations";
 import { v4 as uuidv4 } from 'uuid';
+import { showNotification, showServiceWorkerNotification } from '@/utils/notifications';
 
 interface OP5FormProps {
   defaultRegionId?: string;
@@ -214,6 +215,17 @@ export function OP5Form({ defaultRegionId = "", defaultDistrictId = "", onSubmit
   const [currentMaterialDetails, setCurrentMaterialDetails] = useState<Partial<MaterialUsed>>({});
   // --- End State for Materials Used --- 
   
+  // Add these helper functions before the handleSubmit function
+  const getRegionName = (regionId: string) => {
+    const region = regions.find(r => r.id === regionId);
+    return region?.name || regionId;
+  };
+
+  const getDistrictName = (districtId: string) => {
+    const district = districts.find(d => d.id === districtId);
+    return district?.name || districtId;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -315,6 +327,19 @@ export function OP5Form({ defaultRegionId = "", defaultDistrictId = "", onSubmit
         onSubmit(formDataToSubmit);
       } else {
         await addOP5Fault(formDataToSubmit);
+        
+        // Show notification for successful fault creation
+        const notificationTitle = 'Fault Created';
+        const notificationBody = `New ${outageType} fault created in ${getRegionName(regionId)} - ${getDistrictName(districtId)}`;
+        
+        // Show both types of notifications
+        showServiceWorkerNotification(notificationTitle, {
+          body: notificationBody,
+          data: { url: window.location.href }
+        });
+        
+        showNotification(notificationTitle, notificationBody);
+        
         toast.success("Fault created successfully");
         navigate("/dashboard");
       }
@@ -469,6 +494,7 @@ export function OP5Form({ defaultRegionId = "", defaultDistrictId = "", onSubmit
                   <SelectItem value="Unplanned">Unplanned</SelectItem>
                   <SelectItem value="Emergency">Emergency</SelectItem>
                   <SelectItem value="Load Shedding">Load Shedding</SelectItem>
+                  <SelectItem value="GridCo Outages">GridCo Outages</SelectItem>
                 </SelectContent>
               </Select>
           </div>
