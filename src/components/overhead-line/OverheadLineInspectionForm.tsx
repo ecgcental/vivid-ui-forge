@@ -27,27 +27,22 @@ interface OverheadLineInspectionFormProps {
 }
 
 export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: OverheadLineInspectionFormProps) {
-  const { regions, districts, addOverheadLineInspection, updateOverheadLineInspection } = useData();
+  const { regions, districts } = useData();
   const { user, loading } = useAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
 
-  // Show loading state while auth is being checked
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  const defaultInsulatorCondition = {
+    brokenOrCracked: false,
+    burntOrFlashOver: false,
+    shattered: false,
+    defectiveBinding: false,
+    notes: ""
+  };
 
   const [formData, setFormData] = useState<OverheadLineInspection>(() => {
-    if (inspection) {
-      // When editing, use the existing inspection data
-      return {
-        ...inspection,
-        updatedAt: new Date().toISOString(),
-      };
-    }
-    // For new inspection, initialize with default values
-    return {
+    const defaultFormData: OverheadLineInspection = {
       id: "",
       regionId: "",
       districtId: "",
@@ -59,29 +54,30 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
       updatedAt: new Date().toISOString(),
       latitude: 0,
       longitude: 0,
-      poleId: "",
-      poleHeight: "8m",
-      poleType: "CP",
-      poleLocation: "",
       inspector: {
         id: user?.id || "",
         name: user?.name || "",
         email: user?.email || "",
+        phone: ""
       },
+      poleId: "",
+      poleHeight: "8m",
+      poleType: "CP",
+      poleLocation: "",
       poleCondition: {
         tilted: false,
         rotten: false,
         burnt: false,
         substandard: false,
         conflictWithLV: false,
-        notes: "",
+        notes: ""
       },
       stayCondition: {
         requiredButNotAvailable: false,
         cut: false,
         misaligned: false,
         defectiveStay: false,
-        notes: "",
+        notes: ""
       },
       crossArmCondition: {
         misaligned: false,
@@ -89,15 +85,9 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
         corroded: false,
         substandard: false,
         others: false,
-        notes: "",
+        notes: ""
       },
-      insulatorCondition: {
-        brokenOrCracked: false,
-        burntOrFlashOver: false,
-        shattered: false,
-        defectiveBinding: false,
-        notes: "",
-      },
+      insulatorCondition: defaultInsulatorCondition,
       conductorCondition: {
         looseConnectors: false,
         weakJumpers: false,
@@ -105,7 +95,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
         saggedLine: false,
         undersized: false,
         linked: false,
-        notes: "",
+        notes: ""
       },
       lightningArresterCondition: {
         brokenOrCracked: false,
@@ -114,7 +104,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
         noEarthing: false,
         bypassed: false,
         noArrester: false,
-        notes: "",
+        notes: ""
       },
       dropOutFuseCondition: {
         brokenOrCracked: false,
@@ -124,7 +114,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
         corroded: false,
         linkedHVFuses: false,
         others: false,
-        notes: "",
+        notes: ""
       },
       transformerCondition: {
         leakingOil: false,
@@ -133,7 +123,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
         rustedTank: false,
         crackedBushing: false,
         others: false,
-        notes: "",
+        notes: ""
       },
       recloserCondition: {
         lowGasLevel: false,
@@ -142,28 +132,115 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
         protectionDisabled: false,
         bypassed: false,
         others: false,
-        notes: "",
+        notes: ""
       },
       additionalNotes: "",
-      images: [],
+      images: []
     };
+
+    // Initialize region and district for district and regional engineers
+    if (user?.role === "district_engineer" && user.region && user.district) {
+      const userRegion = regions.find(r => r.name === user.region);
+      if (userRegion) {
+        const userDistrict = districts.find(d => 
+          d.regionId === userRegion.id && d.name === user.district
+        );
+        if (userDistrict) {
+          defaultFormData.regionId = userRegion.id;
+          defaultFormData.districtId = userDistrict.id;
+        }
+      }
+    } else if (user?.role === "regional_engineer" && user.region) {
+      const userRegion = regions.find(r => r.name === user.region);
+      if (userRegion) {
+        defaultFormData.regionId = userRegion.id;
+      }
+    }
+
+    if (inspection) {
+      return {
+        ...defaultFormData,
+        ...inspection,
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    return defaultFormData;
   });
+
+  // Filter regions and districts based on user role
+  const filteredRegions = useMemo(() => {
+    if (user?.role === "global_engineer") return regions;
+    if (user?.role === "regional_engineer") {
+      return regions.filter(r => r.name === user.region);
+    }
+    if (user?.role === "district_engineer") {
+      return regions.filter(r => r.name === user.region);
+    }
+    return [];
+  }, [regions, user]);
+
+  const filteredDistricts = useMemo(() => {
+    if (!formData.regionId) return [];
+    if (user?.role === "global_engineer") {
+      return districts.filter(d => d.regionId === formData.regionId);
+    }
+    if (user?.role === "regional_engineer") {
+      return districts.filter(d => d.regionId === formData.regionId);
+    }
+    if (user?.role === "district_engineer") {
+      return districts.filter(d => d.name === user.district);
+    }
+    return [];
+  }, [districts, formData.regionId, user]);
+
+  // Handle region change
+  const handleRegionChange = (value: string) => {
+    if (user?.role === "district_engineer" || user?.role === "regional_engineer") return;
+    
+    setFormData(prev => ({ 
+      ...prev, 
+      regionId: value,
+      districtId: "" // Reset district when region changes
+    }));
+  };
+
+  // Handle district change
+  const handleDistrictChange = (value: string) => {
+    if (user?.role === "district_engineer") return;
+    setFormData(prev => ({ ...prev, districtId: value }));
+  };
+
+  // Show loading state while auth is being checked
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  // Update form data when user becomes available
+  useEffect(() => {
+    if (user && !inspection) {
+      setFormData(prev => ({
+        ...prev,
+        inspector: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone: ""
+        }
+      }));
+    }
+  }, [user, inspection]);
 
   // Add useEffect to update form data when inspection prop changes
   useEffect(() => {
     if (inspection) {
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         ...inspection,
         updatedAt: new Date().toISOString(),
-      });
+      }));
     }
   }, [inspection]);
-
-  // Memoize filtered districts
-  const filteredDistricts = useMemo(() => 
-    districts.filter(d => d.regionId === formData.regionId),
-    [districts, formData.regionId]
-  );
 
   // Memoize handlers
   const handleGetLocation = useCallback(() => {
@@ -205,22 +282,93 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
     setIsSubmitting(true);
 
     try {
-      if (inspection) {
-        // Update existing inspection
-        await updateOverheadLineInspection(formData);
-        toast({
-          title: "Success",
-          description: "Inspection updated successfully",
-        });
-      } else {
-        // Create new inspection
-        await addOverheadLineInspection(formData);
-        toast({
-          title: "Success",
-          description: "Inspection created successfully",
-        });
-      }
-      onSubmit(formData);
+      const submissionData = {
+        ...formData,
+        poleCondition: {
+          tilted: formData.poleCondition?.tilted || false,
+          rotten: formData.poleCondition?.rotten || false,
+          burnt: formData.poleCondition?.burnt || false,
+          substandard: formData.poleCondition?.substandard || false,
+          conflictWithLV: formData.poleCondition?.conflictWithLV || false,
+          notes: formData.poleCondition?.notes || ""
+        },
+        stayCondition: {
+          requiredButNotAvailable: formData.stayCondition?.requiredButNotAvailable || false,
+          cut: formData.stayCondition?.cut || false,
+          misaligned: formData.stayCondition?.misaligned || false,
+          defectiveStay: formData.stayCondition?.defectiveStay || false,
+          notes: formData.stayCondition?.notes || ""
+        },
+        crossArmCondition: {
+          misaligned: formData.crossArmCondition?.misaligned || false,
+          bend: formData.crossArmCondition?.bend || false,
+          corroded: formData.crossArmCondition?.corroded || false,
+          substandard: formData.crossArmCondition?.substandard || false,
+          others: formData.crossArmCondition?.others || false,
+          notes: formData.crossArmCondition?.notes || ""
+        },
+        insulatorCondition: {
+          brokenOrCracked: formData.insulatorCondition?.brokenOrCracked || false,
+          burntOrFlashOver: formData.insulatorCondition?.burntOrFlashOver || false,
+          shattered: formData.insulatorCondition?.shattered || false,
+          defectiveBinding: formData.insulatorCondition?.defectiveBinding || false,
+          notes: formData.insulatorCondition?.notes || ""
+        },
+        conductorCondition: {
+          looseConnectors: formData.conductorCondition?.looseConnectors || false,
+          weakJumpers: formData.conductorCondition?.weakJumpers || false,
+          burntLugs: formData.conductorCondition?.burntLugs || false,
+          saggedLine: formData.conductorCondition?.saggedLine || false,
+          undersized: formData.conductorCondition?.undersized || false,
+          linked: formData.conductorCondition?.linked || false,
+          notes: formData.conductorCondition?.notes || ""
+        },
+        lightningArresterCondition: {
+          brokenOrCracked: formData.lightningArresterCondition?.brokenOrCracked || false,
+          flashOver: formData.lightningArresterCondition?.flashOver || false,
+          missing: formData.lightningArresterCondition?.missing || false,
+          noEarthing: formData.lightningArresterCondition?.noEarthing || false,
+          bypassed: formData.lightningArresterCondition?.bypassed || false,
+          noArrester: formData.lightningArresterCondition?.noArrester || false,
+          notes: formData.lightningArresterCondition?.notes || ""
+        },
+        dropOutFuseCondition: {
+          brokenOrCracked: formData.dropOutFuseCondition?.brokenOrCracked || false,
+          flashOver: formData.dropOutFuseCondition?.flashOver || false,
+          insufficientClearance: formData.dropOutFuseCondition?.insufficientClearance || false,
+          looseOrNoEarthing: formData.dropOutFuseCondition?.looseOrNoEarthing || false,
+          corroded: formData.dropOutFuseCondition?.corroded || false,
+          linkedHVFuses: formData.dropOutFuseCondition?.linkedHVFuses || false,
+          others: formData.dropOutFuseCondition?.others || false,
+          notes: formData.dropOutFuseCondition?.notes || ""
+        },
+        transformerCondition: {
+          leakingOil: formData.transformerCondition?.leakingOil || false,
+          missingEarthLeads: formData.transformerCondition?.missingEarthLeads || false,
+          linkedHVFuses: formData.transformerCondition?.linkedHVFuses || false,
+          rustedTank: formData.transformerCondition?.rustedTank || false,
+          crackedBushing: formData.transformerCondition?.crackedBushing || false,
+          others: formData.transformerCondition?.others || false,
+          notes: formData.transformerCondition?.notes || ""
+        },
+        recloserCondition: {
+          lowGasLevel: formData.recloserCondition?.lowGasLevel || false,
+          lowBatteryLevel: formData.recloserCondition?.lowBatteryLevel || false,
+          burntVoltageTransformers: formData.recloserCondition?.burntVoltageTransformers || false,
+          protectionDisabled: formData.recloserCondition?.protectionDisabled || false,
+          bypassed: formData.recloserCondition?.bypassed || false,
+          others: formData.recloserCondition?.others || false,
+          notes: formData.recloserCondition?.notes || ""
+        }
+      };
+
+      // Call onSubmit with the data - let the parent component handle the actual submission
+      onSubmit(submissionData);
+      
+      toast({
+        title: "Success",
+        description: inspection ? "Inspection updated successfully" : "Inspection created successfully",
+      });
     } catch (error) {
       console.error("Error submitting inspection:", error);
       toast({
@@ -282,7 +430,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
             <Label htmlFor="inspectorName">Inspector Name</Label>
             <Input
               id="inspectorName"
-              value={formData.inspector.name}
+              value={formData.inspector?.name || ""}
               onChange={(e) => setFormData({
                 ...formData,
                 inspector: { ...formData.inspector, name: e.target.value }
@@ -295,7 +443,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
             <Input
               id="inspectorEmail"
               type="email"
-              value={formData.inspector.email}
+              value={formData.inspector?.email || ""}
               onChange={(e) => setFormData({
                 ...formData,
                 inspector: { ...formData.inspector, email: e.target.value }
@@ -317,13 +465,15 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
             <Label htmlFor="region">Region *</Label>
             <Select
               value={formData.regionId}
-              onValueChange={(value) => setFormData({ ...formData, regionId: value })}
+              onValueChange={handleRegionChange}
+              disabled={user?.role === "district_engineer" || user?.role === "regional_engineer"}
+              required
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select region" />
               </SelectTrigger>
               <SelectContent>
-                {regions.map((region) => (
+                {filteredRegions.map((region) => (
                   <SelectItem key={region.id} value={region.id}>
                     {region.name}
                   </SelectItem>
@@ -336,7 +486,9 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
             <Label htmlFor="district">District *</Label>
             <Select
               value={formData.districtId}
-              onValueChange={(value) => setFormData({ ...formData, districtId: value })}
+              onValueChange={handleDistrictChange}
+              disabled={user?.role === "district_engineer" || !formData.regionId}
+              required
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select district" />
@@ -413,7 +565,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
         </div>
       </CardContent>
     </Card>
-  ), [formData, filteredDistricts, handleGetLocation, isGettingLocation]);
+  ), [formData, filteredRegions, filteredDistricts, handleGetLocation, isGettingLocation]);
 
   // Add pole information section
   const renderPoleInformation = useMemo(() => (
@@ -720,75 +872,80 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
   ), [formData]);
 
   // Add insulator condition section
-  const renderInsulatorCondition = useMemo(() => (
-    <Card>
-      <CardContent className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Insulator Condition</h3>
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="insulatorBrokenOrCracked"
-              checked={formData.insulatorCondition.brokenOrCracked}
-              onCheckedChange={(checked) => 
-                setFormData({
-                  ...formData,
-                  insulatorCondition: { ...formData.insulatorCondition, brokenOrCracked: checked as boolean },
-                })
-              }
-            />
-            <Label htmlFor="insulatorBrokenOrCracked">Broken/Cracked</Label>
+  const renderInsulatorCondition = useMemo(() => {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <h3 className="text-lg font-semibold mb-4">Insulator Condition</h3>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="insulatorBrokenOrCracked"
+                checked={formData.insulatorCondition.brokenOrCracked}
+                onCheckedChange={(checked) => 
+                  setFormData({
+                    ...formData,
+                    insulatorCondition: { ...formData.insulatorCondition, brokenOrCracked: checked as boolean },
+                  })
+                }
+              />
+              <Label htmlFor="insulatorBrokenOrCracked">Broken/Cracked</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="insulatorBurntOrFlashOver"
+                checked={formData.insulatorCondition.burntOrFlashOver}
+                onCheckedChange={(checked) => 
+                  setFormData({
+                    ...formData,
+                    insulatorCondition: { ...formData.insulatorCondition, burntOrFlashOver: checked as boolean },
+                  })
+                }
+              />
+              <Label htmlFor="insulatorBurntOrFlashOver">Burnt/Flash over</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="insulatorShattered"
+                checked={formData.insulatorCondition.shattered}
+                onCheckedChange={(checked) => 
+                  setFormData({
+                    ...formData,
+                    insulatorCondition: { ...formData.insulatorCondition, shattered: checked as boolean },
+                  })
+                }
+              />
+              <Label htmlFor="insulatorShattered">Shattered</Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="insulatorDefectiveBinding"
+                checked={formData.insulatorCondition.defectiveBinding}
+                onCheckedChange={(checked) => 
+                  setFormData({
+                    ...formData,
+                    insulatorCondition: { ...formData.insulatorCondition, defectiveBinding: checked as boolean },
+                  })
+                }
+              />
+              <Label htmlFor="insulatorDefectiveBinding">Defective Binding</Label>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="insulatorNotes">Notes</Label>
+              <Textarea
+                id="insulatorNotes"
+                value={formData.insulatorCondition.notes}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  insulatorCondition: { ...formData.insulatorCondition, notes: e.target.value } 
+                })}
+              />
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="insulatorBurntOrFlashOver"
-              checked={formData.insulatorCondition.burntOrFlashOver}
-              onCheckedChange={(checked) => 
-                setFormData({
-                  ...formData,
-                  insulatorCondition: { ...formData.insulatorCondition, burntOrFlashOver: checked as boolean },
-                })
-              }
-            />
-            <Label htmlFor="insulatorBurntOrFlashOver">Burnt/Flash over</Label>
-          </div>
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="insulatorShattered"
-              checked={formData.insulatorCondition.shattered}
-              onCheckedChange={(checked) => 
-                setFormData({
-                  ...formData,
-                  insulatorCondition: { ...formData.insulatorCondition, shattered: checked as boolean },
-                })
-              }
-            />
-            <Label htmlFor="insulatorShattered">Shattered</Label>
-          </div>
-          <div className="flex items-center gap-2">
-            <Checkbox
-              id="insulatorDefectiveBinding"
-              checked={formData.insulatorCondition.defectiveBinding}
-              onCheckedChange={(checked) => 
-                setFormData({
-                  ...formData,
-                  insulatorCondition: { ...formData.insulatorCondition, defectiveBinding: checked as boolean },
-                })
-              }
-            />
-            <Label htmlFor="insulatorDefectiveBinding">Defective Binding</Label>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="insulatorNotes">Notes</Label>
-            <Textarea
-              id="insulatorNotes"
-              value={formData.insulatorCondition.notes}
-              onChange={(e) => setFormData({ ...formData, insulatorCondition: { ...formData.insulatorCondition, notes: e.target.value } })}
-            />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  ), [formData]);
+        </CardContent>
+      </Card>
+    );
+  }, [formData]);
 
   // Add conductor condition section
   const renderConductorCondition = useMemo(() => (

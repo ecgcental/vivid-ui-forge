@@ -838,27 +838,97 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   };
 
   const addOverheadLineInspection = (inspection: Omit<OverheadLineInspection, "id" | "createdAt" | "updatedAt">) => {
-    const now = new Date().toISOString();
     const newInspection: OverheadLineInspection = {
       ...inspection,
       id: uuidv4(),
-      createdAt: now,
-      updatedAt: now
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
-    setOverheadLineInspections(prev => [...prev, newInspection]);
+
+    setOverheadLineInspections(prev => {
+      const updatedInspections = [...prev, newInspection];
+      localStorage.setItem('overheadLineInspections', JSON.stringify(updatedInspections));
+      return updatedInspections;
+    });
   };
 
   const updateOverheadLineInspection = (id: string, updates: Partial<OverheadLineInspection>) => {
-    setOverheadLineInspections(prev => prev.map(inspection => {
-      if (inspection.id === id) {
-        return {
-          ...inspection,
-          ...updates,
-          updatedAt: new Date().toISOString()
-        };
-      }
-      return inspection;
-    }));
+    setOverheadLineInspections(prev => {
+      const updatedInspections = prev.map(inspection => {
+        if (inspection.id === id) {
+          // Create a new inspection object with the updates
+          const updatedInspection = {
+            ...inspection,
+            ...updates,
+            updatedAt: new Date().toISOString()
+          };
+
+          // Handle nested condition objects
+          if (updates.poleCondition) {
+            updatedInspection.poleCondition = {
+              ...inspection.poleCondition,
+              ...updates.poleCondition
+            };
+          }
+          if (updates.stayCondition) {
+            updatedInspection.stayCondition = {
+              ...inspection.stayCondition,
+              ...updates.stayCondition
+            };
+          }
+          if (updates.crossArmCondition) {
+            updatedInspection.crossArmCondition = {
+              ...inspection.crossArmCondition,
+              ...updates.crossArmCondition
+            };
+          }
+          if (updates.insulatorCondition) {
+            updatedInspection.insulatorCondition = {
+              ...inspection.insulatorCondition,
+              ...updates.insulatorCondition
+            };
+          }
+          if (updates.conductorCondition) {
+            updatedInspection.conductorCondition = {
+              ...inspection.conductorCondition,
+              ...updates.conductorCondition
+            };
+          }
+          if (updates.lightningArresterCondition) {
+            updatedInspection.lightningArresterCondition = {
+              ...inspection.lightningArresterCondition,
+              ...updates.lightningArresterCondition
+            };
+          }
+          if (updates.dropOutFuseCondition) {
+            updatedInspection.dropOutFuseCondition = {
+              ...inspection.dropOutFuseCondition,
+              ...updates.dropOutFuseCondition
+            };
+          }
+          if (updates.transformerCondition) {
+            updatedInspection.transformerCondition = {
+              ...inspection.transformerCondition,
+              ...updates.transformerCondition
+            };
+          }
+          if (updates.recloserCondition) {
+            updatedInspection.recloserCondition = {
+              ...inspection.recloserCondition,
+              ...updates.recloserCondition
+            };
+          }
+
+          return updatedInspection;
+        }
+        return inspection;
+      });
+      
+      // Save to localStorage
+      localStorage.setItem('overheadLineInspections', JSON.stringify(updatedInspections));
+      
+      return updatedInspections;
+    });
   };
 
   const deleteOverheadLineInspection = (id: string) => {

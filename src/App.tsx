@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route, useParams } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { DataProvider } from "@/contexts/DataContext";
 import { Layout } from "@/components/layout/Layout";
+import { ProtectedRoute } from "@/components/access-control/ProtectedRoute";
+import { AccessControlWrapper } from "@/components/access-control/AccessControlWrapper";
 
 import HomePage from "./pages/HomePage";
 import LoginPage from "./pages/LoginPage";
@@ -26,6 +28,7 @@ import EditVITInspectionPage from "./pages/asset-management/EditVITInspectionPag
 import VITInspectionFormPage from "./pages/asset-management/VITInspectionFormPage";
 import OverheadLineInspectionPage from "./pages/asset-management/OverheadLineInspectionPage";
 import NotFound from "./pages/NotFound";
+import UnauthorizedPage from "./pages/UnauthorizedPage";
 import CreateLoadMonitoringPage from "./pages/asset-management/CreateLoadMonitoringPage";
 import EditLoadMonitoringPage from "./pages/asset-management/EditLoadMonitoringPage";
 import LoadMonitoringDetailsPage from "./pages/asset-management/LoadMonitoringDetailsPage";
@@ -34,45 +37,161 @@ import EditControlOutagePage from "@/pages/EditControlOutagePage";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <DataProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/report-fault" element={<ReportFaultPage />} />
-              <Route path="/analytics" element={<AnalyticsPage />} />
-              <Route path="/user-management" element={<UserManagementPage />} />
-              <Route path="/asset-management/load-monitoring" element={<LoadMonitoringPage />} />
-              <Route path="/asset-management/create-load-monitoring" element={<CreateLoadMonitoringPage />} />
-              <Route path="/asset-management/edit-load-monitoring/:id" element={<EditLoadMonitoringPage />} />
-              <Route path="/asset-management/load-monitoring-details/:id" element={<LoadMonitoringDetailsPage />} />
-              <Route path="/asset-management/substation-inspection" element={<SubstationInspectionPage />} />
-              <Route path="/asset-management/inspection-management" element={<InspectionManagementPage />} />
-              <Route path="/asset-management/inspection-details/:id" element={<InspectionDetailsPage />} />
-              <Route path="/asset-management/edit-inspection/:id" element={<EditInspectionPage />} />
-              <Route path="/asset-management/vit-inspection" element={<VITInspectionPage />} />
-              <Route path="/asset-management/vit-inspection-management" element={<VITInspectionManagementPage />} />
-              <Route path="/asset-management/vit-inspection-details/:id" element={<VITInspectionDetailsPage />} />
-              <Route path="/asset-management/edit-vit-inspection/:id" element={<EditVITInspectionPage />} />
-              <Route path="/asset-management/vit-inspection-form/:id" element={<VITInspectionFormPage />} />
-              <Route path="/asset-management/overhead-line" element={<OverheadLineInspectionPage />} />
-              <Route path="/edit-op5-fault/:id" element={<EditOP5FaultPage />} />
-              <Route path="/edit-control-outage/:id" element={<EditControlOutagePage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </DataProvider>
-    </AuthProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <DataProvider>
+          <QueryClientProvider client={queryClient}>
+            <TooltipProvider>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={<HomePage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
+                <Route path="/unauthorized" element={<UnauthorizedPage />} />
+
+                {/* Protected routes */}
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <DashboardPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/report-fault" element={
+                  <ProtectedRoute>
+                    <ReportFaultPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/analytics" element={
+                  <ProtectedRoute>
+                    <AnalyticsPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/user-management" element={
+                  <ProtectedRoute requiredRole="global_engineer">
+                    <UserManagementPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/asset-management/load-monitoring" element={
+                  <ProtectedRoute>
+                    <LoadMonitoringPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/asset-management/load-monitoring-details/:id" element={
+                  <ProtectedRoute>
+                    <LoadMonitoringDetailsPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/asset-management/edit-load-monitoring/:id" element={
+                  <ProtectedRoute>
+                    <EditLoadMonitoringPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/asset-management/create-load-monitoring" element={
+                  <ProtectedRoute>
+                    <CreateLoadMonitoringPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/asset-management/inspection-management" element={
+                  <ProtectedRoute>
+                    <InspectionManagementPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/asset-management/inspection-details/:id" element={
+                  <ProtectedRoute>
+                    <InspectionDetailsPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/asset-management/substation-inspection" element={
+                  <ProtectedRoute>
+                    <SubstationInspectionPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/asset-management/edit-inspection/:id" element={
+                  <ProtectedRoute>
+                    <EditInspectionPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/asset-management/vit-inspection" element={
+                  <ProtectedRoute>
+                    <VITInspectionPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/asset-management/vit-inspection-management" element={
+                  <ProtectedRoute>
+                    <VITInspectionManagementPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/asset-management/vit-inspection-details/:id" element={
+                  <ProtectedRoute>
+                    <VITInspectionDetailsPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/asset-management/edit-vit-inspection/:id" element={
+                  <ProtectedRoute>
+                    <EditVITInspectionPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/asset-management/vit-inspection-form/:id" element={
+                  <ProtectedRoute>
+                    <VITInspectionFormPage />
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/asset-management/overhead-line" element={
+                  <ProtectedRoute>
+                    <AccessControlWrapper type="inspection">
+                      <OverheadLineInspectionPage />
+                    </AccessControlWrapper>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/asset-management/overhead-line/details/:id" element={
+                  <ProtectedRoute>
+                    <AccessControlWrapper type="inspection">
+                      <InspectionDetailsPage />
+                    </AccessControlWrapper>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/asset-management/overhead-line/edit/:id" element={
+                  <ProtectedRoute>
+                    <AccessControlWrapper type="inspection">
+                      <EditInspectionPage />
+                    </AccessControlWrapper>
+                  </ProtectedRoute>
+                } />
+
+                <Route path="/edit-op5-fault/:id" element={<EditOP5FaultPage />} />
+                <Route path="/edit-control-outage/:id" element={<EditControlOutagePage />} />
+
+                {/* Catch all */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <Toaster />
+              <Sonner />
+            </TooltipProvider>
+          </QueryClientProvider>
+        </DataProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  );
+}
 
 export default App;

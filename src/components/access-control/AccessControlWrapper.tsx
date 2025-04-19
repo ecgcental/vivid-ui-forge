@@ -163,10 +163,22 @@ export function AccessControlWrapper({
     return null;
   }
 
-  if (type === 'inspection' && !canAddInspection(assetId, regionId, districtId)) {
-    toast.error("You don't have permission to add inspections in this location");
-    navigate('/asset-management');
-    return null;
+  if (type === 'inspection') {
+    if (user?.role === 'district_engineer') {
+      const userDistrict = districts.find(d => d.name === user.district);
+      if (!userDistrict) {
+        toast.error("You don't have permission to add inspections");
+        navigate('/asset-management');
+        return null;
+      }
+    } else if (user?.role === 'regional_engineer') {
+      const userRegion = regions.find(r => r.name === user.region);
+      if (!userRegion) {
+        toast.error("You don't have permission to add inspections");
+        navigate('/asset-management');
+        return null;
+      }
+    }
   }
 
   return <>{children}</>;

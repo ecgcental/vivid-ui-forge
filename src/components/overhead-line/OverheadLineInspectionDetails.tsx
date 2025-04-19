@@ -111,26 +111,26 @@ export function OverheadLineInspectionDetails({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Tilted</p>
-              <p>{inspection.poleCondition.tilted ? "Yes" : "No"}</p>
+              <p>{inspection.poleCondition?.tilted ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Rotten</p>
-              <p>{inspection.poleCondition.rotten ? "Yes" : "No"}</p>
+              <p>{inspection.poleCondition?.rotten ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Burnt</p>
-              <p>{inspection.poleCondition.burnt ? "Yes" : "No"}</p>
+              <p>{inspection.poleCondition?.burnt ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Substandard</p>
-              <p>{inspection.poleCondition.substandard ? "Yes" : "No"}</p>
+              <p>{inspection.poleCondition?.substandard ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Conflict with LV</p>
-              <p>{inspection.poleCondition.conflictWithLV ? "Yes" : "No"}</p>
+              <p>{inspection.poleCondition?.conflictWithLV ? "Yes" : "No"}</p>
             </div>
           </div>
-          {inspection.poleCondition.notes && (
+          {inspection.poleCondition?.notes && (
             <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground">Notes</p>
               <p>{inspection.poleCondition.notes}</p>
@@ -147,22 +147,22 @@ export function OverheadLineInspectionDetails({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Required but not available</p>
-              <p>{inspection.stayCondition.requiredButNotAvailable ? "Yes" : "No"}</p>
+              <p>{inspection.stayCondition?.requiredButNotAvailable ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Cut</p>
-              <p>{inspection.stayCondition.cut ? "Yes" : "No"}</p>
+              <p>{inspection.stayCondition?.cut ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Misaligned</p>
-              <p>{inspection.stayCondition.misaligned ? "Yes" : "No"}</p>
+              <p>{inspection.stayCondition?.misaligned ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Defective Stay</p>
-              <p>{inspection.stayCondition.defectiveStay ? "Yes" : "No"}</p>
+              <p>{inspection.stayCondition?.defectiveStay ? "Yes" : "No"}</p>
             </div>
           </div>
-          {inspection.stayCondition.notes && (
+          {inspection.stayCondition?.notes && (
             <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground">Notes</p>
               <p>{inspection.stayCondition.notes}</p>
@@ -179,26 +179,26 @@ export function OverheadLineInspectionDetails({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Misaligned</p>
-              <p>{inspection.crossArmCondition.misaligned ? "Yes" : "No"}</p>
+              <p>{inspection.crossArmCondition?.misaligned ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Bend</p>
-              <p>{inspection.crossArmCondition.bend ? "Yes" : "No"}</p>
+              <p>{inspection.crossArmCondition?.bend ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Corroded</p>
-              <p>{inspection.crossArmCondition.corroded ? "Yes" : "No"}</p>
+              <p>{inspection.crossArmCondition?.corroded ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Substandard</p>
-              <p>{inspection.crossArmCondition.substandard ? "Yes" : "No"}</p>
+              <p>{inspection.crossArmCondition?.substandard ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Others</p>
-              <p>{inspection.crossArmCondition.others ? "Yes" : "No"}</p>
+              <p>{inspection.crossArmCondition?.others ? "Yes" : "No"}</p>
             </div>
           </div>
-          {inspection.crossArmCondition.notes && (
+          {inspection.crossArmCondition?.notes && (
             <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground">Notes</p>
               <p>{inspection.crossArmCondition.notes}</p>
@@ -215,22 +215,22 @@ export function OverheadLineInspectionDetails({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Broken/Cracked</p>
-              <p>{inspection.insulatorCondition.brokenOrCracked ? "Yes" : "No"}</p>
+              <p>{inspection.insulatorCondition?.brokenOrCracked ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Burnt/Flash over</p>
-              <p>{inspection.insulatorCondition.burntOrFlashOver ? "Yes" : "No"}</p>
+              <p>{inspection.insulatorCondition?.burntOrFlashOver ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Shattered</p>
-              <p>{inspection.insulatorCondition.shattered ? "Yes" : "No"}</p>
+              <p>{inspection.insulatorCondition?.shattered ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Defective Binding</p>
-              <p>{inspection.insulatorCondition.defectiveBinding ? "Yes" : "No"}</p>
+              <p>{inspection.insulatorCondition?.defectiveBinding ? "Yes" : "No"}</p>
             </div>
           </div>
-          {inspection.insulatorCondition.notes && (
+          {inspection.insulatorCondition?.notes && (
             <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground">Notes</p>
               <p>{inspection.insulatorCondition.notes}</p>
@@ -247,30 +247,30 @@ export function OverheadLineInspectionDetails({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Loose Connectors</p>
-              <p>{inspection.conductorCondition.looseConnectors ? "Yes" : "No"}</p>
+              <p>{inspection.conductorCondition?.looseConnectors ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Weak Jumpers</p>
-              <p>{inspection.conductorCondition.weakJumpers ? "Yes" : "No"}</p>
+              <p>{inspection.conductorCondition?.weakJumpers ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Burnt Lugs</p>
-              <p>{inspection.conductorCondition.burntLugs ? "Yes" : "No"}</p>
+              <p>{inspection.conductorCondition?.burntLugs ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Sagged Line</p>
-              <p>{inspection.conductorCondition.saggedLine ? "Yes" : "No"}</p>
+              <p>{inspection.conductorCondition?.saggedLine ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Undersized</p>
-              <p>{inspection.conductorCondition.undersized ? "Yes" : "No"}</p>
+              <p>{inspection.conductorCondition?.undersized ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Linked</p>
-              <p>{inspection.conductorCondition.linked ? "Yes" : "No"}</p>
+              <p>{inspection.conductorCondition?.linked ? "Yes" : "No"}</p>
             </div>
           </div>
-          {inspection.conductorCondition.notes && (
+          {inspection.conductorCondition?.notes && (
             <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground">Notes</p>
               <p>{inspection.conductorCondition.notes}</p>
@@ -287,35 +287,35 @@ export function OverheadLineInspectionDetails({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Broken/Cracked</p>
-              <p>{inspection.lightningArresterCondition.brokenOrCracked ? "Yes" : "No"}</p>
+              <p>{inspection.lightningArresterCondition?.brokenOrCracked ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Flash over</p>
-              <p>{inspection.lightningArresterCondition.flashOver ? "Yes" : "No"}</p>
+              <p>{inspection.lightningArresterCondition?.flashOver ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Missing</p>
-              <p>{inspection.lightningArresterCondition.missing ? "Yes" : "No"}</p>
+              <p>{inspection.lightningArresterCondition?.missing ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">No Earthing</p>
-              <p>{inspection.lightningArresterCondition.noEarthing ? "Yes" : "No"}</p>
+              <p>{inspection.lightningArresterCondition?.noEarthing ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">By-passed</p>
-              <p>{inspection.lightningArresterCondition.byPassed ? "Yes" : "No"}</p>
+              <p>{inspection.lightningArresterCondition?.bypassed ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">No Arrester</p>
-              <p>{inspection.lightningArresterCondition.noArrester ? "Yes" : "No"}</p>
+              <p>{inspection.lightningArresterCondition?.noArrester ? "Yes" : "No"}</p>
             </div>
+            {inspection.lightningArresterCondition?.notes && (
+              <div className="col-span-2">
+                <p className="text-sm font-medium text-muted-foreground">Notes</p>
+                <p>{inspection.lightningArresterCondition.notes}</p>
+              </div>
+            )}
           </div>
-          {inspection.lightningArresterCondition.notes && (
-            <div className="mt-4">
-              <p className="text-sm font-medium text-muted-foreground">Notes</p>
-              <p>{inspection.lightningArresterCondition.notes}</p>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -327,34 +327,34 @@ export function OverheadLineInspectionDetails({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Broken/Cracked</p>
-              <p>{inspection.dropOutFuseCondition.brokenOrCracked ? "Yes" : "No"}</p>
+              <p>{inspection.dropOutFuseCondition?.brokenOrCracked ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Flash over</p>
-              <p>{inspection.dropOutFuseCondition.flashOver ? "Yes" : "No"}</p>
+              <p>{inspection.dropOutFuseCondition?.flashOver ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Insufficient Clearance</p>
-              <p>{inspection.dropOutFuseCondition.insufficientClearance ? "Yes" : "No"}</p>
+              <p>{inspection.dropOutFuseCondition?.insufficientClearance ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Loose or No Earthing</p>
-              <p>{inspection.dropOutFuseCondition.looseOrNoEarthing ? "Yes" : "No"}</p>
+              <p>{inspection.dropOutFuseCondition?.looseOrNoEarthing ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Corroded</p>
-              <p>{inspection.dropOutFuseCondition.corroded ? "Yes" : "No"}</p>
+              <p>{inspection.dropOutFuseCondition?.corroded ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Linked HV Fuses</p>
-              <p>{inspection.dropOutFuseCondition.linkedHVFuses ? "Yes" : "No"}</p>
+              <p>{inspection.dropOutFuseCondition?.linkedHVFuses ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Others</p>
-              <p>{inspection.dropOutFuseCondition.others ? "Yes" : "No"}</p>
+              <p>{inspection.dropOutFuseCondition?.others ? "Yes" : "No"}</p>
             </div>
           </div>
-          {inspection.dropOutFuseCondition.notes && (
+          {inspection.dropOutFuseCondition?.notes && (
             <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground">Notes</p>
               <p>{inspection.dropOutFuseCondition.notes}</p>
@@ -371,30 +371,30 @@ export function OverheadLineInspectionDetails({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Leaking Oil</p>
-              <p>{inspection.transformerCondition.leakingOil ? "Yes" : "No"}</p>
+              <p>{inspection.transformerCondition?.leakingOil ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Missing Earth leads</p>
-              <p>{inspection.transformerCondition.missingEarthLeads ? "Yes" : "No"}</p>
+              <p>{inspection.transformerCondition?.missingEarthLeads ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Linked HV Fuses</p>
-              <p>{inspection.transformerCondition.linkedHVFuses ? "Yes" : "No"}</p>
+              <p>{inspection.transformerCondition?.linkedHVFuses ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Rusted Tank</p>
-              <p>{inspection.transformerCondition.rustedTank ? "Yes" : "No"}</p>
+              <p>{inspection.transformerCondition?.rustedTank ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Cracked Bushing</p>
-              <p>{inspection.transformerCondition.crackedBushing ? "Yes" : "No"}</p>
+              <p>{inspection.transformerCondition?.crackedBushing ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Others</p>
-              <p>{inspection.transformerCondition.others ? "Yes" : "No"}</p>
+              <p>{inspection.transformerCondition?.others ? "Yes" : "No"}</p>
             </div>
           </div>
-          {inspection.transformerCondition.notes && (
+          {inspection.transformerCondition?.notes && (
             <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground">Notes</p>
               <p>{inspection.transformerCondition.notes}</p>
@@ -411,30 +411,30 @@ export function OverheadLineInspectionDetails({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-sm font-medium text-muted-foreground">Low Gas Level</p>
-              <p>{inspection.recloserCondition.lowGasLevel ? "Yes" : "No"}</p>
+              <p>{inspection.recloserCondition?.lowGasLevel ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Low Battery Level</p>
-              <p>{inspection.recloserCondition.lowBatteryLevel ? "Yes" : "No"}</p>
+              <p>{inspection.recloserCondition?.lowBatteryLevel ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Burnt Voltage Transformers</p>
-              <p>{inspection.recloserCondition.burntVoltageTransformers ? "Yes" : "No"}</p>
+              <p>{inspection.recloserCondition?.burntVoltageTransformers ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Protection Disabled</p>
-              <p>{inspection.recloserCondition.protectionDisabled ? "Yes" : "No"}</p>
+              <p>{inspection.recloserCondition?.protectionDisabled ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">By-passed</p>
-              <p>{inspection.recloserCondition.byPassed ? "Yes" : "No"}</p>
+              <p>{inspection.recloserCondition?.bypassed ? "Yes" : "No"}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-muted-foreground">Others</p>
-              <p>{inspection.recloserCondition.others ? "Yes" : "No"}</p>
+              <p>{inspection.recloserCondition?.others ? "Yes" : "No"}</p>
             </div>
           </div>
-          {inspection.recloserCondition.notes && (
+          {inspection.recloserCondition?.notes && (
             <div className="mt-4">
               <p className="text-sm font-medium text-muted-foreground">Notes</p>
               <p>{inspection.recloserCondition.notes}</p>
