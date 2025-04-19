@@ -42,7 +42,7 @@ export function OverheadLineInspectionsTable({
   const { regions, districts } = useData();
   const [sortedInspections, setSortedInspections] = useState([...inspections]);
 
-  // Add useEffect to update sorted inspections when inspections prop changes
+  // Update sorted inspections whenever the inspections prop changes
   useEffect(() => {
     setSortedInspections([...inspections]);
   }, [inspections]);

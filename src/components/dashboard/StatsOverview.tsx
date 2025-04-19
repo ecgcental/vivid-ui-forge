@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useData } from "@/contexts/DataContext";
@@ -19,7 +18,9 @@ export function StatsOverview({ op5Faults, controlOutages }: StatsOverviewProps)
     // Calculate total affected population
     let totalAffected = 0;
     op5Faults.forEach(fault => {
-      totalAffected += fault.affectedPopulation.rural + fault.affectedPopulation.urban + fault.affectedPopulation.metro;
+      if (fault.affectedPopulation) {
+        totalAffected += fault.affectedPopulation.rural + fault.affectedPopulation.urban + fault.affectedPopulation.metro;
+      }
     });
     setAffectedPopulation(totalAffected);
 

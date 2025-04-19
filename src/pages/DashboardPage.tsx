@@ -52,7 +52,7 @@ export default function DashboardPage() {
   
   useEffect(() => {
     loadFaults();
-  }, [filterRegion, filterDistrict, filterStatus]);
+  }, [filterRegion, filterDistrict, filterStatus, getFilteredFaults]);
   
   const loadFaults = () => {
     const filteredFaults = getFilteredFaults(filterRegion, filterDistrict);
