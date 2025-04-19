@@ -111,6 +111,22 @@ export function Navbar() {
                           </Link>
                         </NavigationMenuLink>
                       </li>
+                      <li>
+                        <NavigationMenuLink asChild>
+                          <Link
+                            to="/asset-management/overhead-line"
+                            className={cn(
+                              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                              isActiveRoute("/asset-management/overhead-line") && "bg-accent"
+                            )}
+                          >
+                            <div className="text-sm font-medium leading-none">Overhead Line Inspection</div>
+                            <div className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                              Manage and monitor overhead line inspections
+                            </div>
+                          </Link>
+                        </NavigationMenuLink>
+                      </li>
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
@@ -135,7 +151,7 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           <Link to="/" className="flex items-center gap-2">
             <img src="/lovable-uploads/ecg-logo.png" alt="ECG Logo" className="h-10 w-auto" />
-            <span className="font-bold text-lg hidden md:block">ECG Fault Master</span>
+            <span className="font-bold text-lg hidden md:block">ECG Outage Management System</span>
           </Link>
         </div>
         
@@ -203,6 +219,12 @@ export function Navbar() {
                         className="block text-sm text-muted-foreground hover:text-foreground"
                       >
                         VITs Inspection
+                      </Link>
+                      <Link 
+                        to="/asset-management/overhead-line" 
+                        className="block text-sm text-muted-foreground hover:text-foreground"
+                      >
+                        Overhead Line Inspection
                       </Link>
                     </div>
                   </div>

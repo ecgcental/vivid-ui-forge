@@ -39,7 +39,7 @@ export function LoginForm() {
             className="h-16 w-auto mx-auto"
           />
         </div>
-        <CardTitle className="text-2xl">Login to ECG Fault Master</CardTitle>
+        <CardTitle className="text-2xl">Login to ECG Outage Management System</CardTitle>
         <CardDescription>
           Enter your credentials to access your account
         </CardDescription>

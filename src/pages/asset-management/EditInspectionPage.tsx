@@ -20,6 +20,7 @@ import { SubstationInspection, ConditionStatus, InspectionItem } from "@/lib/typ
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
 import { ChevronLeft } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
 
 export default function EditInspectionPage() {
   const { id } = useParams<{ id: string }>();
@@ -28,8 +29,8 @@ export default function EditInspectionPage() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("general");
   const [formData, setFormData] = useState<Partial<SubstationInspection>>({
-    region: user?.region || "",
-    district: user?.district || "",
+    region: "",
+    district: "",
     date: new Date().toISOString().split('T')[0],
     type: "indoor",
     items: []
@@ -40,7 +41,15 @@ export default function EditInspectionPage() {
     if (id) {
       const inspection = getSavedInspection(id);
       if (inspection) {
-        setFormData(inspection);
+        // Ensure all required fields are properly initialized
+        setFormData({
+          ...inspection,
+          region: inspection.region || "",
+          district: inspection.district || "",
+          date: inspection.date || new Date().toISOString().split('T')[0],
+          type: inspection.type || "indoor",
+          items: inspection.items || []
+        });
         setLoading(false);
       } else {
         toast.error("Inspection not found");
@@ -48,6 +57,49 @@ export default function EditInspectionPage() {
       }
     }
   }, [id, getSavedInspection, navigate]);
+
+  // Initialize default inspection items if none exist
+  useEffect(() => {
+    if (!loading && (!formData.items || formData.items.length === 0)) {
+      const defaultItems: InspectionItem[] = [
+        // General Building items
+        { id: uuidv4(), category: "general building", name: "Building Structure", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "general building", name: "Roof Condition", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "general building", name: "Floor Condition", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "general building", name: "Walls Condition", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "general building", name: "Doors and Windows", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "general building", name: "Lighting", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "general building", name: "Ventilation", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "general building", name: "Fire Safety Equipment", status: "pending", remarks: "" },
+        
+        // Control Equipment items
+        { id: uuidv4(), category: "control equipment", name: "Control Panels", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "control equipment", name: "Protection Relays", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "control equipment", name: "Metering Equipment", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "control equipment", name: "Communication Equipment", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "control equipment", name: "Battery Systems", status: "pending", remarks: "" },
+        
+        // Power Transformer items
+        { id: uuidv4(), category: "power transformer", name: "Transformer Body", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "power transformer", name: "Cooling System", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "power transformer", name: "Bushings", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "power transformer", name: "Tap Changer", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "power transformer", name: "Oil Level", status: "pending", remarks: "" },
+        
+        // Outdoor Equipment items
+        { id: uuidv4(), category: "outdoor equipment", name: "Circuit Breakers", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "outdoor equipment", name: "Isolators", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "outdoor equipment", name: "Lightning Arresters", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "outdoor equipment", name: "Busbars", status: "pending", remarks: "" },
+        { id: uuidv4(), category: "outdoor equipment", name: "Earthing System", status: "pending", remarks: "" }
+      ];
+      
+      setFormData(prev => ({
+        ...prev,
+        items: defaultItems
+      }));
+    }
+  }, [loading, formData.items]);
 
   // Handle generic form input changes
   const handleInputChange = (field: keyof SubstationInspection, value: any) => {
@@ -88,14 +140,8 @@ export default function EditInspectionPage() {
     }
     
     if (id) {
-      // Update the region and district IDs based on their names
-      const regionId = regions.find(r => r.name === formData.region)?.id || formData.regionId;
-      const districtId = districts.find(d => d.name === formData.district)?.id || formData.districtId;
-      
       const updatedData: Partial<SubstationInspection> = {
-        ...formData,
-        regionId,
-        districtId
+        ...formData
       };
       
       // Update the inspection data
@@ -152,23 +198,44 @@ export default function EditInspectionPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="region">Region</Label>
-                    <Input
-                      id="region"
-                      type="text"
+                    <Select
                       value={formData.region}
-                      onChange={(e) => handleInputChange('region', e.target.value)}
+                      onValueChange={(value) => handleInputChange('region', value)}
                       required
-                    />
+                    >
+                      <SelectTrigger id="region">
+                        <SelectValue placeholder="Select region" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {regions.map(region => (
+                          <SelectItem key={region.id} value={region.name}>
+                            {region.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="district">District</Label>
-                    <Input
-                      id="district"
-                      type="text"
+                    <Select
                       value={formData.district}
-                      onChange={(e) => handleInputChange('district', e.target.value)}
+                      onValueChange={(value) => handleInputChange('district', value)}
                       required
-                    />
+                      disabled={!formData.region}
+                    >
+                      <SelectTrigger id="district">
+                        <SelectValue placeholder="Select district" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {districts
+                          .filter(d => regions.find(r => r.name === formData.region)?.id === d.regionId)
+                          .map(district => (
+                            <SelectItem key={district.id} value={district.name}>
+                              {district.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="date">Date</Label>
@@ -247,68 +314,40 @@ export default function EditInspectionPage() {
                         <div className="flex justify-between items-start">
                           <div className="space-y-1">
                             <h4 className="font-medium">{item.name}</h4>
-                            <p className="text-sm text-muted-foreground">{item.description}</p>
                           </div>
-                          <div className="flex items-center space-x-4">
-                            <RadioGroup
-                              value={item.status}
-                              onValueChange={(value) => updateInspectionItem(item.id, 'status', value as ConditionStatus)}
-                              className="flex items-center space-x-4"
-                            >
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem 
-                                  value="good" 
-                                  id={`good-${item.id}`} 
-                                  className="text-green-500 border-green-500 focus:ring-green-500" 
-                                />
-                                <Label 
-                                  htmlFor={`good-${item.id}`}
-                                  className="text-green-600"
-                                >
-                                  Good
-                                </Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem 
-                                  value="bad" 
-                                  id={`bad-${item.id}`} 
-                                  className="text-red-500 border-red-500 focus:ring-red-500" 
-                                />
-                                <Label 
-                                  htmlFor={`bad-${item.id}`}
-                                  className="text-red-600"
-                                >
-                                  Bad
-                                </Label>
-                              </div>
-                            </RadioGroup>
-                          </div>
+                          <RadioGroup
+                            value={item.status}
+                            onValueChange={(value) => updateInspectionItem(item.id, 'status', value as ConditionStatus)}
+                            className="flex items-center space-x-4"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="pending" id={`${item.id}-pending`} />
+                              <Label htmlFor={`${item.id}-pending`}>Pending</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="good" id={`${item.id}-good`} />
+                              <Label htmlFor={`${item.id}-good`}>Good</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="bad" id={`${item.id}-bad`} />
+                              <Label htmlFor={`${item.id}-bad`}>Bad</Label>
+                            </div>
+                          </RadioGroup>
                         </div>
-                        <div className="mt-2">
-                          <Label htmlFor={`remarks-${item.id}`} className="text-sm">
-                            Remarks
-                          </Label>
+                        <div className="mt-4">
+                          <Label htmlFor={`remarks-${item.id}`}>Remarks</Label>
                           <Textarea
                             id={`remarks-${item.id}`}
-                            value={item.remarks}
+                            value={item.remarks || ''}
                             onChange={(e) => updateInspectionItem(item.id, 'remarks', e.target.value)}
-                            placeholder="Add any comments or observations"
-                            className="mt-1 h-20"
+                            placeholder="Add remarks about this item"
+                            className="mt-1"
                           />
                         </div>
                       </div>
                     ))}
-                    <div className="flex justify-between">
-                      <div></div>
-                      <Button 
-                        type="button" 
-                        onClick={() => setActiveTab("control")}
-                      >
-                        Next: Control Equipment
-                      </Button>
-                    </div>
                   </TabsContent>
-                  
+
                   {/* Control Equipment */}
                   <TabsContent value="control" className="space-y-4">
                     {getItemsByCategory("control").map((item) => (
@@ -316,74 +355,40 @@ export default function EditInspectionPage() {
                         <div className="flex justify-between items-start">
                           <div className="space-y-1">
                             <h4 className="font-medium">{item.name}</h4>
-                            <p className="text-sm text-muted-foreground">{item.description}</p>
                           </div>
-                          <div className="flex items-center space-x-4">
-                            <RadioGroup
-                              value={item.status}
-                              onValueChange={(value) => updateInspectionItem(item.id, 'status', value as ConditionStatus)}
-                              className="flex items-center space-x-4"
-                            >
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem 
-                                  value="good" 
-                                  id={`good-${item.id}`} 
-                                  className="text-green-500 border-green-500 focus:ring-green-500" 
-                                />
-                                <Label 
-                                  htmlFor={`good-${item.id}`}
-                                  className="text-green-600"
-                                >
-                                  Good
-                                </Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem 
-                                  value="bad" 
-                                  id={`bad-${item.id}`} 
-                                  className="text-red-500 border-red-500 focus:ring-red-500" 
-                                />
-                                <Label 
-                                  htmlFor={`bad-${item.id}`}
-                                  className="text-red-600"
-                                >
-                                  Bad
-                                </Label>
-                              </div>
-                            </RadioGroup>
-                          </div>
+                          <RadioGroup
+                            value={item.status}
+                            onValueChange={(value) => updateInspectionItem(item.id, 'status', value as ConditionStatus)}
+                            className="flex items-center space-x-4"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="pending" id={`${item.id}-pending`} />
+                              <Label htmlFor={`${item.id}-pending`}>Pending</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="good" id={`${item.id}-good`} />
+                              <Label htmlFor={`${item.id}-good`}>Good</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="bad" id={`${item.id}-bad`} />
+                              <Label htmlFor={`${item.id}-bad`}>Bad</Label>
+                            </div>
+                          </RadioGroup>
                         </div>
-                        <div className="mt-2">
-                          <Label htmlFor={`remarks-${item.id}`} className="text-sm">
-                            Remarks
-                          </Label>
+                        <div className="mt-4">
+                          <Label htmlFor={`remarks-${item.id}`}>Remarks</Label>
                           <Textarea
                             id={`remarks-${item.id}`}
-                            value={item.remarks}
+                            value={item.remarks || ''}
                             onChange={(e) => updateInspectionItem(item.id, 'remarks', e.target.value)}
-                            placeholder="Add any comments or observations"
-                            className="mt-1 h-20"
+                            placeholder="Add remarks about this item"
+                            className="mt-1"
                           />
                         </div>
                       </div>
                     ))}
-                    <div className="flex justify-between">
-                      <Button 
-                        type="button" 
-                        variant="outline"
-                        onClick={() => setActiveTab("general")}
-                      >
-                        Previous: General Building
-                      </Button>
-                      <Button 
-                        type="button" 
-                        onClick={() => setActiveTab("transformer")}
-                      >
-                        Next: Power Transformer
-                      </Button>
-                    </div>
                   </TabsContent>
-                  
+
                   {/* Power Transformer */}
                   <TabsContent value="transformer" className="space-y-4">
                     {getItemsByCategory("transformer").map((item) => (
@@ -391,74 +396,40 @@ export default function EditInspectionPage() {
                         <div className="flex justify-between items-start">
                           <div className="space-y-1">
                             <h4 className="font-medium">{item.name}</h4>
-                            <p className="text-sm text-muted-foreground">{item.description}</p>
                           </div>
-                          <div className="flex items-center space-x-4">
-                            <RadioGroup
-                              value={item.status}
-                              onValueChange={(value) => updateInspectionItem(item.id, 'status', value as ConditionStatus)}
-                              className="flex items-center space-x-4"
-                            >
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem 
-                                  value="good" 
-                                  id={`good-${item.id}`} 
-                                  className="text-green-500 border-green-500 focus:ring-green-500" 
-                                />
-                                <Label 
-                                  htmlFor={`good-${item.id}`}
-                                  className="text-green-600"
-                                >
-                                  Good
-                                </Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem 
-                                  value="bad" 
-                                  id={`bad-${item.id}`} 
-                                  className="text-red-500 border-red-500 focus:ring-red-500" 
-                                />
-                                <Label 
-                                  htmlFor={`bad-${item.id}`}
-                                  className="text-red-600"
-                                >
-                                  Bad
-                                </Label>
-                              </div>
-                            </RadioGroup>
-                          </div>
+                          <RadioGroup
+                            value={item.status}
+                            onValueChange={(value) => updateInspectionItem(item.id, 'status', value as ConditionStatus)}
+                            className="flex items-center space-x-4"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="pending" id={`${item.id}-pending`} />
+                              <Label htmlFor={`${item.id}-pending`}>Pending</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="good" id={`${item.id}-good`} />
+                              <Label htmlFor={`${item.id}-good`}>Good</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="bad" id={`${item.id}-bad`} />
+                              <Label htmlFor={`${item.id}-bad`}>Bad</Label>
+                            </div>
+                          </RadioGroup>
                         </div>
-                        <div className="mt-2">
-                          <Label htmlFor={`remarks-${item.id}`} className="text-sm">
-                            Remarks
-                          </Label>
+                        <div className="mt-4">
+                          <Label htmlFor={`remarks-${item.id}`}>Remarks</Label>
                           <Textarea
                             id={`remarks-${item.id}`}
-                            value={item.remarks}
+                            value={item.remarks || ''}
                             onChange={(e) => updateInspectionItem(item.id, 'remarks', e.target.value)}
-                            placeholder="Add any comments or observations"
-                            className="mt-1 h-20"
+                            placeholder="Add remarks about this item"
+                            className="mt-1"
                           />
                         </div>
                       </div>
                     ))}
-                    <div className="flex justify-between">
-                      <Button 
-                        type="button" 
-                        variant="outline"
-                        onClick={() => setActiveTab("control")}
-                      >
-                        Previous: Control Equipment
-                      </Button>
-                      <Button 
-                        type="button" 
-                        onClick={() => setActiveTab("outdoor")}
-                      >
-                        Next: Outdoor Equipment
-                      </Button>
-                    </div>
                   </TabsContent>
-                  
+
                   {/* Outdoor Equipment */}
                   <TabsContent value="outdoor" className="space-y-4">
                     {getItemsByCategory("outdoor").map((item) => (
@@ -466,67 +437,38 @@ export default function EditInspectionPage() {
                         <div className="flex justify-between items-start">
                           <div className="space-y-1">
                             <h4 className="font-medium">{item.name}</h4>
-                            <p className="text-sm text-muted-foreground">{item.description}</p>
                           </div>
-                          <div className="flex items-center space-x-4">
-                            <RadioGroup
-                              value={item.status}
-                              onValueChange={(value) => updateInspectionItem(item.id, 'status', value as ConditionStatus)}
-                              className="flex items-center space-x-4"
-                            >
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem 
-                                  value="good" 
-                                  id={`good-${item.id}`} 
-                                  className="text-green-500 border-green-500 focus:ring-green-500" 
-                                />
-                                <Label 
-                                  htmlFor={`good-${item.id}`}
-                                  className="text-green-600"
-                                >
-                                  Good
-                                </Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem 
-                                  value="bad" 
-                                  id={`bad-${item.id}`} 
-                                  className="text-red-500 border-red-500 focus:ring-red-500" 
-                                />
-                                <Label 
-                                  htmlFor={`bad-${item.id}`}
-                                  className="text-red-600"
-                                >
-                                  Bad
-                                </Label>
-                              </div>
-                            </RadioGroup>
-                          </div>
+                          <RadioGroup
+                            value={item.status}
+                            onValueChange={(value) => updateInspectionItem(item.id, 'status', value as ConditionStatus)}
+                            className="flex items-center space-x-4"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="pending" id={`${item.id}-pending`} />
+                              <Label htmlFor={`${item.id}-pending`}>Pending</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="good" id={`${item.id}-good`} />
+                              <Label htmlFor={`${item.id}-good`}>Good</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="bad" id={`${item.id}-bad`} />
+                              <Label htmlFor={`${item.id}-bad`}>Bad</Label>
+                            </div>
+                          </RadioGroup>
                         </div>
-                        <div className="mt-2">
-                          <Label htmlFor={`remarks-${item.id}`} className="text-sm">
-                            Remarks
-                          </Label>
+                        <div className="mt-4">
+                          <Label htmlFor={`remarks-${item.id}`}>Remarks</Label>
                           <Textarea
                             id={`remarks-${item.id}`}
-                            value={item.remarks}
+                            value={item.remarks || ''}
                             onChange={(e) => updateInspectionItem(item.id, 'remarks', e.target.value)}
-                            placeholder="Add any comments or observations"
-                            className="mt-1 h-20"
+                            placeholder="Add remarks about this item"
+                            className="mt-1"
                           />
                         </div>
                       </div>
                     ))}
-                    <div className="flex justify-between">
-                      <Button 
-                        type="button" 
-                        variant="outline"
-                        onClick={() => setActiveTab("transformer")}
-                      >
-                        Previous: Power Transformer
-                      </Button>
-                      <div></div>
-                    </div>
                   </TabsContent>
                 </Tabs>
               </CardContent>

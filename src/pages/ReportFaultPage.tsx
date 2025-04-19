@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useData } from "@/contexts/DataContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { getUserRegionAndDistrict } from "@/utils/user-utils";
 
 export default function ReportFaultPage() {
   const { isAuthenticated, user } = useAuth();
@@ -29,22 +29,14 @@ export default function ReportFaultPage() {
     
     // Set default values based on user role
     if (user) {
-      // For district engineers, find and set their district ID
-      if (user.role === "district_engineer" && user.district) {
-        const userDistrict = districts.find(d => d.name === user.district);
-        if (userDistrict) {
-          setDefaultDistrictId(userDistrict.id);
-          setDefaultRegionId(userDistrict.regionId);
-          console.log("Setting district ID:", userDistrict.id, "for district:", user.district);
-        }
+      const { regionId, districtId } = getUserRegionAndDistrict(user, regions, districts);
+      
+      if (regionId) {
+        setDefaultRegionId(regionId);
       }
-      // For regional engineers, find and set their region ID
-      else if (user.role === "regional_engineer" && user.region) {
-        const userRegion = regions.find(r => r.name === user.region);
-        if (userRegion) {
-          setDefaultRegionId(userRegion.id);
-          console.log("Setting region ID:", userRegion.id, "for region:", user.region);
-        }
+      
+      if (districtId) {
+        setDefaultDistrictId(districtId);
       }
     }
   }, [isAuthenticated, navigate, user, regions, districts]);
@@ -116,14 +108,14 @@ export default function ReportFaultPage() {
         <Card className="border border-border/50 bg-card/50 shadow-sm">
           <CardContent className="p-6">
             <Tabs defaultValue="op5" className="w-full">
-              <TabsList className="mb-8 w-full justify-start bg-muted/50 p-1 rounded-md">
-                <TabsTrigger value="op5" className="flex items-center data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                  <AlertTriangle size={16} className="mr-2 text-destructive" />
-                  OP5 Fault
+              <TabsList className="mb-8 w-full grid grid-cols-2 bg-muted/50 p-1 rounded-md">
+                <TabsTrigger value="op5" className="flex items-center gap-1 text-[11px] leading-tight sm:text-sm data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
+                  <AlertTriangle className="h-3 w-3 sm:h-4 sm:w-4 text-destructive shrink-0" />
+                  <span className="truncate">OP5 Fault</span>
                 </TabsTrigger>
-                <TabsTrigger value="control" className="flex items-center data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                  <ZapOff size={16} className="mr-2 text-amber-500" />
-                  Control System Outage
+                <TabsTrigger value="control" className="flex items-center gap-1 text-[11px] leading-tight sm:text-sm data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm">
+                  <ZapOff className="h-3 w-3 sm:h-4 sm:w-4 text-amber-500 shrink-0" />
+                  <span className="truncate">Control System Outage</span>
                 </TabsTrigger>
               </TabsList>
               

@@ -12,6 +12,8 @@ export interface LoadMonitoringData {
   id: string;
   date: string;
   time: string;
+  regionId: string;
+  districtId: string;
   region: string;
   district: string;
   

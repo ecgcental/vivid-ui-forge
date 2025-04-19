@@ -127,6 +127,23 @@ export function VITInspectionForm({
     }
   }, [selectedAssetId, vitAssets]);
 
+  // Filter assets based on user role
+  const filteredAssets = vitAssets.filter(asset => {
+    if (user?.role === "global_engineer") return true;
+    if (user?.role === "regional_engineer" && user.region) {
+      return asset.regionId === user.region;
+    }
+    if (user?.role === "district_engineer" && user.region && user.district) {
+      return asset.regionId === user.region && asset.districtId === user.district;
+    }
+    return true;
+  });
+
+  // Handle asset selection
+  const handleAssetChange = (value: string) => {
+    setSelectedAssetId(value);
+  };
+
   // Calculate issues count
   const calculateIssuesCount = () => {
     let count = 0;
@@ -229,17 +246,17 @@ export function VITInspectionForm({
                 <Label htmlFor="assetSelect">VIT Asset *</Label>
                 <Select
                   value={selectedAssetId}
-                  onValueChange={setSelectedAssetId}
-                  disabled={!!assetId}
+                  onValueChange={handleAssetChange}
+                  disabled={user?.role === "district_engineer" && !inspectionData}
                   required
                 >
-                  <SelectTrigger id="assetSelect">
-                    <SelectValue placeholder="Select VIT asset" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select VIT Asset" />
                   </SelectTrigger>
                   <SelectContent>
-                    {vitAssets.map((asset) => (
-                      <SelectItem key={asset.id} value={asset.id || "unknown-asset"}>
-                        {asset.serialNumber} - {asset.typeOfUnit}
+                    {filteredAssets.map(asset => (
+                      <SelectItem key={asset.id} value={asset.id}>
+                        {asset.serialNumber} - {asset.typeOfUnit} ({asset.voltageLevel})
                       </SelectItem>
                     ))}
                   </SelectContent>

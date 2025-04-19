@@ -35,11 +35,28 @@ export default function SubstationInspectionPage() {
   const { user } = useAuth();
   const { regions, districts, saveInspection } = useData();
   const navigate = useNavigate();
-  const [regionId, setRegionId] = useState("");
-  const [districtId, setDistrictId] = useState("");
-  const [formData, setFormData] = useState<Partial<SubstationInspection>>({
-    date: new Date().toISOString().split('T')[0],
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [regionId, setRegionId] = useState<string>("");
+  const [districtId, setDistrictId] = useState<string>("");
+  const [formData, setFormData] = useState<SubstationInspection>({
+    id: uuidv4(),
+    region: "",
+    district: "",
+    substationName: "",
+    substationNo: "",
     type: "indoor",
+    date: new Date().toISOString(),
+    inspectionDate: new Date().toISOString(),
+    items: [],
+    generalBuilding: [],
+    controlEquipment: [],
+    powerTransformer: [],
+    outdoorEquipment: [],
+    remarks: "",
+    createdBy: user?.name || "",
+    createdAt: new Date().toISOString(),
+    inspectedBy: user?.name || ""
   });
   const [categories, setCategories] = useState<Category[]>([
     {
@@ -88,22 +105,45 @@ export default function SubstationInspectionPage() {
     },
   ]);
 
-  // Initialize region and district based on user role
+  // Initialize region and district based on user's assigned values
   useEffect(() => {
-    if (user) {
-      if (user.role === "district_engineer" || user.role === "regional_engineer") {
-        const userRegion = regions.find(r => r.name === user.region);
-        if (userRegion) {
-          setRegionId(userRegion.id);
-          setFormData(prev => ({ ...prev, region: userRegion.name }));
-          
-          if (user.role === "district_engineer" && user.district) {
-            const userDistrict = districts.find(d => d.name === user.district);
-            if (userDistrict) {
-              setDistrictId(userDistrict.id);
-              setFormData(prev => ({ ...prev, district: userDistrict.name }));
-            }
+    if (user?.role === "district_engineer" || user?.role === "regional_engineer") {
+      // Find region ID based on user's assigned region name
+      const userRegion = regions.find(r => r.name === user.region);
+      if (userRegion) {
+        setRegionId(userRegion.id);
+        setFormData(prev => ({ ...prev, region: userRegion.name }));
+        
+        // For district engineer, also set the district
+        if (user.role === "district_engineer" && user.district) {
+          const userDistrict = districts.find(d => 
+            d.regionId === userRegion.id && d.name === user.district
+          );
+          if (userDistrict) {
+            setDistrictId(userDistrict.id);
+            setFormData(prev => ({ ...prev, district: userDistrict.name }));
           }
+        }
+      }
+    }
+  }, [user, regions, districts]);
+
+  // Ensure district engineer's district is always set correctly
+  useEffect(() => {
+    if (user?.role === "district_engineer" && user.district && user.region) {
+      const userRegion = regions.find(r => r.name === user.region);
+      if (userRegion) {
+        const userDistrict = districts.find(d => 
+          d.regionId === userRegion.id && d.name === user.district
+        );
+        if (userDistrict) {
+          setRegionId(userRegion.id);
+          setDistrictId(userDistrict.id);
+          setFormData(prev => ({ 
+            ...prev, 
+            region: userRegion.name,
+            district: userDistrict.name 
+          }));
         }
       }
     }
@@ -116,17 +156,23 @@ export default function SubstationInspectionPage() {
   
   const filteredDistricts = regionId
     ? districts.filter(d => {
-        const region = regions.find(r => r.id === regionId);
-        return region?.districts.some(rd => rd.id === d.id) && (
-          user?.role === "district_engineer" 
-            ? user.district === d.name 
-            : true
-        );
+        // First check if district belongs to selected region
+        if (d.regionId !== regionId) return false;
+        
+        // For district engineers, only show their assigned district
+        if (user?.role === "district_engineer") {
+          return d.name === user.district;
+        }
+        
+        // For other roles, show all districts in the region
+        return true;
       })
     : [];
 
-  // Handle region change
+  // Handle region change - prevent district engineers from changing region
   const handleRegionChange = (value: string) => {
+    if (user?.role === "district_engineer") return; // Prevent district engineers from changing region
+    
     setRegionId(value);
     const region = regions.find(r => r.id === value);
     setFormData(prev => ({ ...prev, region: region?.name || "" }));
@@ -134,8 +180,10 @@ export default function SubstationInspectionPage() {
     setFormData(prev => ({ ...prev, district: "" }));
   };
 
-  // Handle district change
+  // Handle district change - prevent district engineers from changing district
   const handleDistrictChange = (value: string) => {
+    if (user?.role === "district_engineer") return; // Prevent district engineers from changing district
+    
     setDistrictId(value);
     const district = districts.find(d => d.id === value);
     setFormData(prev => ({ ...prev, district: district?.name || "" }));
@@ -190,30 +238,50 @@ export default function SubstationInspectionPage() {
     const regionId = regionFound?.id || "";
     const districtId = districtFound?.id || "";
     
-    const inspectionItems: InspectionItem[] = categories.flatMap(category =>
-      category.items
-        .filter(item => item.status) // Only include items that have a status selected
-        .map(item => ({
-          id: item.id,
-          category: category.name.toLowerCase(),
-          name: item.name,
-          status: item.status,
-          remarks: item.remarks || "",
-        }))
-    );
+    const selectedRegion = regionFound?.name || "";
+    const selectedDistrict = districtFound?.name || "";
     
     const inspectionData: Omit<SubstationInspection, "id"> = {
-      regionId,
-      districtId,
-      region: region,
-      district: district,
+      region: selectedRegion,
+      district: selectedDistrict,
       date: formData.date || new Date().toISOString().split('T')[0],
+      inspectionDate: formData.inspectionDate || new Date().toISOString().split('T')[0],
       substationNo: formData.substationNo || "",
       substationName: formData.substationName || "",
       type: formData.type || "indoor",
-      items: inspectionItems,
+      items: [],
+      generalBuilding: categories.find(c => c.name === "General Building")?.items.map(item => ({
+        id: item.id,
+        category: "general building",
+        name: item.name,
+        status: item.status,
+        remarks: item.remarks || ""
+      })) || [],
+      controlEquipment: categories.find(c => c.name === "Control Equipment")?.items.map(item => ({
+        id: item.id,
+        category: "control equipment",
+        name: item.name,
+        status: item.status,
+        remarks: item.remarks || ""
+      })) || [],
+      powerTransformer: categories.find(c => c.name === "Power Transformer")?.items.map(item => ({
+        id: item.id,
+        category: "power transformer",
+        name: item.name,
+        status: item.status,
+        remarks: item.remarks || ""
+      })) || [],
+      outdoorEquipment: categories.find(c => c.name === "Outdoor Equipment")?.items.map(item => ({
+        id: item.id,
+        category: "outdoor equipment",
+        name: item.name,
+        status: item.status,
+        remarks: item.remarks || ""
+      })) || [],
+      remarks: "",
       createdBy: user?.name || "Unknown",
       createdAt: new Date().toISOString(),
+      inspectedBy: user?.name || "Unknown"
     };
     
     const id = saveInspection(inspectionData);
@@ -246,10 +314,11 @@ export default function SubstationInspectionPage() {
                   <Select
                     value={regionId}
                     onValueChange={handleRegionChange}
+                    required
                     disabled={user?.role === "district_engineer" || user?.role === "regional_engineer"}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select region" />
+                    <SelectTrigger id="region">
+                      <SelectValue placeholder="Select Region" />
                     </SelectTrigger>
                     <SelectContent>
                       {filteredRegions.map((region) => (
@@ -266,10 +335,11 @@ export default function SubstationInspectionPage() {
                   <Select
                     value={districtId}
                     onValueChange={handleDistrictChange}
+                    required
                     disabled={user?.role === "district_engineer" || !regionId}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select district" />
+                    <SelectTrigger id="district">
+                      <SelectValue placeholder="Select District" />
                     </SelectTrigger>
                     <SelectContent>
                       {filteredDistricts.map((district) => (
@@ -289,6 +359,27 @@ export default function SubstationInspectionPage() {
                     value={formData.date}
                     onChange={(e) => handleInputChange("date", e.target.value)}
                     required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="substationNo">Substation Number</Label>
+                  <Input
+                    id="substationNo"
+                    type="text"
+                    value={formData.substationNo || ''}
+                    onChange={(e) => handleInputChange('substationNo', e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="substationName">Substation Name (Optional)</Label>
+                  <Input
+                    id="substationName"
+                    type="text"
+                    value={formData.substationName || ''}
+                    onChange={(e) => handleInputChange('substationName', e.target.value)}
                   />
                 </div>
 

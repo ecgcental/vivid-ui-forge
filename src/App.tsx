@@ -24,10 +24,13 @@ import VITInspectionManagementPage from "./pages/asset-management/VITInspectionM
 import VITInspectionDetailsPage from "./pages/asset-management/VITInspectionDetailsPage";
 import EditVITInspectionPage from "./pages/asset-management/EditVITInspectionPage";
 import VITInspectionFormPage from "./pages/asset-management/VITInspectionFormPage";
+import OverheadLineInspectionPage from "./pages/asset-management/OverheadLineInspectionPage";
 import NotFound from "./pages/NotFound";
 import CreateLoadMonitoringPage from "./pages/asset-management/CreateLoadMonitoringPage";
 import EditLoadMonitoringPage from "./pages/asset-management/EditLoadMonitoringPage";
 import LoadMonitoringDetailsPage from "./pages/asset-management/LoadMonitoringDetailsPage";
+import EditOP5FaultPage from "@/pages/EditOP5FaultPage";
+import EditControlOutagePage from "@/pages/EditControlOutagePage";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +63,9 @@ const App = () => (
               <Route path="/asset-management/vit-inspection-details/:id" element={<VITInspectionDetailsPage />} />
               <Route path="/asset-management/edit-vit-inspection/:id" element={<EditVITInspectionPage />} />
               <Route path="/asset-management/vit-inspection-form/:id" element={<VITInspectionFormPage />} />
+              <Route path="/asset-management/overhead-line" element={<OverheadLineInspectionPage />} />
+              <Route path="/edit-op5-fault/:id" element={<EditOP5FaultPage />} />
+              <Route path="/edit-control-outage/:id" element={<EditControlOutagePage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

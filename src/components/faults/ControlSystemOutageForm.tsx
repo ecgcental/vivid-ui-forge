@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -23,8 +22,8 @@ import {
   CardTitle 
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, InfoIcon, Users, MapPin, Calculator } from "lucide-react";
-import { FaultType } from "@/lib/types";
+import { Loader2, InfoIcon, Users, MapPin, Calculator, FileText } from "lucide-react";
+import { FaultType, UnplannedFaultType, EmergencyFaultType } from "@/lib/types";
 import { 
   calculateDurationHours,
   calculateUnservedEnergy
@@ -46,9 +45,9 @@ export function ControlSystemOutageForm({ defaultRegionId = "", defaultDistrictI
   const [districtId, setDistrictId] = useState<string>(defaultDistrictId);
   const [occurrenceDate, setOccurrenceDate] = useState<string>("");
   const [faultType, setFaultType] = useState<FaultType>("Unplanned");
-  const [ruralAffected, setRuralAffected] = useState<number>(0);
-  const [urbanAffected, setUrbanAffected] = useState<number>(0);
-  const [metroAffected, setMetroAffected] = useState<number>(0);
+  const [ruralAffected, setRuralAffected] = useState<number | null>(null);
+  const [urbanAffected, setUrbanAffected] = useState<number | null>(null);
+  const [metroAffected, setMetroAffected] = useState<number | null>(null);
   const [restorationDate, setRestorationDate] = useState<string>("");
   const [reason, setReason] = useState<string>("");
   const [indications, setIndications] = useState<string>("");
@@ -58,6 +57,7 @@ export function ControlSystemOutageForm({ defaultRegionId = "", defaultDistrictI
   // Derived values
   const [durationHours, setDurationHours] = useState<number | null>(null);
   const [unservedEnergyMWh, setUnservedEnergyMWh] = useState<number | null>(null);
+  const [specificFaultType, setSpecificFaultType] = useState<UnplannedFaultType | EmergencyFaultType | undefined>(undefined);
   
   // Update region and district when props change
   useEffect(() => {
@@ -111,6 +111,18 @@ export function ControlSystemOutageForm({ defaultRegionId = "", defaultDistrictI
       return;
     }
     
+    // Validate that at least one affected population field is filled
+    if (ruralAffected === null && urbanAffected === null && metroAffected === null) {
+      toast.error("Please enter the number of affected customers for at least one population type");
+      return;
+    }
+    
+    // Require specific fault type for unplanned faults
+    if (faultType === "Unplanned" && !specificFaultType) {
+      toast.error("Please select the specific type of fault");
+      return;
+    }
+    
     // Validate that restoration date is after occurrence date
     if (restorationDate && new Date(restorationDate) <= new Date(occurrenceDate)) {
       toast.error("Restoration date must be after occurrence date");
@@ -125,7 +137,8 @@ export function ControlSystemOutageForm({ defaultRegionId = "", defaultDistrictI
         districtId,
         occurrenceDate,
         faultType,
-        restorationDate: restorationDate || new Date().toISOString(), // Use current time if not set
+        specificFaultType: faultType === "Unplanned" ? specificFaultType : undefined,
+        restorationDate: restorationDate || null,
         customersAffected: {
           rural: ruralAffected,
           urban: urbanAffected,
@@ -135,7 +148,9 @@ export function ControlSystemOutageForm({ defaultRegionId = "", defaultDistrictI
         controlPanelIndications: indications,
         areaAffected,
         loadMW,
-        unservedEnergyMWh: unservedEnergyMWh || 0
+        unservedEnergyMWh: unservedEnergyMWh || 0,
+        createdBy: user?.id || 'unknown',
+        createdAt: new Date().toISOString()
       });
       
       navigate("/dashboard");
@@ -146,6 +161,13 @@ export function ControlSystemOutageForm({ defaultRegionId = "", defaultDistrictI
       setIsSubmitting(false);
     }
   };
+  
+  // Reset specific fault type when fault type changes
+  useEffect(() => {
+    if (faultType !== "Unplanned" && faultType !== "Emergency") {
+      setSpecificFaultType(undefined);
+    }
+  }, [faultType]);
   
   return (
     <Card className="border-0 shadow-none bg-transparent">
@@ -233,132 +255,229 @@ export function ControlSystemOutageForm({ defaultRegionId = "", defaultDistrictI
             </div>
           </div>
           
+          {/* Show specific fault type dropdown when Unplanned or Emergency is selected */}
+          {(faultType === "Unplanned" || faultType === "Emergency") && (
+            <div className="space-y-3">
+              <Label htmlFor="specificFaultType" className="text-base font-medium">Specific Fault Type</Label>
+              <Select 
+                value={specificFaultType} 
+                onValueChange={(value) => setSpecificFaultType(
+                  faultType === "Unplanned" 
+                    ? value as UnplannedFaultType 
+                    : value as EmergencyFaultType
+                )}
+                required
+              >
+                <SelectTrigger className="h-12 text-base bg-background/50 border-muted">
+                  <SelectValue placeholder="Select specific fault type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {faultType === "Unplanned" ? (
+                    <>
+                      <SelectItem value="JUMPER CUT">Jumper Cut</SelectItem>
+                      <SelectItem value="CONDUCTOR CUT">Conductor Cut</SelectItem>
+                      <SelectItem value="MERGED CONDUCTOR">Merged Conductor</SelectItem>
+                      <SelectItem value="HV/LV LINE CONTACT">HV/LV Line Contact</SelectItem>
+                      <SelectItem value="VEGETATION">Vegetation</SelectItem>
+                      <SelectItem value="CABLE FAULT">Cable Fault</SelectItem>
+                      <SelectItem value="TERMINATION FAILURE">Termination Failure</SelectItem>
+                      <SelectItem value="BROKEN POLES">Broken Poles</SelectItem>
+                      <SelectItem value="BURNT POLE">Burnt Pole</SelectItem>
+                      <SelectItem value="FAULTY ARRESTER/INSULATOR">Faulty Arrester/Insulator</SelectItem>
+                      <SelectItem value="EQIPMENT FAILURE">Equipment Failure</SelectItem>
+                      <SelectItem value="PUNCTURED CABLE">Punctured Cable</SelectItem>
+                      <SelectItem value="ANIMAL INTERRUPTION">Animal Interruption</SelectItem>
+                      <SelectItem value="BAD WEATHER">Bad Weather</SelectItem>
+                      <SelectItem value="TRANSIENT FAULTS">Transient Faults</SelectItem>
+                    </>
+                  ) : (
+                    <>
+                      <SelectItem value="MEND CABLE">Mend Cable</SelectItem>
+                      <SelectItem value="WORK ON EQUIPMENT">Work on Equipment</SelectItem>
+                      <SelectItem value="FIRE">Fire</SelectItem>
+                      <SelectItem value="IMPROVE HV">Improve HV</SelectItem>
+                      <SelectItem value="JUMPER REPLACEMENT">Jumper Replacement</SelectItem>
+                      <SelectItem value="MEND BROKEN">Mend Broken</SelectItem>
+                      <SelectItem value="MEND JUMPER">Mend Jumper</SelectItem>
+                      <SelectItem value="MEND TERMINATION">Mend Termination</SelectItem>
+                      <SelectItem value="BROKEN POLE">Broken Pole</SelectItem>
+                      <SelectItem value="BURNT POLE">Burnt Pole</SelectItem>
+                      <SelectItem value="ANIMAL CONTACT">Animal Contact</SelectItem>
+                      <SelectItem value="VEGETATION SAFETY">Vegetation Safety</SelectItem>
+                      <SelectItem value="TRANSFER/RESTORE">Transfer/Restore</SelectItem>
+                      <SelectItem value="TROUBLE SHOOTING">Trouble Shooting</SelectItem>
+                      <SelectItem value="MEND LOOSE">Mend Loose</SelectItem>
+                      <SelectItem value="MAINTENANCE">Maintenance</SelectItem>
+                      <SelectItem value="REPLACE FUSE">Replace Fuse</SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          
           <Tabs defaultValue="affected" className="w-full">
-            <TabsList className="w-full grid grid-cols-3 bg-muted/50 p-1">
-              <TabsTrigger value="affected" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                <Users className="h-4 w-4 mr-2" />
-                Affected Customers
+            <TabsList className="grid w-full grid-cols-3 gap-1">
+              <TabsTrigger value="affected" className="flex items-center gap-1 text-xs sm:text-sm">
+                <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Affected</span>
+                <span className="sm:hidden">Aff.</span>
               </TabsTrigger>
-              <TabsTrigger value="details" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                <MapPin className="h-4 w-4 mr-2" />
-                Outage Details
+              <TabsTrigger value="details" className="flex items-center gap-1 text-xs sm:text-sm">
+                <FileText className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Details</span>
+                <span className="sm:hidden">Det.</span>
               </TabsTrigger>
-              <TabsTrigger value="calculations" className="data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                <Calculator className="h-4 w-4 mr-2" />
-                Calculations
+              <TabsTrigger value="calculations" className="flex items-center gap-1 text-xs sm:text-sm">
+                <Calculator className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Calculations</span>
+                <span className="sm:hidden">Calc.</span>
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="affected" className="space-y-6 pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="space-y-3">
-                  <Label htmlFor="ruralAffected" className="font-medium flex items-center">
-                    Rural Customers Affected
-                    <InfoIcon className="h-4 w-4 ml-1 text-muted-foreground" />
+            <TabsContent value="affected" className="space-y-4 sm:space-y-6 pt-4 sm:pt-6">
+              <div className="bg-muted/50 p-4 rounded-lg border border-muted">
+                <h4 className="font-medium mb-2">Enter Number of Customers Affected by this Outage</h4>
+                <p className="text-sm text-muted-foreground">
+                  Please enter the number of customers affected in each population category. 
+                  At least one category must have affected customers to proceed.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="ruralAffected" className="font-medium flex items-center text-sm">
+                    Rural Customers Affected *
+                    <InfoIcon className="h-3 w-3 sm:h-4 sm:w-4 ml-1 text-muted-foreground" />
                   </Label>
                   <Input
                     id="ruralAffected"
                     type="number"
                     min="0"
-                    value={ruralAffected}
-                    onChange={(e) => setRuralAffected(parseInt(e.target.value) || 0)}
-                    className="bg-background/50 border-muted"
+                    value={ruralAffected === null ? "" : ruralAffected}
+                    onChange={(e) => setRuralAffected(e.target.value === "" ? null : parseInt(e.target.value))}
+                    className="bg-background/50 border-muted h-9 sm:h-10"
+                    required
+                    placeholder="Enter number of affected customers"
                   />
                 </div>
                 
-                <div className="space-y-3">
-                  <Label htmlFor="urbanAffected" className="font-medium flex items-center">
-                    Urban Customers Affected
-                    <InfoIcon className="h-4 w-4 ml-1 text-muted-foreground" />
+                <div className="space-y-2">
+                  <Label htmlFor="urbanAffected" className="font-medium flex items-center text-sm">
+                    Urban Customers Affected *
+                    <InfoIcon className="h-3 w-3 sm:h-4 sm:w-4 ml-1 text-muted-foreground" />
                   </Label>
                   <Input
                     id="urbanAffected"
                     type="number"
                     min="0"
-                    value={urbanAffected}
-                    onChange={(e) => setUrbanAffected(parseInt(e.target.value) || 0)}
-                    className="bg-background/50 border-muted"
+                    value={urbanAffected === null ? "" : urbanAffected}
+                    onChange={(e) => setUrbanAffected(e.target.value === "" ? null : parseInt(e.target.value))}
+                    className="bg-background/50 border-muted h-9 sm:h-10"
+                    required
+                    placeholder="Enter number of affected customers"
                   />
                 </div>
                 
-                <div className="space-y-3">
-                  <Label htmlFor="metroAffected" className="font-medium flex items-center">
-                    Metro Customers Affected
-                    <InfoIcon className="h-4 w-4 ml-1 text-muted-foreground" />
+                <div className="space-y-2">
+                  <Label htmlFor="metroAffected" className="font-medium flex items-center text-sm">
+                    Metro Customers Affected *
+                    <InfoIcon className="h-3 w-3 sm:h-4 sm:w-4 ml-1 text-muted-foreground" />
                   </Label>
                   <Input
                     id="metroAffected"
                     type="number"
                     min="0"
-                    value={metroAffected}
-                    onChange={(e) => setMetroAffected(parseInt(e.target.value) || 0)}
-                    className="bg-background/50 border-muted"
+                    value={metroAffected === null ? "" : metroAffected}
+                    onChange={(e) => setMetroAffected(e.target.value === "" ? null : parseInt(e.target.value))}
+                    className="bg-background/50 border-muted h-9 sm:h-10"
+                    required
+                    placeholder="Enter number of affected customers"
                   />
                 </div>
               </div>
+              <p className="text-sm text-muted-foreground">
+                * At least one population type must have affected customers
+              </p>
             </TabsContent>
             
-            <TabsContent value="details" className="space-y-6 pt-6">
-              <div className="space-y-3">
-                <Label htmlFor="reason" className="text-base font-medium">Reason for Outage</Label>
+            <TabsContent value="details" className="space-y-4 sm:space-y-6 pt-4 sm:pt-6">
+              <div className="space-y-2">
+                <Label htmlFor="reason" className="text-sm font-medium">Reason for Outage</Label>
                 <Textarea
                   id="reason"
                   placeholder="Describe the reason for the outage"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   rows={2}
-                  className="bg-background/50 border-muted"
+                  className="bg-background/50 border-muted h-20 sm:h-24"
                 />
               </div>
               
-              <div className="space-y-3">
-                <Label htmlFor="indications" className="text-base font-medium">Indications on Control Panel</Label>
+              <div className="space-y-2">
+                <Label htmlFor="indications" className="text-sm font-medium">Indications on Control Panel</Label>
                 <Textarea
                   id="indications"
                   placeholder="Describe the indications observed on the control panel"
                   value={indications}
                   onChange={(e) => setIndications(e.target.value)}
                   rows={2}
-                  className="bg-background/50 border-muted"
+                  className="bg-background/50 border-muted h-20 sm:h-24"
                 />
               </div>
               
-              <div className="space-y-3">
-                <Label htmlFor="areaAffected" className="text-base font-medium">Area Affected</Label>
+              <div className="space-y-2">
+                <Label htmlFor="areaAffected" className="text-sm font-medium">Area Affected</Label>
                 <Input
                   id="areaAffected"
                   type="text"
                   placeholder="E.g., North Sector, Industrial Zone"
                   value={areaAffected}
                   onChange={(e) => setAreaAffected(e.target.value)}
-                  className="h-12 text-base bg-background/50 border-muted"
+                  className="h-9 sm:h-10 text-sm bg-background/50 border-muted"
                 />
               </div>
               
               <div className="space-y-3">
-                <Label htmlFor="loadMW" className="text-base font-medium">Load in MW</Label>
+                <Label htmlFor="load" className="text-base font-medium flex items-center gap-2">
+                  Load (MW)
+                  <InfoIcon className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    Enter the load in Megawatts (MW) at the time of the outage
+                  </span>
+                </Label>
                 <Input
-                  id="loadMW"
+                  id="load"
                   type="number"
                   min="0"
                   step="0.1"
-                  placeholder="Load in megawatts"
                   value={loadMW}
-                  onChange={(e) => setLoadMW(parseFloat(e.target.value) || 0)}
-                  required
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value);
+                    if (value >= 0) {
+                      setLoadMW(value);
+                    }
+                  }}
                   className="h-12 text-base bg-background/50 border-muted"
+                  required
                 />
+                {loadMW > 0 && durationHours !== null && unservedEnergyMWh !== null && (
+                  <div className="text-sm text-muted-foreground">
+                    Unserved Energy: {unservedEnergyMWh} MWh
+                    <br />
+                    (Load: {loadMW} MW × Duration: {durationHours.toFixed(2)} hours)
+                  </div>
+                )}
               </div>
 
-              {/* Moved Restoration Date & Time to details tab */}
-              <div className="space-y-3">
-                <Label htmlFor="restorationDate" className="text-base font-medium">Restoration Date & Time</Label>
+              <div className="space-y-2">
+                <Label htmlFor="restorationDate" className="text-sm font-medium">Restoration Date & Time</Label>
                 <Input
                   id="restorationDate"
                   type="datetime-local"
                   value={restorationDate}
                   onChange={(e) => setRestorationDate(e.target.value)}
-                  className="h-12 text-base bg-background/50 border-muted"
+                  className="h-9 sm:h-10 text-sm bg-background/50 border-muted"
                 />
                 <p className="text-xs text-muted-foreground">
                   Leave empty if the outage is still active
@@ -366,21 +485,21 @@ export function ControlSystemOutageForm({ defaultRegionId = "", defaultDistrictI
               </div>
             </TabsContent>
             
-            <TabsContent value="calculations" className="pt-6">
-              <div className="space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <Label htmlFor="durationHours" className="font-medium">Duration of Outage</Label>
-                    <div className="bg-muted/50 rounded-md p-3 text-sm border border-muted">
+            <TabsContent value="calculations" className="pt-4 sm:pt-6">
+              <div className="space-y-4 sm:space-y-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="durationHours" className="font-medium text-sm">Duration of Outage</Label>
+                    <div className="bg-muted/50 rounded-md p-2 sm:p-3 text-sm border border-muted">
                       {durationHours !== null 
                         ? `${durationHours.toFixed(2)} hours` 
                         : "Not calculated yet"}
                     </div>
                   </div>
                   
-                  <div className="space-y-3">
-                    <Label htmlFor="unservedEnergyMWh" className="font-medium">Unserved Energy (MWh)</Label>
-                    <div className="bg-muted/50 rounded-md p-3 text-sm border border-muted">
+                  <div className="space-y-2">
+                    <Label htmlFor="unservedEnergyMWh" className="font-medium text-sm">Unserved Energy (MWh)</Label>
+                    <div className="bg-muted/50 rounded-md p-2 sm:p-3 text-sm border border-muted">
                       {unservedEnergyMWh !== null 
                         ? `${unservedEnergyMWh.toFixed(2)} MWh` 
                         : "Not calculated yet"}

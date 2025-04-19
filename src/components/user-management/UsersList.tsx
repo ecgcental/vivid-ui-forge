@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { User, UserRole } from "@/lib/types";
 import { 
@@ -19,14 +18,16 @@ import {
   DialogDescription, 
   DialogHeader, 
   DialogTitle,
-  DialogTrigger 
+  DialogTrigger,
+  DialogFooter
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useData } from "@/contexts/DataContext";
-import { EditIcon, PlusCircle, Trash2 } from "lucide-react";
+import { EditIcon, PlusCircle, Trash2, Copy } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
+import { validateUserRoleAssignment, getFilteredRegionsAndDistricts } from "@/utils/user-utils";
 
 // Mock list of users
 const MOCK_USERS: User[] = [
@@ -35,15 +36,15 @@ const MOCK_USERS: User[] = [
     email: "district@ecg.com",
     name: "District Engineer",
     role: "district_engineer",
-    region: "Greater Accra",
-    district: "Accra Metro"
+    region: "ACCRA EAST REGION",
+    district: "MAKOLA"
   },
   {
     id: "2",
     email: "regional@ecg.com",
     name: "Regional Engineer",
     role: "regional_engineer",
-    region: "Greater Accra"
+    region: "ACCRA EAST REGION"
   },
   {
     id: "3",
@@ -56,23 +57,23 @@ const MOCK_USERS: User[] = [
     email: "district2@ecg.com",
     name: "Tema District Engineer",
     role: "district_engineer",
-    region: "Greater Accra",
-    district: "Tema"
+    region: "TEMA REGION",
+    district: "TEMA NORTH"
   },
   {
     id: "5",
     email: "district3@ecg.com",
     name: "Kumasi District Engineer",
     role: "district_engineer",
-    region: "Ashanti",
-    district: "Kumasi Metro"
+    region: "ASHANTI EAST REGION",
+    district: "KUMASI EAST"
   },
   {
     id: "6",
     email: "regional2@ecg.com",
     name: "Ashanti Regional Engineer",
     role: "regional_engineer",
-    region: "Ashanti"
+    region: "ASHANTI EAST REGION"
   }
 ];
 
@@ -91,6 +92,8 @@ export function UsersList() {
   const [newRole, setNewRole] = useState<UserRole>(null);
   const [newRegion, setNewRegion] = useState("");
   const [newDistrict, setNewDistrict] = useState("");
+  const [tempPassword, setTempPassword] = useState<string>("");
+  const [showCredentials, setShowCredentials] = useState(false);
   
   const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
@@ -118,21 +121,33 @@ export function UsersList() {
     }
   };
   
+  // Function to generate a random temporary password
+  const generateTempPassword = () => {
+    const length = 12;
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+      const randomIndex = Math.floor(Math.random() * charset.length);
+      password += charset[randomIndex];
+    }
+    return password;
+  };
+  
   const handleAddUser = () => {
     if (!newName || !newEmail || !newRole) {
       toast.error("Please fill all required fields");
       return;
     }
     
-    if (newRole === "district_engineer" && (!newRegion || !newDistrict)) {
-      toast.error("District Engineers must have a region and district assigned");
+    const validation = validateUserRoleAssignment(newRole, newRegion, newDistrict, regions, districts);
+    if (!validation.isValid) {
+      toast.error(validation.error);
       return;
     }
-    
-    if (newRole === "regional_engineer" && !newRegion) {
-      toast.error("Regional Engineers must have a region assigned");
-      return;
-    }
+
+    // Generate temporary password
+    const tempPass = generateTempPassword();
+    setTempPassword(tempPass);
     
     const newUser: User = {
       id: (users.length + 1).toString(),
@@ -140,13 +155,19 @@ export function UsersList() {
       email: newEmail,
       role: newRole,
       region: newRole !== "global_engineer" ? newRegion : undefined,
-      district: newRole === "district_engineer" ? newDistrict : undefined
+      district: newRole === "district_engineer" ? newDistrict : undefined,
+      tempPassword: tempPass,
+      mustChangePassword: true
     };
     
+    // Add to both local state and MOCK_USERS
     setUsers([...users, newUser]);
+    MOCK_USERS.push(newUser);
+    
     resetForm();
     setIsAddDialogOpen(false);
-    toast.success("User added successfully");
+    setShowCredentials(true);
+    toast.success("User added successfully!");
   };
   
   const handleEditUser = () => {
@@ -157,13 +178,9 @@ export function UsersList() {
       return;
     }
     
-    if (newRole === "district_engineer" && (!newRegion || !newDistrict)) {
-      toast.error("District Engineers must have a region and district assigned");
-      return;
-    }
-    
-    if (newRole === "regional_engineer" && !newRegion) {
-      toast.error("Regional Engineers must have a region assigned");
+    const validation = validateUserRoleAssignment(newRole, newRegion, newDistrict, regions, districts);
+    if (!validation.isValid) {
+      toast.error(validation.error);
       return;
     }
     
@@ -218,6 +235,51 @@ export function UsersList() {
     setNewRegion("");
     setNewDistrict("");
     setSelectedUser(null);
+  };
+  
+  // Get filtered regions and districts based on user role
+  const { filteredRegions, filteredDistricts } = getFilteredRegionsAndDistricts(
+    currentUser,
+    regions,
+    districts,
+    newRegion ? regions.find(r => r.name === newRegion)?.id : undefined
+  );
+
+  // Simplified district filtering - just get districts for the selected region
+  const availableDistricts = newRegion
+    ? districts.filter(d => {
+        const selectedRegion = regions.find(r => r.name === newRegion);
+        return d.regionId === selectedRegion?.id;
+      })
+    : [];
+  
+  // When region changes, reset district selection
+  useEffect(() => {
+    setNewDistrict("");
+  }, [newRegion]);
+  
+  const copyToClipboard = (text: string) => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text);
+        toast.success("Copied to clipboard");
+      } else {
+        // Fallback for browsers that don't support clipboard API
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          toast.success("Copied to clipboard");
+        } catch (err) {
+          toast.error("Failed to copy to clipboard");
+        }
+        document.body.removeChild(textArea);
+      }
+    } catch (err) {
+      toast.error("Failed to copy to clipboard");
+    }
   };
   
   return (
@@ -287,7 +349,7 @@ export function UsersList() {
           <DialogHeader>
             <DialogTitle>Add New User</DialogTitle>
             <DialogDescription>
-              Create a new user account with specific role and permissions
+              Fill in the details to create a new user account.
             </DialogDescription>
           </DialogHeader>
           
@@ -335,7 +397,7 @@ export function UsersList() {
                     <SelectValue placeholder="Select region" />
                   </SelectTrigger>
                   <SelectContent>
-                    {regions.map(region => (
+                    {filteredRegions.map(region => (
                       <SelectItem key={region.id} value={region.name}>
                         {region.name}
                       </SelectItem>
@@ -353,17 +415,11 @@ export function UsersList() {
                     <SelectValue placeholder="Select district" />
                   </SelectTrigger>
                   <SelectContent>
-                    {districts
-                      .filter(d => {
-                        const district = regions.find(r => r.name === newRegion)?.districts.find(dist => dist.id === d.id);
-                        return !!district;
-                      })
-                      .map(district => (
-                        <SelectItem key={district.id} value={district.name}>
-                          {district.name}
-                        </SelectItem>
-                      ))
-                    }
+                    {availableDistricts.map(district => (
+                      <SelectItem key={district.id} value={district.name}>
+                        {district.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -381,6 +437,41 @@ export function UsersList() {
               Add User
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Credentials Dialog */}
+      <Dialog open={showCredentials} onOpenChange={setShowCredentials}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>New User Credentials</DialogTitle>
+            <DialogDescription>
+              Please provide these credentials to the new user. They will be required to change their password on first login.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Email</Label>
+              <div className="flex items-center space-x-2">
+                <Input value={newEmail} readOnly />
+                <Button variant="outline" size="icon" onClick={() => copyToClipboard(newEmail)}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div>
+              <Label>Temporary Password</Label>
+              <div className="flex items-center space-x-2">
+                <Input value={tempPassword} readOnly />
+                <Button variant="outline" size="icon" onClick={() => copyToClipboard(tempPassword)}>
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShowCredentials(false)}>Close</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       
@@ -438,7 +529,7 @@ export function UsersList() {
                     <SelectValue placeholder="Select region" />
                   </SelectTrigger>
                   <SelectContent>
-                    {regions.map(region => (
+                    {filteredRegions.map(region => (
                       <SelectItem key={region.id} value={region.name}>
                         {region.name}
                       </SelectItem>
@@ -456,17 +547,11 @@ export function UsersList() {
                     <SelectValue placeholder="Select district" />
                   </SelectTrigger>
                   <SelectContent>
-                    {districts
-                      .filter(d => {
-                        const district = regions.find(r => r.name === newRegion)?.districts.find(dist => dist.id === d.id);
-                        return !!district;
-                      })
-                      .map(district => (
-                        <SelectItem key={district.id} value={district.name}>
-                          {district.name}
-                        </SelectItem>
-                      ))
-                    }
+                    {availableDistricts.map(district => (
+                      <SelectItem key={district.id} value={district.name}>
+                        {district.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

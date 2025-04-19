@@ -1,4 +1,4 @@
-
+import React from 'react';
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -50,6 +50,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { AccessControlWrapper } from '@/components/access-control/AccessControlWrapper';
 
 // Add type declaration for jsPDF with autotable extensions
 declare module "jspdf" {
@@ -115,98 +116,100 @@ export default function VITInspectionManagementPage() {
   };
 
   return (
-    <Layout>
-      <div className="container py-6">
-        <div className="flex flex-col space-y-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">VIT Inspection Management</h1>
-          </div>
+    <AccessControlWrapper type="inspection">
+      <Layout>
+        <div className="container py-6">
+          <div className="flex flex-col space-y-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold">VIT Inspection Management</h1>
+            </div>
 
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="mb-4">
-              <TabsTrigger value="assets">Assets Management</TabsTrigger>
-              <TabsTrigger value="inspections">Inspection Records</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="assets" className="space-y-4">
-              <VITAssetsTable 
-                onAddAsset={handleAddAsset}
-                onEditAsset={handleEditAsset}
-                onInspect={handleAddInspection}
-              />
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="assets">Assets Management</TabsTrigger>
+                <TabsTrigger value="inspections">Inspection Records</TabsTrigger>
+              </TabsList>
               
-              <Button
-                onClick={handleAddAsset}
-                className="mt-4"
-              >
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Add New VIT Asset
-              </Button>
-            </TabsContent>
-            
-            <TabsContent value="inspections" className="space-y-4">
-              <InspectionRecordsTable 
-                onViewDetails={handleViewDetails} 
-                onEditInspection={handleEditInspection}
-                onViewAsset={handleViewAsset}
-              />
-            </TabsContent>
-          </Tabs>
+              <TabsContent value="assets" className="space-y-4">
+                <VITAssetsTable 
+                  onAddAsset={handleAddAsset}
+                  onEditAsset={handleEditAsset}
+                  onInspect={handleAddInspection}
+                />
+                
+                <Button
+                  onClick={handleAddAsset}
+                  className="mt-4"
+                >
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Add New VIT Asset
+                </Button>
+              </TabsContent>
+              
+              <TabsContent value="inspections" className="space-y-4">
+                <InspectionRecordsTable 
+                  onViewDetails={handleViewDetails} 
+                  onEditInspection={handleEditInspection}
+                  onViewAsset={handleViewAsset}
+                />
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
-      </div>
 
-      {/* Asset Form Sheet */}
-      <Sheet open={isAssetFormOpen} onOpenChange={setIsAssetFormOpen}>
-        <SheetContent className="sm:max-w-xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>{selectedAsset ? "Edit VIT Asset" : "Add New VIT Asset"}</SheetTitle>
-          </SheetHeader>
-          <div className="mt-6">
-            <VITAssetForm
-              asset={selectedAsset ?? undefined}
-              onSubmit={handleCloseAssetForm}
-              onCancel={handleCloseAssetForm}
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
+        {/* Asset Form Sheet */}
+        <Sheet open={isAssetFormOpen} onOpenChange={setIsAssetFormOpen}>
+          <SheetContent className="sm:max-w-xl overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>{selectedAsset ? "Edit VIT Asset" : "Add New VIT Asset"}</SheetTitle>
+            </SheetHeader>
+            <div className="mt-6">
+              <VITAssetForm
+                asset={selectedAsset ?? undefined}
+                onSubmit={handleCloseAssetForm}
+                onCancel={handleCloseAssetForm}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
 
-      {/* Inspection Form Sheet - Used for both Add and Edit */}
-      <Sheet open={isInspectionFormOpen || isEditInspectionOpen} onOpenChange={(open) => {
-        if (!open) {
-          setIsInspectionFormOpen(false);
-          setIsEditInspectionOpen(false);
-          handleCloseInspectionForm();
-        }
-      }}>
-        <SheetContent className="sm:max-w-xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>{selectedInspection ? "Edit VIT Inspection" : "Add VIT Inspection"}</SheetTitle>
-          </SheetHeader>
-          <div className="mt-6">
-            <VITInspectionForm
-              assetId={selectedAssetId}
-              inspectionData={selectedInspection}
-              onSubmit={handleCloseInspectionForm}
-              onCancel={handleCloseInspectionForm}
-            />
-          </div>
-        </SheetContent>
-      </Sheet>
+        {/* Inspection Form Sheet - Used for both Add and Edit */}
+        <Sheet open={isInspectionFormOpen || isEditInspectionOpen} onOpenChange={(open) => {
+          if (!open) {
+            setIsInspectionFormOpen(false);
+            setIsEditInspectionOpen(false);
+            handleCloseInspectionForm();
+          }
+        }}>
+          <SheetContent className="sm:max-w-xl overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>{selectedInspection ? "Edit VIT Inspection" : "Add VIT Inspection"}</SheetTitle>
+            </SheetHeader>
+            <div className="mt-6">
+              <VITInspectionForm
+                assetId={selectedAssetId}
+                inspectionData={selectedInspection}
+                onSubmit={handleCloseInspectionForm}
+                onCancel={handleCloseInspectionForm}
+              />
+            </div>
+          </SheetContent>
+        </Sheet>
 
-      {/* Inspection Details Dialog */}
-      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
-        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>VIT Inspection Details</DialogTitle>
-            <DialogDescription>
-              Inspection performed on {selectedInspection ? new Date(selectedInspection.inspectionDate).toLocaleDateString() : ""}
-            </DialogDescription>
-          </DialogHeader>
-          {selectedInspection && <InspectionDetailsView inspection={selectedInspection} />}
-        </DialogContent>
-      </Dialog>
-    </Layout>
+        {/* Inspection Details Dialog */}
+        <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+          <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>VIT Inspection Details</DialogTitle>
+              <DialogDescription>
+                Inspection performed on {selectedInspection ? new Date(selectedInspection.inspectionDate).toLocaleDateString() : ""}
+              </DialogDescription>
+            </DialogHeader>
+            {selectedInspection && <InspectionDetailsView inspection={selectedInspection} />}
+          </DialogContent>
+        </Dialog>
+      </Layout>
+    </AccessControlWrapper>
   );
 }
 
@@ -476,6 +479,75 @@ function InspectionRecordsTable({ onViewDetails, onEditInspection, onViewAsset }
     doc.save(`vit-inspection-${asset.serialNumber}-${format(new Date(inspection.inspectionDate), "yyyy-MM-dd")}.pdf`);
     toast.success("PDF report generated successfully");
   };
+
+  const exportToCSV = (inspection: VITInspectionChecklist) => {
+    const asset = vitAssets.find(a => a.id === inspection.vitAssetId);
+    if (!asset) {
+      toast.error("Asset information not found");
+      return;
+    }
+    
+    const region = regions.find(r => r.id === asset.regionId)?.name || "Unknown";
+    const district = districts.find(d => d.id === asset.districtId)?.name || "Unknown";
+    
+    // Create CSV content
+    const csvContent = [
+      ["VIT Inspection Report"],
+      ["Date", format(new Date(inspection.inspectionDate), "dd/MM/yyyy")],
+      ["Inspector", inspection.inspectedBy],
+      [],
+      ["Asset Information"],
+      ["Serial Number", asset.serialNumber],
+      ["Type of Unit", asset.typeOfUnit],
+      ["Voltage Level", asset.voltageLevel],
+      ["Region", region],
+      ["District", district],
+      ["Location", asset.location],
+      [],
+      ["Inspection Checklist"],
+      ["Item", "Status"],
+      ["Rodent/Termite Encroachment", inspection.rodentTermiteEncroachment],
+      ["Clean and Dust Free", inspection.cleanDustFree],
+      ["Protection Button Enabled", inspection.protectionButtonEnabled],
+      ["Recloser Button Enabled", inspection.recloserButtonEnabled],
+      ["Ground Earth Button Enabled", inspection.groundEarthButtonEnabled],
+      ["AC Power On", inspection.acPowerOn],
+      ["Battery Power Low", inspection.batteryPowerLow],
+      ["Handle Lock On", inspection.handleLockOn],
+      ["Remote Button Enabled", inspection.remoteButtonEnabled],
+      ["Gas Level Low", inspection.gasLevelLow],
+      ["Earthing Arrangement Adequate", inspection.earthingArrangementAdequate],
+      ["No Fuses Blown", inspection.noFusesBlown],
+      ["No Damage to Bushings", inspection.noDamageToBushings],
+      ["No Damage to HV Connections", inspection.noDamageToHVConnections],
+      ["Insulators Clean", inspection.insulatorsClean],
+      ["Paintwork Adequate", inspection.paintworkAdequate],
+      ["PT Fuse Link Intact", inspection.ptFuseLinkIntact],
+      ["No Corrosion", inspection.noCorrosion],
+      ["Silica Gel Condition", inspection.silicaGelCondition],
+      ["Correct Labelling", inspection.correctLabelling]
+    ];
+    
+    if (inspection.remarks) {
+      csvContent.push([], ["Remarks"], [inspection.remarks]);
+    }
+    
+    // Convert to CSV string
+    const csvString = csvContent.map(row => row.join(",")).join("\n");
+    
+    // Create and download file
+    const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `vit-inspection-${asset.serialNumber}-${format(new Date(inspection.inspectionDate), "yyyy-MM-dd")}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success("CSV report generated successfully");
+  };
   
   const handleViewInspectionDetails = (inspection: VITInspectionChecklist) => {
     onViewAsset(inspection.vitAssetId);
@@ -609,6 +681,10 @@ function InspectionRecordsTable({ onViewDetails, onEditInspection, onViewAsset }
                           <DropdownMenuItem onClick={() => exportToPDF(inspection)}>
                             <FileText className="mr-2 h-4 w-4" />
                             Export to PDF
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => exportToCSV(inspection)}>
+                            <Download className="mr-2 h-4 w-4" />
+                            Export to CSV
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem 

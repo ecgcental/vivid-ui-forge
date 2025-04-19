@@ -31,12 +31,14 @@ export default function CreateLoadMonitoringPage() {
   const [formData, setFormData] = useState<Partial<LoadMonitoringData>>({
     date: new Date().toISOString().split('T')[0],
     time: new Date().toTimeString().slice(0, 5),
-    region: "", // Initialize as empty, will be set by select
-    district: "", // Initialize as empty, will be set by select
+    regionId: "", // Add regionId
+    districtId: "", // Add districtId
+    region: "", // Keep region name
+    district: "", // Keep district name
     substationName: "",
     substationNumber: "",
     location: "",
-    rating: undefined, // Initialize rating as undefined
+    rating: undefined,
     peakLoadStatus: "day",
     feederLegs: [
       {
@@ -55,18 +57,28 @@ export default function CreateLoadMonitoringPage() {
       const userRegion = regions.find(r => r.name === user.region);
       if (userRegion) {
         handleRegionChange(userRegion.id); // Use ID to trigger filtering
-        setFormData(prev => ({ ...prev, region: user.region }));
+        setFormData(prev => ({ 
+          ...prev, 
+          regionId: userRegion.id,
+          region: user.region 
+        }));
         if (user?.district) {
-           setFormData(prev => ({ ...prev, district: user.district }));
+          const userDistrict = districts.find(d => d.name === user.district && d.regionId === userRegion.id);
+          if (userDistrict) {
+            setFormData(prev => ({ 
+              ...prev, 
+              districtId: userDistrict.id,
+              district: user.district 
+            }));
+          }
         }
       } else {
-        // User region not found? Clear filters
         setFilteredDistricts([]);
       }
     } else {
-       setFilteredDistricts([]); // No user region, show no districts initially
+      setFilteredDistricts([]);
     }
-  }, [user, regions, districts]); // Rerun if user or regions/districts load
+  }, [user, regions, districts]);
 
   const [loadInfo, setLoadInfo] = useState({
     ratedLoad: 0,
@@ -143,25 +155,26 @@ export default function CreateLoadMonitoringPage() {
       setFilteredDistricts(regionDistricts);
       setFormData(prev => ({
         ...prev,
-        region: selectedRegion.name, // Store region NAME
-        district: "" // Reset district when region changes
+        regionId: regionId, // Store region ID
+        region: selectedRegion.name, // Store region name
+        districtId: "", // Reset district ID
+        district: "" // Reset district name
       }));
     } else {
       setFilteredDistricts([]);
-      setFormData(prev => ({
-        ...prev,
-        region: "",
-        district: ""
-      }));
     }
   };
 
-  // Handle District Change - Update Form Data
-  const handleDistrictChange = (districtName: string) => {
-    setFormData(prev => ({
+  // Handle District Change
+  const handleDistrictChange = (districtId: string) => {
+    const selectedDistrict = districts?.find(d => d.id === districtId);
+    if (selectedDistrict) {
+      setFormData(prev => ({
         ...prev,
-        district: districtName // Store district NAME
+        districtId: districtId, // Store district ID
+        district: selectedDistrict.name // Store district name
       }));
+    }
   };
 
   // --- Load Calculation Logic ---
@@ -244,7 +257,7 @@ export default function CreateLoadMonitoringPage() {
     }
 
 
-    if (!formData.date || !formData.time || !formData.region || !formData.district || !formData.substationName || !formData.substationNumber || formData.rating === undefined || formData.rating <= 0 || !formData.feederLegs) {
+    if (!formData.date || !formData.time || !formData.regionId || !formData.districtId || !formData.region || !formData.district || !formData.substationName || !formData.substationNumber || formData.rating === undefined || formData.rating <= 0 || !formData.feederLegs) {
       toast.error("Please fill all required fields, including a valid rating (KVA > 0).");
       return;
     }
@@ -264,6 +277,8 @@ export default function CreateLoadMonitoringPage() {
     const completeData: Omit<LoadMonitoringData, 'id'> = {
       date: formData.date,
       time: formData.time,
+      regionId: formData.regionId, // Add regionId
+      districtId: formData.districtId, // Add districtId
       region: formData.region,
       district: formData.district,
       substationName: formData.substationName,
@@ -340,9 +355,10 @@ export default function CreateLoadMonitoringPage() {
                   <div className="space-y-2">
                     <Label htmlFor="region">Region</Label>
                     <Select
-                      value={regions?.find(r => r.name === formData.region)?.id || ""} // Find ID from name for value
+                      value={formData.regionId || ""} // Use ID directly
                       onValueChange={handleRegionChange} // Use custom handler
                       required
+                      disabled={user?.role === "district_engineer"} // Disable for district engineers
                     >
                       <SelectTrigger id="region">
                         <SelectValue placeholder="Select Region" />
@@ -360,17 +376,17 @@ export default function CreateLoadMonitoringPage() {
                   <div className="space-y-2">
                     <Label htmlFor="district">District</Label>
                     <Select
-                      value={formData.district || ""} // Use name for value
+                      value={formData.districtId || ""} // Use ID for value
                       onValueChange={handleDistrictChange} // Use custom handler
                       required
-                      disabled={!formData.region || filteredDistricts.length === 0} // Disable if no region or districts
+                      disabled={user?.role === "district_engineer" || !formData.regionId || filteredDistricts.length === 0} // Disable for district engineers or if no region/districts
                     >
                       <SelectTrigger id="district">
                         <SelectValue placeholder="Select District" />
                       </SelectTrigger>
                       <SelectContent>
                         {filteredDistricts.map((district) => (
-                          <SelectItem key={district.id} value={district.name}> {/* Use name for value */} 
+                          <SelectItem key={district.id} value={district.id}> {/* Use id for value */} 
                             {district.name}
                           </SelectItem>
                         ))}

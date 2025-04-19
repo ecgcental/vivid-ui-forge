@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, AlertTriangle, ZapOff, RefreshCw, Filter } from "lucide-react";
 import { OP5Fault, ControlSystemOutage } from "@/lib/types";
+import { getUserRegionAndDistrict } from "@/utils/user-utils";
 
 export default function DashboardPage() {
   const { isAuthenticated, user } = useAuth();
@@ -24,6 +25,8 @@ export default function DashboardPage() {
     op5Faults: [],
     controlOutages: []
   });
+  const [selectedRegion, setSelectedRegion] = useState<string>("");
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("");
   
   // Set initial filter values based on user role
   useEffect(() => {
@@ -33,24 +36,16 @@ export default function DashboardPage() {
     }
     
     if (user) {
-      // For district engineer, set both region and district filters
-      if (user.role === "district_engineer" && user.region && user.district) {
-        const userRegion = regions.find(r => r.name === user.region);
-        if (userRegion) {
-          setFilterRegion(userRegion.id);
-          
-          const userDistrict = districts.find(d => d.name === user.district);
-          if (userDistrict) {
-            setFilterDistrict(userDistrict.id);
-          }
-        }
-      } 
-      // For regional engineer, set only region filter
-      else if (user.role === "regional_engineer" && user.region) {
-        const userRegion = regions.find(r => r.name === user.region);
-        if (userRegion) {
-          setFilterRegion(userRegion.id);
-        }
+      const { regionId, districtId } = getUserRegionAndDistrict(user, regions, districts);
+      
+      if (regionId) {
+        setFilterRegion(regionId);
+        setSelectedRegion(regionId);
+      }
+      
+      if (districtId) {
+        setFilterDistrict(districtId);
+        setSelectedDistrict(districtId);
       }
     }
   }, [isAuthenticated, navigate, user, regions, districts]);
@@ -170,7 +165,7 @@ export default function DashboardPage() {
                     <FaultCard 
                       key={fault.id} 
                       fault={fault} 
-                      type={fault.id.startsWith("op5") ? "op5" : "control"} 
+                      type={faults.op5Faults.some(f => f.id === fault.id) ? "op5" : "control"} 
                     />
                   ))
                 }

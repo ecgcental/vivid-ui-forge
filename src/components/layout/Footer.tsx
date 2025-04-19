@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 
 export function Footer() {
@@ -7,7 +6,7 @@ export function Footer() {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h3 className="font-bold text-lg mb-4">ECG Fault Master</h3>
+            <h3 className="font-bold text-lg mb-4">ECG Outage Management System</h3>
             <p className="text-sm">
               A comprehensive fault management system for the Electricity Company of Ghana,
               streamlining fault reporting and resolution across the nation.

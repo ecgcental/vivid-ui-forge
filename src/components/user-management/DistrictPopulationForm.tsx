@@ -43,9 +43,9 @@ export function DistrictPopulationForm() {
         const userDistrict = districts.find(d => d.name === user.district);
         if (userDistrict) {
           setSelectedDistrict(userDistrict.id);
-          setRuralPopulation(userDistrict.population.rural);
-          setUrbanPopulation(userDistrict.population.urban);
-          setMetroPopulation(userDistrict.population.metro);
+          setRuralPopulation(userDistrict.population.rural || 0);
+          setUrbanPopulation(userDistrict.population.urban || 0);
+          setMetroPopulation(userDistrict.population.metro || 0);
         }
       }
     }
@@ -55,10 +55,14 @@ export function DistrictPopulationForm() {
   useEffect(() => {
     if (selectedDistrict) {
       const district = districts.find(d => d.id === selectedDistrict);
-      if (district) {
-        setRuralPopulation(district.population.rural);
-        setUrbanPopulation(district.population.urban);
-        setMetroPopulation(district.population.metro);
+      if (district && district.population) {
+        setRuralPopulation(district.population.rural || 0);
+        setUrbanPopulation(district.population.urban || 0);
+        setMetroPopulation(district.population.metro || 0);
+      } else {
+        setRuralPopulation(0);
+        setUrbanPopulation(0);
+        setMetroPopulation(0);
       }
     } else {
       setRuralPopulation(0);

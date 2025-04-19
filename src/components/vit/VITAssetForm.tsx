@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useData } from "@/contexts/DataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,11 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { VITAsset, VITStatus, VoltageLevel } from "@/lib/types";
-import { Loader2, MapPin } from "lucide-react";
+import { Loader2, MapPin, Camera, Upload } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import Webcam from "react-webcam";
 
 interface VITAssetFormProps {
   asset?: VITAsset;
@@ -25,12 +29,19 @@ interface VITAssetFormProps {
 export function VITAssetForm({ asset, onSubmit, onCancel }: VITAssetFormProps) {
   const { regions, districts, addVITAsset, updateVITAsset } = useData();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const webcamRef = useRef<Webcam>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
   
-  // Form fields
-  const [regionId, setRegionId] = useState(asset?.regionId || "");
-  const [districtId, setDistrictId] = useState(asset?.districtId || "");
+  const [regionId, setRegionId] = useState<string>(asset?.regionId || "");
+  const [districtId, setDistrictId] = useState<string>(asset?.districtId || "");
   const [voltageLevel, setVoltageLevel] = useState<VoltageLevel>(asset?.voltageLevel || "11KV");
   const [typeOfUnit, setTypeOfUnit] = useState(asset?.typeOfUnit || "");
   const [serialNumber, setSerialNumber] = useState(asset?.serialNumber || "");
@@ -39,25 +50,59 @@ export function VITAssetForm({ asset, onSubmit, onCancel }: VITAssetFormProps) {
   const [status, setStatus] = useState<VITStatus>(asset?.status || "Operational");
   const [protection, setProtection] = useState(asset?.protection || "");
   const [photoUrl, setPhotoUrl] = useState(asset?.photoUrl || "");
+  const [formData, setFormData] = useState<Partial<VITAsset>>({
+    regionId: asset?.regionId || "",
+    districtId: asset?.districtId || "",
+    voltageLevel: asset?.voltageLevel || "11KV",
+    typeOfUnit: asset?.typeOfUnit || "",
+    serialNumber: asset?.serialNumber || "",
+    location: asset?.location || "",
+    gpsCoordinates: asset?.gpsCoordinates || "",
+    status: asset?.status || "Operational",
+    protection: asset?.protection || "",
+    photoUrl: asset?.photoUrl || "",
+    createdBy: user?.email || "unknown"
+  });
 
-  // Initialize region and district based on user role
+  // Initialize region and district based on user's assigned values
   useEffect(() => {
-    if (!asset && user) {
-      if (user.role === "district_engineer" || user.role === "regional_engineer") {
-        const userRegion = regions.find(r => r.name === user.region);
-        if (userRegion) {
-          setRegionId(userRegion.id);
-          
-          if (user.role === "district_engineer" && user.district) {
-            const userDistrict = districts.find(d => d.name === user.district);
-            if (userDistrict) {
-              setDistrictId(userDistrict.id);
-            }
+    if (!asset && (user?.role === "district_engineer" || user?.role === "regional_engineer")) {
+      // Find region ID based on user's assigned region name
+      const userRegion = regions.find(r => r.name === user.region);
+      if (userRegion) {
+        setRegionId(userRegion.id);
+        setFormData(prev => ({ ...prev, regionId: userRegion.id }));
+        
+        // For district engineer, also set the district
+        if (user.role === "district_engineer" && user.district) {
+          const userDistrict = districts.find(d => 
+            d.regionId === userRegion.id && d.name === user.district
+          );
+          if (userDistrict) {
+            setDistrictId(userDistrict.id);
+            setFormData(prev => ({ ...prev, districtId: userDistrict.id }));
           }
         }
       }
     }
-  }, [asset, user, regions, districts]);
+  }, [user, regions, districts, asset]);
+
+  // Ensure district engineer's district is always set correctly
+  useEffect(() => {
+    if (user?.role === "district_engineer" && user.district && !asset) {
+      // Find the user's assigned district
+      const userRegion = regions.find(r => r.name === user.region);
+      if (userRegion) {
+        const userDistrict = districts.find(d => 
+          d.regionId === userRegion.id && d.name === user.district
+        );
+        if (userDistrict && userDistrict.id !== districtId) {
+          setDistrictId(userDistrict.id);
+          setFormData(prev => ({ ...prev, districtId: userDistrict.id }));
+        }
+      }
+    }
+  }, [user, regions, districts, districtId, asset]);
 
   // Filter regions and districts based on user role
   const filteredRegions = user?.role === "global_engineer"
@@ -78,23 +123,58 @@ export function VITAssetForm({ asset, onSubmit, onCancel }: VITAssetFormProps) {
   const handleGetLocation = () => {
     setIsGettingLocation(true);
     
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setGpsCoordinates(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
-          setIsGettingLocation(false);
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          setIsGettingLocation(false);
-          alert("Could not get your location. Please enter GPS coordinates manually.");
-        }
-      );
-    } else {
+    if (!navigator.geolocation) {
       setIsGettingLocation(false);
-      alert("Geolocation is not supported by this browser.");
+      toast.error("Geolocation is not supported by your browser");
+      return;
     }
+
+    const options = {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    };
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const accuracy = position.coords.accuracy;
+        
+        setGpsCoordinates(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+        setIsGettingLocation(false);
+        toast.success("Location obtained successfully!");
+        
+        if (accuracy > 100) {
+          toast.warning(`Location accuracy is ${Math.round(accuracy)} meters. Consider moving to an open area for better accuracy.`);
+        }
+      },
+      (error) => {
+        setIsGettingLocation(false);
+        let errorMessage = "Could not get your location. ";
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = "Location access was denied. Please check your browser settings:";
+            toast.error(errorMessage, {
+              duration: 6000,
+              description: "1. Click the lock/info icon in your address bar\n2. Find 'Location' in site settings\n3. Allow access and refresh the page"
+            });
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage += "Location information is unavailable. Please check your GPS settings and ensure you're not in airplane mode.";
+            toast.error(errorMessage);
+            break;
+          case error.TIMEOUT:
+            errorMessage += "Location request timed out. Please check your internet connection and try again.";
+            toast.error(errorMessage);
+            break;
+          default:
+            errorMessage += "Please try again or enter coordinates manually.";
+            toast.error(errorMessage);
+        }
+      },
+      options
+    );
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
@@ -118,7 +198,8 @@ export function VITAssetForm({ asset, onSubmit, onCancel }: VITAssetFormProps) {
         gpsCoordinates,
         status,
         protection,
-        photoUrl
+        photoUrl,
+        createdBy: user?.email || "unknown"
       };
       
       if (asset) {
@@ -137,6 +218,102 @@ export function VITAssetForm({ asset, onSubmit, onCancel }: VITAssetFormProps) {
     }
   };
   
+  // Detect if user is on mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      );
+      setIsMobile(mobile);
+    };
+    checkMobile();
+  }, []);
+
+  const videoConstraints = {
+    width: 1280,
+    height: 720,
+    facingMode: isMobile ? "environment" : "user"
+  };
+
+  const handleCameraError = useCallback((error: any) => {
+    console.error('Camera Error:', error);
+    setCameraError(error.message || 'Failed to access camera');
+    toast.error(
+      'Camera access failed. Please check permissions and try again.',
+      {
+        duration: 5000,
+        description: error.message || "Make sure your camera is not being used by another application"
+      }
+    );
+  }, []);
+
+  const captureImage = useCallback(() => {
+    if (webcamRef.current) {
+      try {
+        const imageSrc = webcamRef.current.getScreenshot();
+        if (imageSrc) {
+          setCapturedImage(imageSrc);
+          setPhotoUrl(imageSrc);
+          setIsCapturing(false);
+          toast.success('Photo captured successfully!');
+        } else {
+          toast.error('Failed to capture image. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error capturing image:', error);
+        toast.error('Failed to capture image. Please try again.');
+      }
+    }
+  }, []);
+
+  // Add explicit guards in the region and district change handlers
+  const handleRegionChange = (value: string) => {
+    // District engineers cannot change their region
+    if (user?.role === "district_engineer") {
+      return;
+    }
+    setRegionId(value);
+    setFormData(prev => ({ ...prev, regionId: value }));
+    // Reset district when region changes
+    setDistrictId("");
+    setFormData(prev => ({ ...prev, districtId: "" }));
+  };
+
+  const handleDistrictChange = (value: string) => {
+    // District engineers cannot change their district
+    if (user?.role === "district_engineer") {
+      return;
+    }
+    setDistrictId(value);
+    setFormData(prev => ({ ...prev, districtId: value }));
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setCapturedImage(base64String);
+        setPhotoUrl(base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Update the Dialog component to ensure proper cleanup
+  useEffect(() => {
+    // Cleanup function to ensure camera is stopped when dialog is closed
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => {
+          track.stop();
+        });
+        streamRef.current = null;
+      }
+    };
+  }, []);
+
   return (
     <Card>
       <CardHeader>
@@ -149,7 +326,7 @@ export function VITAssetForm({ asset, onSubmit, onCancel }: VITAssetFormProps) {
               <Label htmlFor="region">Region *</Label>
               <Select 
                 value={regionId} 
-                onValueChange={setRegionId}
+                onValueChange={handleRegionChange}
                 disabled={user?.role === "district_engineer" || user?.role === "regional_engineer"}
                 required
               >
@@ -170,7 +347,7 @@ export function VITAssetForm({ asset, onSubmit, onCancel }: VITAssetFormProps) {
               <Label htmlFor="district">District *</Label>
               <Select 
                 value={districtId} 
-                onValueChange={setDistrictId}
+                onValueChange={handleDistrictChange}
                 disabled={user?.role === "district_engineer" || !regionId}
                 required
               >
@@ -298,13 +475,59 @@ export function VITAssetForm({ asset, onSubmit, onCancel }: VITAssetFormProps) {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="photoUrl">Photo URL</Label>
-            <Input
-              id="photoUrl"
-              value={photoUrl}
-              onChange={(e) => setPhotoUrl(e.target.value)}
-              placeholder="URL to asset photo (if available)"
-            />
+            <Label>Asset Photo</Label>
+            <div className="flex flex-col gap-4">
+              {capturedImage && (
+                <div className="relative">
+                  <img 
+                    src={capturedImage} 
+                    alt="Captured asset" 
+                    className="w-full h-48 object-cover rounded-md"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={() => {
+                      setCapturedImage(null);
+                      setPhotoUrl("");
+                    }}
+                  >
+                    Remove
+                  </Button>
+                </div>
+              )}
+              
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsCapturing(true)}
+                  className="flex-1"
+                >
+                  <Camera className="mr-2 h-4 w-4" />
+                  Take Photo
+                </Button>
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Upload Photo
+                  <input
+                    id="file-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                </Button>
+              </div>
+            </div>
           </div>
         </form>
       </CardContent>
@@ -312,7 +535,7 @@ export function VITAssetForm({ asset, onSubmit, onCancel }: VITAssetFormProps) {
         <Button variant="outline" onClick={onCancel}>
           Cancel
         </Button>
-        <Button onClick={handleSubmit} disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting} onClick={handleSubmit}>
           {isSubmitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -323,6 +546,58 @@ export function VITAssetForm({ asset, onSubmit, onCancel }: VITAssetFormProps) {
           )}
         </Button>
       </CardFooter>
+
+      {/* Camera Dialog */}
+      <Dialog open={isCapturing} onOpenChange={(open) => {
+        if (!open) {
+          setCameraError(null);
+        }
+        setIsCapturing(open);
+      }}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Take Photo</DialogTitle>
+            <DialogDescription>
+              Take a photo of the VIT asset using your camera. Make sure the asset is clearly visible and well-lit.
+            </DialogDescription>
+            {cameraError && (
+              <p className="text-sm text-red-500 mt-2">
+                Error: {cameraError}
+              </p>
+            )}
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="relative aspect-video bg-black">
+              <Webcam
+                audio={false}
+                ref={webcamRef}
+                screenshotFormat="image/jpeg"
+                videoConstraints={videoConstraints}
+                onUserMediaError={handleCameraError}
+                className="w-full h-full rounded-md object-cover"
+                mirrored={!isMobile}
+                imageSmoothing={true}
+              />
+            </div>
+            <div className="flex justify-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsCapturing(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={captureImage}
+                disabled={!!cameraError}
+              >
+                Capture
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

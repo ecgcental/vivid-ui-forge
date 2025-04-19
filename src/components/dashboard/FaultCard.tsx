@@ -31,6 +31,19 @@ export function FaultCard({ fault, type }: FaultCardProps) {
   const op5Fault = isOP5 ? fault as OP5Fault : null;
   const controlOutage = !isOP5 ? fault as ControlSystemOutage : null;
   
+  const getTotalAffectedCustomers = () => {
+    if (isOP5 && op5Fault?.affectedPopulation) {
+      return op5Fault.affectedPopulation.rural + 
+             op5Fault.affectedPopulation.urban + 
+             op5Fault.affectedPopulation.metro;
+    } else if (!isOP5 && controlOutage?.customersAffected) {
+      return controlOutage.customersAffected.rural + 
+             controlOutage.customersAffected.urban + 
+             controlOutage.customersAffected.metro;
+    }
+    return 0;
+  };
+  
   const getBadgeColor = (type: string) => {
     switch (type) {
       case "Planned":
@@ -51,24 +64,27 @@ export function FaultCard({ fault, type }: FaultCardProps) {
     : "bg-green-100 text-green-800";
   
   const durationText = fault.occurrenceDate && fault.restorationDate 
-    ? formatDuration(Math.floor((new Date(fault.restorationDate).getTime() - new Date(fault.occurrenceDate).getTime()) / (1000 * 60)))
+    ? formatDuration((new Date(fault.restorationDate).getTime() - new Date(fault.occurrenceDate).getTime()) / (1000 * 60 * 60))
     : "Ongoing";
   
   const handleResolve = () => {
-    resolveFault(fault.id, type);
+    resolveFault(fault.id, isOP5);
     setIsResolveOpen(false);
     toast.success("Fault has been marked as resolved");
   };
 
   const handleDelete = () => {
-    deleteFault(fault.id, type);
+    deleteFault(fault.id, isOP5);
     setIsDeleteOpen(false);
     toast.success("Fault has been deleted");
   };
   
   const handleEdit = () => {
-    // For now, just show a toast - in a real implementation, this would navigate to an edit form
-    toast.info(`Edit functionality for ${isOP5 ? "OP5 fault" : "Control System Outage"} ${fault.id} will be implemented soon`);
+    if (isOP5) {
+      navigate(`/edit-op5-fault/${fault.id}`);
+    } else {
+      navigate(`/edit-control-outage/${fault.id}`);
+    }
   };
   
   const canResolve = () => {
@@ -134,15 +150,17 @@ export function FaultCard({ fault, type }: FaultCardProps) {
             </p>
           )}
           
-          <div className="flex items-center gap-1 text-sm">
-            <Clock size={14} className="text-muted-foreground" />
-            <span className="font-medium">Duration:</span> {durationText}
+          <div className="flex items-center gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">
+              Duration: {durationText}
+            </span>
           </div>
           
           <div className="flex items-center gap-1 text-sm">
             <Users size={14} className="text-muted-foreground" />
             <span className="font-medium">Affected:</span>{" "}
-            {affectedPopulation.rural + affectedPopulation.urban + affectedPopulation.metro} customers
+            {getTotalAffectedCustomers()} customers
           </div>
           
           <Accordion type="single" collapsible className="w-full">
@@ -154,7 +172,7 @@ export function FaultCard({ fault, type }: FaultCardProps) {
                   <div>{formatDate(fault.occurrenceDate)}</div>
                 </div>
                 
-                {fault.restorationDate && fault.status === "resolved" && (
+                {fault.restorationDate && (
                   <div>
                     <div className="font-medium">Restored:</div>
                     <div>{formatDate(fault.restorationDate)}</div>
@@ -199,85 +217,75 @@ export function FaultCard({ fault, type }: FaultCardProps) {
           </Accordion>
         </div>
       </CardContent>
-      <CardFooter className="pt-4 flex flex-wrap gap-2">
-        {canResolve() && fault.status === "active" ? (
-          <Dialog open={isResolveOpen} onOpenChange={setIsResolveOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="flex-1">
-                <CheckCircle2 size={16} className="mr-2" />
-                Mark as Resolved
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Confirm Resolution</DialogTitle>
-                <DialogDescription>
-                  Are you sure you want to mark this fault as resolved? This will set the restoration time to now.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="flex justify-end gap-2 mt-4">
-                <Button variant="outline" onClick={() => setIsResolveOpen(false)}>
-                  <XCircle size={16} className="mr-2" />
-                  Cancel
+      <CardFooter className="pt-4">
+        <div className="flex gap-2 w-full">
+          {canResolve() && (
+            <Dialog open={isResolveOpen} onOpenChange={setIsResolveOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="flex-1">
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Resolve
                 </Button>
-                <Button onClick={handleResolve}>
-                  <CheckCircle2 size={16} className="mr-2" />
-                  Confirm Resolution
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Resolve Fault</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to mark this fault as resolved?
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsResolveOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button onClick={handleResolve}>
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                    Confirm Resolve
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+          
+          {canEdit && (
+            <Button 
+              variant="outline" 
+              className="flex-1"
+              onClick={handleEdit}
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Button>
+          )}
+          
+          {canEdit && (
+            <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="flex-1">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-        ) : (
-          <Button variant="outline" className="flex-1" disabled>
-            {fault.status === "active" ? (
-              <>
-                <XCircle size={16} className="mr-2" />
-                Cannot Resolve
-              </>
-            ) : (
-              <>
-                <CheckCircle2 size={16} className="mr-2" />
-                Resolved
-              </>
-            )}
-          </Button>
-        )}
-        
-        {/* Edit button */}
-        {canEdit && (
-          <Button 
-            variant="outline" 
-            className="flex-1"
-            onClick={handleEdit}
-          >
-            <Edit size={16} className="mr-2" />
-            Edit
-          </Button>
-        )}
-        
-        {/* Delete button */}
-        {canEdit && (
-          <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-            <DialogTrigger asChild>
-              <Button variant="outline" className="flex-1 text-destructive hover:text-destructive">
-                <Trash2 size={16} className="mr-2" />
-                Delete
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Confirm Deletion</DialogTitle>
-                <DialogDescription>
-                  Are you sure you want to delete this fault? This action cannot be undone.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter className="mt-4">
-                <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Cancel</Button>
-                <Button variant="destructive" onClick={handleDelete}>Delete</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete Fault</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to delete this fault? This action cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button variant="destructive" onClick={handleDelete}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
+        </div>
       </CardFooter>
     </Card>
   );

@@ -50,7 +50,16 @@ export default function EditLoadMonitoringPage() {
     if (id && getLoadMonitoringRecord && regions && districts) {
       const record = getLoadMonitoringRecord(id);
       if (record) {
-        setFormData(record);
+        // Set form data with both IDs and names
+        const regionId = regions.find(r => r.name === record.region)?.id || "";
+        const districtId = districts.find(d => d.name === record.district && d.regionId === regionId)?.id || "";
+        
+        setFormData({
+          ...record,
+          regionId: regionId,
+          districtId: districtId
+        });
+        
         // Pre-filter districts based on loaded record's region
         const initialRegion = regions.find(r => r.name === record.region);
         if (initialRegion) {
@@ -58,11 +67,11 @@ export default function EditLoadMonitoringPage() {
           setFilteredDistricts(initialRegionDistricts);
           // Ensure district is valid for the region, otherwise reset
           if (!initialRegionDistricts.find(d => d.name === record.district)) {
-             setFormData(prev => ({ ...prev, district: "" }));
+             setFormData(prev => ({ ...prev, districtId: "", district: "" }));
           }
         } else {
           // Region from record not found? Reset both.
-          setFormData(prev => ({ ...prev, region: "", district: "" }));
+          setFormData(prev => ({ ...prev, regionId: "", region: "", districtId: "", district: "" }));
           setFilteredDistricts([]);
         }
       } else {
@@ -146,18 +155,33 @@ export default function EditLoadMonitoringPage() {
       setFilteredDistricts(regionDistricts);
       setFormData(prev => ({
         ...prev,
+        regionId: regionId,
         region: selectedRegion.name,
-        district: "" // Reset district
+        districtId: "",
+        district: ""
       }));
     } else {
       setFilteredDistricts([]);
-      setFormData(prev => ({ ...prev, region: "", district: "" }));
+      setFormData(prev => ({ 
+        ...prev, 
+        regionId: "", 
+        region: "", 
+        districtId: "", 
+        district: "" 
+      }));
     }
   };
 
   // Handle District Change
-  const handleDistrictChange = (districtName: string) => {
-     setFormData(prev => ({ ...prev, district: districtName }));
+  const handleDistrictChange = (districtId: string) => {
+    const selectedDistrict = districts?.find(d => d.id === districtId);
+    if (selectedDistrict) {
+      setFormData(prev => ({ 
+        ...prev, 
+        districtId: districtId,
+        district: selectedDistrict.name
+      }));
+    }
   };
 
   // --- Load Calculation Logic ---
@@ -230,6 +254,10 @@ export default function EditLoadMonitoringPage() {
       return;
     }
 
+    // Get region and district IDs
+    const regionId = regions?.find(r => r.name === formData.region)?.id || "";
+    const districtId = districts?.find(d => d.name === formData.district && d.regionId === regionId)?.id || "";
+
     const processedFeederLegs = formData.feederLegs.map(leg => ({
         ...leg,
         redPhaseCurrent: Number(leg.redPhaseCurrent),
@@ -242,6 +270,8 @@ export default function EditLoadMonitoringPage() {
       id: id,
       date: formData.date,
       time: formData.time,
+      regionId: regionId,
+      districtId: districtId,
       region: formData.region,
       district: formData.district,
       substationName: formData.substationName,
@@ -318,9 +348,10 @@ export default function EditLoadMonitoringPage() {
                   <div className="space-y-2">
                     <Label htmlFor="region">Region</Label>
                     <Select
-                      value={regions?.find(r => r.name === formData.region)?.id || ""}
+                      value={formData.regionId || ""}
                       onValueChange={handleRegionChange}
                       required
+                      disabled={user?.role === "district_engineer"}
                     >
                       <SelectTrigger id="region">
                         <SelectValue placeholder="Select Region" />
@@ -337,17 +368,17 @@ export default function EditLoadMonitoringPage() {
                   <div className="space-y-2">
                     <Label htmlFor="district">District</Label>
                     <Select
-                      value={formData.district || ""}
+                      value={formData.districtId || ""}
                       onValueChange={handleDistrictChange}
                       required
-                      disabled={!formData.region || filteredDistricts.length === 0}
+                      disabled={user?.role === "district_engineer" || !formData.region || filteredDistricts.length === 0}
                     >
                       <SelectTrigger id="district">
                         <SelectValue placeholder="Select District" />
                       </SelectTrigger>
                       <SelectContent>
                         {filteredDistricts.map((district) => (
-                          <SelectItem key={district.id} value={district.name}>
+                          <SelectItem key={district.id} value={district.id}>
                             {district.name}
                           </SelectItem>
                         ))}

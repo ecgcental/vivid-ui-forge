@@ -10,6 +10,9 @@ export type User = {
   role: UserRole;
   region?: string;
   district?: string;
+  tempPassword?: string;
+  mustChangePassword?: boolean;
+  password?: string;
 };
 
 export type RegionPopulation = {
@@ -21,7 +24,8 @@ export type RegionPopulation = {
 export type Region = {
   id: string;
   name: string;
-  districts: District[];
+  code: string;
+  districts?: District[];
 };
 
 export type District = {
@@ -32,6 +36,42 @@ export type District = {
 };
 
 export type FaultType = "Planned" | "Unplanned" | "Emergency" | "Load Shedding";
+
+export type UnplannedFaultType = 
+  | "JUMPER CUT"
+  | "CONDUCTOR CUT"
+  | "MERGED CONDUCTOR"
+  | "HV/LV LINE CONTACT"
+  | "VEGETATION"
+  | "CABLE FAULT"
+  | "TERMINATION FAILURE"
+  | "BROKEN POLES"
+  | "BURNT POLE"
+  | "FAULTY ARRESTER/INSULATOR"
+  | "EQIPMENT FAILURE"
+  | "PUNCTURED CABLE"
+  | "ANIMAL INTERRUPTION"
+  | "BAD WEATHER"
+  | "TRANSIENT FAULTS";
+
+export type EmergencyFaultType =
+  | "MEND CABLE"
+  | "WORK ON EQUIPMENT"
+  | "FIRE"
+  | "IMPROVE HV"
+  | "JUMPER REPLACEMENT"
+  | "MEND BROKEN"
+  | "MEND JUMPER"
+  | "MEND TERMINATION"
+  | "BROKEN POLE"
+  | "BURNT POLE"
+  | "ANIMAL CONTACT"
+  | "VEGETATION SAFETY"
+  | "TRANSFER/RESTORE"
+  | "TROUBLE SHOOTING"
+  | "MEND LOOSE"
+  | "MAINTENANCE"
+  | "REPLACE FUSE";
 
 export type StatsOverviewProps = {
   op5Faults: OP5Fault[];
@@ -47,26 +87,25 @@ export type FilterBarProps = {
   isRefreshing: boolean;
 };
 
-export type OP5Fault = {
+export interface OP5Fault {
   id: string;
   regionId: string;
   districtId: string;
   occurrenceDate: string;
-  restorationDate: string;
-  faultType: FaultType;
-  faultLocation: string;
+  restorationDate: string | null;
+  repairDate: string | null;
   status: "active" | "resolved";
-  outrageDuration?: number; // in minutes
-  mttr?: number; // Mean Time To Repair (in minutes)
-  affectedPopulation: RegionPopulation;
-  reliabilityIndices?: {
-    saidi: number; // System Average Interruption Duration Index
-    saifi: number; // System Average Interruption Frequency Index
-    caidi: number; // Customer Average Interruption Duration Index
-  };
-  createdBy: string;
+  faultType: FaultType;
+  specificFaultType: string;
+  faultLocation: string;
+  outageDescription?: string;
+  affectedPopulation: AffectedPopulation;
+  mttr: number;
+  reliabilityIndices: ReliabilityIndices;
+  materialsUsed?: MaterialUsed[];
   createdAt: string;
-};
+  createdBy: string;
+}
 
 export type ControlSystemOutage = {
   id: string;
@@ -75,6 +114,7 @@ export type ControlSystemOutage = {
   occurrenceDate: string;
   restorationDate: string;
   faultType: FaultType;
+  specificFaultType?: UnplannedFaultType | EmergencyFaultType;
   status: "active" | "resolved";
   reason?: string;
   controlPanelIndications?: string;
@@ -164,11 +204,43 @@ export interface SubstationInspection {
   district: string;
   date: string;
   substationNo: string;
+  substationName?: string;
   type: 'indoor' | 'outdoor';
   items: InspectionItem[];
   createdAt?: string;
   createdBy?: string;
+  inspectionDate: string;
+  inspectedBy: string;
+  location?: string;
+  voltageLevel?: string;
+  status?: string;
+  cleanDustFree?: string;
+  protectionButtonEnabled?: string;
+  recloserButtonEnabled?: string;
+  groundEarthButtonEnabled?: string;
+  acPowerOn?: string;
+  batteryPowerLow?: string;
+  handleLockOn?: string;
+  remoteButtonEnabled?: string;
+  gasLevelLow?: string;
+  earthingArrangementAdequate?: string;
+  noFusesBlown?: string;
+  noDamageToBushings?: string;
+  noDamageToHVConnections?: string;
+  insulatorsClean?: string;
+  paintworkAdequate?: string;
+  ptFuseLinkIntact?: string;
+  noCorrosion?: string;
+  silicaGelCondition?: string;
+  correctLabelling?: string;
+  remarks?: string;
+  generalBuilding: InspectionItem[];
+  controlEquipment: InspectionItem[];
+  powerTransformer: InspectionItem[];
+  outdoorEquipment: InspectionItem[];
 }
+
+export type Inspection = VITInspectionChecklist | SubstationInspection;
 
 export interface AuthContextType {
   user: {
@@ -185,33 +257,198 @@ export interface AuthContextType {
 }
 
 export interface DataContextType {
-  regions: Region[];
-  districts: District[];
   op5Faults: OP5Fault[];
   controlOutages: ControlSystemOutage[];
+  regions: Region[];
+  districts: District[];
   vitAssets: VITAsset[];
   vitInspections: VITInspectionChecklist[];
   savedInspections?: SubstationInspection[];
   loadMonitoringRecords?: LoadMonitoringData[];
-  addOP5Fault: (fault: Omit<OP5Fault, "id" | "status">) => void;
-  addControlOutage: (outage: Omit<ControlSystemOutage, "id" | "status">) => void;
-  resolveFault: (id: string, type: "op5" | "control") => void;
-  deleteFault: (id: string, type: "op5" | "control") => void;
-  getFilteredFaults?: (regionId?: string, districtId?: string) => { op5Faults: OP5Fault[], controlOutages: ControlSystemOutage[] };
+  setOP5Faults: (faults: OP5Fault[]) => void;
+  setControlOutages: (outages: ControlSystemOutage[]) => void;
+  setRegions: (regions: Region[]) => void;
+  setDistricts: (districts: District[]) => void;
+  setVITAssets: (assets: VITAsset[]) => void;
+  setVITInspections: (inspections: VITInspectionChecklist[]) => void;
+  setSavedInspections: (inspections: SubstationInspection[]) => void;
+  setLoadMonitoringRecords: (records: LoadMonitoringData[]) => void;
+  resolveFault: (id: string, isOP5: boolean) => void;
+  deleteFault: (id: string, isOP5: boolean) => void;
+  updateOP5Fault: (id: string, data: Partial<OP5Fault>) => void;
+  updateControlOutage: (id: string, data: Partial<ControlSystemOutage>) => void;
   canEditFault: (fault: OP5Fault | ControlSystemOutage) => boolean;
+  canEditOutage: (outage: ControlSystemOutage) => boolean;
+  canEditAsset: (asset: VITAsset) => boolean;
+  canEditInspection: (inspection: VITInspectionChecklist | SubstationInspection) => boolean;
+  canDeleteFault: (fault: OP5Fault) => boolean;
+  canDeleteOutage: (outage: ControlSystemOutage) => boolean;
+  canDeleteAsset: (asset: VITAsset) => boolean;
+  canDeleteInspection: (inspection: VITInspectionChecklist | SubstationInspection) => boolean;
+  canResolveFault: (fault: OP5Fault | ControlSystemOutage) => boolean;
+  canAddAsset: (regionId: string, districtId: string) => boolean;
+  canAddInspection: (assetId?: string, region?: string, district?: string) => boolean;
+  addOP5Fault: (fault: Omit<OP5Fault, "id" | "status">) => void;
+  deleteOP5Fault: (id: string) => void;
+  addControlOutage: (outage: Omit<ControlSystemOutage, "id" | "status">) => void;
+  deleteControlOutage: (id: string) => void;
+  getFilteredFaults: (regionId?: string, districtId?: string) => { op5Faults: OP5Fault[]; controlOutages: ControlSystemOutage[] };
   addVITAsset: (asset: Omit<VITAsset, "id" | "createdAt" | "updatedAt">) => void;
-  updateVITAsset: (id: string, asset: Partial<VITAsset>) => void;
+  updateVITAsset: (id: string, updates: Partial<VITAsset>) => void;
   deleteVITAsset: (id: string) => void;
   addVITInspection: (inspection: Omit<VITInspectionChecklist, "id">) => void;
   updateVITInspection: (id: string, inspection: Partial<VITInspectionChecklist>) => void;
   deleteVITInspection: (id: string) => void;
-  updateDistrict?: (id: string, updates: Partial<District>) => void;
-  getSavedInspection?: (id: string) => SubstationInspection | undefined;
-  updateInspection?: (id: string, data: Partial<SubstationInspection>) => void;
-  saveInspection?: (data: Omit<SubstationInspection, "id">) => string;
-  deleteInspection?: (id: string) => void;
-  saveLoadMonitoringRecord?: (data: Omit<LoadMonitoringData, "id">) => string;
-  getLoadMonitoringRecord?: (id: string) => LoadMonitoringData | undefined;
-  updateLoadMonitoringRecord?: (id: string, data: Partial<LoadMonitoringData>) => void;
-  deleteLoadMonitoringRecord?: (id: string) => void;
+  updateDistrict: (id: string, updates: Partial<District>) => void;
+  saveInspection: (data: Omit<SubstationInspection, "id">) => string;
+  getSavedInspection: (id: string) => SubstationInspection | undefined;
+  updateSubstationInspection: (id: string, data: Partial<SubstationInspection>) => void;
+  deleteInspection: (id: string) => void;
+  saveLoadMonitoringRecord: (data: Omit<LoadMonitoringData, "id">) => string;
+  getLoadMonitoringRecord: (id: string) => LoadMonitoringData | undefined;
+  updateLoadMonitoringRecord: (id: string, data: Partial<LoadMonitoringData>) => void;
+  deleteLoadMonitoringRecord: (id: string) => void;
+}
+
+// Exported for use elsewhere
+export interface ReliabilityIndices {
+  saidi: number;
+  saifi: number;
+  caidi: number;
+}
+
+// Exported for use elsewhere
+export interface AffectedPopulation {
+  rural: number;
+  urban: number;
+  metro: number;
+}
+
+// Type for materials used
+export interface MaterialUsed {
+  id: string; // Use UUID for unique key in lists
+  type: 'Fuse' | 'Conductor' | 'Others' | string;
+  rating?: string;      // For Fuse
+  quantity?: number;    // For Fuse and Others
+  conductorType?: string; // For Conductor
+  length?: number;      // For Conductor (e.g., in meters)
+  description?: string; // For Others
+}
+
+export type PoleHeight = "8m" | "9m" | "10m" | "11m" | "14m" | "others";
+
+export type PoleType = "CP" | "WP" | "SP" | "ST"; // CP - Concrete, WP - Wood, SP - Steel Tubular, ST - Steel Tower
+
+export interface OverheadLineInspection {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  regionId: string;
+  districtId: string;
+  feederName: string;
+  voltageLevel: string;
+  referencePole: string;
+  latitude: number;
+  longitude: number;
+  status: "pending" | "in-progress" | "completed" | "rejected";
+  inspector: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+  };
+  // Pole Information
+  poleId: string;
+  poleHeight: "8m" | "9m" | "10m" | "11m" | "14m" | "others";
+  poleType: "CP" | "WP" | "SP" | "ST";
+  poleLocation: string;
+  
+  // Head Gears Information
+  poleCondition: {
+    tilted: boolean;
+    rotten: boolean;
+    burnt: boolean;
+    substandard: boolean;
+    conflictWithLV: boolean;
+    notes: string;
+  };
+  
+  stayCondition: {
+    requiredButNotAvailable: boolean;
+    cut: boolean;
+    misaligned: boolean;
+    defectiveStay: boolean;
+    notes: string;
+  };
+  
+  crossArmCondition: {
+    misaligned: boolean;
+    bend: boolean;
+    corroded: boolean;
+    substandard: boolean;
+    others: boolean;
+    notes: string;
+  };
+  
+  insulatorCondition: {
+    brokenOrCracked: boolean;
+    burntOrFlashOver: boolean;
+    shattered: boolean;
+    defectiveBinding: boolean;
+    notes: string;
+  };
+  
+  conductorCondition: {
+    looseConnectors: boolean;
+    weakJumpers: boolean;
+    burntLugs: boolean;
+    saggedLine: boolean;
+    undersized: boolean;
+    linked: boolean;
+    notes: string;
+  };
+  
+  lightningArresterCondition: {
+    brokenOrCracked: boolean;
+    flashOver: boolean;
+    missing: boolean;
+    noEarthing: boolean;
+    bypassed: boolean;
+    noArrester: boolean;
+    notes: string;
+  };
+  
+  dropOutFuseCondition: {
+    brokenOrCracked: boolean;
+    flashOver: boolean;
+    insufficientClearance: boolean;
+    looseOrNoEarthing: boolean;
+    corroded: boolean;
+    linkedHVFuses: boolean;
+    others: boolean;
+    notes: string;
+  };
+  
+  transformerCondition: {
+    leakingOil: boolean;
+    missingEarthLeads: boolean;
+    linkedHVFuses: boolean;
+    rustedTank: boolean;
+    crackedBushing: boolean;
+    others: boolean;
+    notes: string;
+  };
+  
+  recloserCondition: {
+    lowGasLevel: boolean;
+    lowBatteryLevel: boolean;
+    burntVoltageTransformers: boolean;
+    protectionDisabled: boolean;
+    bypassed: boolean;
+    others: boolean;
+    notes: string;
+  };
+  
+  additionalNotes: string;
+  images: string[];
 }
