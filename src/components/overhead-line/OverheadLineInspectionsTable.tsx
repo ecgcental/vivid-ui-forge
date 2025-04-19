@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, FileEdit, Trash2, Eye, FileText, Download } from "lucide-react";
+import { MoreHorizontal, FileEdit, Trash2, Eye, FileText, Download, Pencil } from "lucide-react";
 import { OverheadLineInspection } from "@/lib/types";
 import { useData } from "@/contexts/DataContext";
 import { format } from "date-fns";
@@ -31,6 +31,7 @@ interface OverheadLineInspectionsTableProps {
   onEdit: (inspection: OverheadLineInspection) => void;
   onDelete: (inspection: OverheadLineInspection) => void;
   onView: (inspection: OverheadLineInspection) => void;
+  userRole?: string;
 }
 
 export function OverheadLineInspectionsTable({
@@ -38,6 +39,7 @@ export function OverheadLineInspectionsTable({
   onEdit,
   onDelete,
   onView,
+  userRole
 }: OverheadLineInspectionsTableProps) {
   const { regions, districts } = useData();
   const [sortedInspections, setSortedInspections] = useState([...inspections]);
@@ -505,7 +507,7 @@ export function OverheadLineInspectionsTable({
         return (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                 <span className="sr-only">Open menu</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -513,15 +515,27 @@ export function OverheadLineInspectionsTable({
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
               <DropdownMenuItem onClick={() => onView(inspection)}>
+                <Eye className="mr-2 h-4 w-4" />
                 View Details
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onEdit(inspection)}>
+                <Pencil className="mr-2 h-4 w-4" />
                 Edit
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => onDelete(inspection.id)}
+              <DropdownMenuItem onClick={() => exportToPDF(inspection)}>
+                <FileText className="mr-2 h-4 w-4" />
+                Export to PDF
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportToCSV(inspection)}>
+                <Download className="mr-2 h-4 w-4" />
+                Export to CSV
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                onClick={() => onDelete(inspection)}
                 className="text-red-600"
               >
+                <Trash2 className="mr-2 h-4 w-4" />
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -580,7 +594,7 @@ export function OverheadLineInspectionsTable({
               <TableCell className="text-right">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                       <span className="sr-only">Open menu</span>
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
@@ -592,7 +606,7 @@ export function OverheadLineInspectionsTable({
                       View Details
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onEdit(inspection)}>
-                      <FileEdit className="mr-2 h-4 w-4" />
+                      <Pencil className="mr-2 h-4 w-4" />
                       Edit
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => exportToPDF(inspection)}>
@@ -605,8 +619,8 @@ export function OverheadLineInspectionsTable({
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem 
-                      className="text-red-600"
                       onClick={() => onDelete(inspection)}
+                      className="text-red-600"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete
