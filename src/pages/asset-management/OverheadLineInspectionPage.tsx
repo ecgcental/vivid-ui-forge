@@ -95,7 +95,7 @@ export default function OverheadLineInspectionPage() {
                 Manage and monitor overhead line inspections
               </p>
             </div>
-            {(user?.role === 'district_engineer' || user?.role === 'regional_engineer') && (
+            {(user?.role === 'global_engineer' || user?.role === 'district_engineer' || user?.role === 'regional_engineer') && (
               <Button onClick={handleAddInspection} className="mt-4 md:mt-0">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 New Inspection
