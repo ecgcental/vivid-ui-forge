@@ -35,21 +35,45 @@ export function DistrictPopulationForm() {
   
   // Set initial values based on user role
   useEffect(() => {
-    if (user?.role === "district_engineer" && user.region && user.district) {
+    console.log("User role:", user?.role);
+    console.log("User region:", user?.region);
+    console.log("User district:", user?.district);
+    
+    if ((user?.role === "district_engineer" || user?.role === "regional_engineer") && user.region) {
       const userRegion = regions.find(r => r.name === user.region);
+      console.log("Found user region:", userRegion);
+      
       if (userRegion) {
         setSelectedRegion(userRegion.id);
         
-        const userDistrict = districts.find(d => d.name === user.district);
-        if (userDistrict) {
-          setSelectedDistrict(userDistrict.id);
-          setRuralPopulation(userDistrict.population.rural || 0);
-          setUrbanPopulation(userDistrict.population.urban || 0);
-          setMetroPopulation(userDistrict.population.metro || 0);
+        // For district engineer, also set the district
+        if (user.role === "district_engineer" && user.district) {
+          const userDistrict = districts.find(d => d.name === user.district);
+          console.log("Found user district:", userDistrict);
+          
+          if (userDistrict) {
+            setSelectedDistrict(userDistrict.id);
+            setRuralPopulation(userDistrict.population.rural || 0);
+            setUrbanPopulation(userDistrict.population.urban || 0);
+            setMetroPopulation(userDistrict.population.metro || 0);
+          }
         }
       }
     }
   }, [user, regions, districts]);
+  
+  // Ensure district is set for district engineers
+  useEffect(() => {
+    if (user?.role === "district_engineer" && user.district && selectedRegion && !selectedDistrict) {
+      const userDistrict = districts.find(d => d.name === user.district);
+      if (userDistrict) {
+        setSelectedDistrict(userDistrict.id);
+        setRuralPopulation(userDistrict.population.rural || 0);
+        setUrbanPopulation(userDistrict.population.urban || 0);
+        setMetroPopulation(userDistrict.population.metro || 0);
+      }
+    }
+  }, [user, selectedRegion, selectedDistrict, districts]);
   
   // Update population fields when district changes
   useEffect(() => {
@@ -110,7 +134,7 @@ export function DistrictPopulationForm() {
       const region = regions.find(r => r.id === selectedRegion);
       return region?.districts.some(rd => rd.id === d.id) && (
         user?.role === "district_engineer" 
-          ? user.district === d.name 
+          ? d.name === user.district 
           : true
       );
     })
@@ -132,7 +156,7 @@ export function DistrictPopulationForm() {
               <Select 
                 value={selectedRegion} 
                 onValueChange={setSelectedRegion}
-                disabled={user?.role === "district_engineer"}
+                disabled={user?.role === "district_engineer" || user?.role === "regional_engineer"}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select region" />
