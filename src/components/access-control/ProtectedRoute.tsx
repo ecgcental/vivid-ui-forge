@@ -28,6 +28,10 @@ export function ProtectedRoute({
   // Check role-based access
   if (requiredRole && user?.role) {
     if (!hasRequiredRole(user.role, requiredRole)) {
+      // Allow technicians to access asset management pages
+      if (location.pathname.startsWith('/asset-management') && user.role === 'technician') {
+        return <>{children}</>;
+      }
       return <Navigate to="/unauthorized" replace />;
     }
   }

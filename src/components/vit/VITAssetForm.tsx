@@ -66,15 +66,15 @@ export function VITAssetForm({ asset, onSubmit, onCancel }: VITAssetFormProps) {
 
   // Initialize region and district based on user's assigned values
   useEffect(() => {
-    if (!asset && (user?.role === "district_engineer" || user?.role === "regional_engineer")) {
+    if (!asset && (user?.role === "district_engineer" || user?.role === "regional_engineer" || user?.role === "technician")) {
       // Find region ID based on user's assigned region name
       const userRegion = regions.find(r => r.name === user.region);
       if (userRegion) {
         setRegionId(userRegion.id);
         setFormData(prev => ({ ...prev, regionId: userRegion.id }));
         
-        // For district engineer, also set the district
-        if (user.role === "district_engineer" && user.district) {
+        // For district engineer and technician, also set the district
+        if ((user.role === "district_engineer" || user?.role === "technician") && user.district) {
           const userDistrict = districts.find(d => 
             d.regionId === userRegion.id && d.name === user.district
           );
@@ -87,9 +87,9 @@ export function VITAssetForm({ asset, onSubmit, onCancel }: VITAssetFormProps) {
     }
   }, [user, regions, districts, asset]);
 
-  // Ensure district engineer's district is always set correctly
+  // Ensure district engineer's and technician's district is always set correctly
   useEffect(() => {
-    if (user?.role === "district_engineer" && user.district && !asset) {
+    if ((user?.role === "district_engineer" || user?.role === "technician") && user.district && !asset) {
       // Find the user's assigned district
       const userRegion = regions.find(r => r.name === user.region);
       if (userRegion) {
@@ -113,7 +113,7 @@ export function VITAssetForm({ asset, onSubmit, onCancel }: VITAssetFormProps) {
     ? districts.filter(d => {
         const region = regions.find(r => r.id === regionId);
         return region?.districts.some(rd => rd.id === d.id) && (
-          user?.role === "district_engineer" 
+          user?.role === "district_engineer" || user?.role === "technician"
             ? user.district === d.name 
             : true
         );
@@ -327,7 +327,7 @@ export function VITAssetForm({ asset, onSubmit, onCancel }: VITAssetFormProps) {
               <Select 
                 value={regionId} 
                 onValueChange={handleRegionChange}
-                disabled={user?.role === "district_engineer" || user?.role === "regional_engineer"}
+                disabled={user?.role === "district_engineer" || user?.role === "regional_engineer" || user?.role === "technician"}
                 required
               >
                 <SelectTrigger id="region">
@@ -348,7 +348,7 @@ export function VITAssetForm({ asset, onSubmit, onCancel }: VITAssetFormProps) {
               <Select 
                 value={districtId} 
                 onValueChange={handleDistrictChange}
-                disabled={user?.role === "district_engineer" || !regionId}
+                disabled={user?.role === "district_engineer" || user?.role === "technician" || !regionId}
                 required
               >
                 <SelectTrigger id="district">

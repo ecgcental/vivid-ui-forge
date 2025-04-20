@@ -65,13 +65,13 @@ function App() {
                 } />
 
                 <Route path="/analytics" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="district_engineer">
                     <AnalyticsPage />
                   </ProtectedRoute>
                 } />
 
                 <Route path="/user-management" element={
-                  <ProtectedRoute requiredRole="global_engineer">
+                  <ProtectedRoute requiredRole="system_admin">
                     <UserManagementPage />
                   </ProtectedRoute>
                 } />
@@ -85,85 +85,85 @@ function App() {
                 } />
 
                 <Route path="/asset-management/load-monitoring" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="district_engineer">
                     <LoadMonitoringPage />
                   </ProtectedRoute>
                 } />
 
                 <Route path="/asset-management/load-monitoring-details/:id" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="district_engineer">
                     <LoadMonitoringDetailsPage />
                   </ProtectedRoute>
                 } />
 
                 <Route path="/asset-management/edit-load-monitoring/:id" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="district_engineer">
                     <EditLoadMonitoringPage />
                   </ProtectedRoute>
                 } />
 
                 <Route path="/asset-management/create-load-monitoring" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="district_engineer">
                     <CreateLoadMonitoringPage />
                   </ProtectedRoute>
                 } />
 
                 <Route path="/asset-management/inspection-management" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="district_engineer">
                     <InspectionManagementPage />
                   </ProtectedRoute>
                 } />
 
                 <Route path="/asset-management/inspection-details/:id" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="district_engineer">
                     <InspectionDetailsPage />
                   </ProtectedRoute>
                 } />
 
                 <Route path="/asset-management/substation-inspection" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="district_engineer">
                     <SubstationInspectionPage />
                   </ProtectedRoute>
                 } />
 
                 <Route path="/asset-management/edit-inspection/:id" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="district_engineer">
                     <EditInspectionPage />
                   </ProtectedRoute>
                 } />
 
                 <Route path="/asset-management/vit-inspection" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="district_engineer">
                     <VITInspectionPage />
                   </ProtectedRoute>
                 } />
 
                 <Route path="/asset-management/vit-inspection-management" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="district_engineer">
                     <VITInspectionManagementPage />
                   </ProtectedRoute>
                 } />
 
                 <Route path="/asset-management/vit-inspection-details/:id" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="district_engineer">
                     <VITInspectionDetailsPage />
                   </ProtectedRoute>
                 } />
 
                 <Route path="/asset-management/edit-vit-inspection/:id" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="district_engineer">
                     <EditVITInspectionPage />
                   </ProtectedRoute>
                 } />
 
                 <Route path="/asset-management/vit-inspection-form/:id" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="district_engineer">
                     <VITInspectionFormPage />
                   </ProtectedRoute>
                 } />
 
                 <Route path="/asset-management/overhead-line" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="district_engineer">
                     <AccessControlWrapper type="inspection">
                       <OverheadLineInspectionPage />
                     </AccessControlWrapper>
@@ -171,7 +171,7 @@ function App() {
                 } />
 
                 <Route path="/asset-management/overhead-line/details/:id" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="district_engineer">
                     <AccessControlWrapper type="inspection">
                       <InspectionDetailsPage />
                     </AccessControlWrapper>
@@ -179,7 +179,7 @@ function App() {
                 } />
 
                 <Route path="/asset-management/overhead-line/edit/:id" element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requiredRole="district_engineer">
                     <AccessControlWrapper type="inspection">
                       <EditInspectionPage />
                     </AccessControlWrapper>

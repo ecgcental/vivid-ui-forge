@@ -3,10 +3,12 @@ import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/sonner';
 import { useNavigate } from 'react-router-dom';
+import { hasRequiredRole } from '@/utils/security';
+import { UserRole } from '@/lib/types';
 
 interface AccessControlWrapperProps {
   children: React.ReactNode;
-  requiredRole?: 'global_engineer' | 'regional_engineer' | 'district_engineer';
+  requiredRole?: UserRole;
   regionId?: string;
   districtId?: string;
   assetId?: string;
@@ -41,7 +43,7 @@ export function AccessControlWrapper({
   const navigate = useNavigate();
 
   // Check if user has the required role
-  if (requiredRole && user?.role !== requiredRole) {
+  if (requiredRole && user?.role && !hasRequiredRole(user.role, requiredRole)) {
     toast.error("You don't have permission to access this page");
     navigate('/');
     return null;
@@ -51,7 +53,7 @@ export function AccessControlWrapper({
   if (type === 'asset') {
     // For asset list view, check if user has access to any assets
     if (!assetId) {
-      if (user?.role === 'district_engineer') {
+      if (user?.role === 'district_engineer' || user?.role === 'technician') {
         const userDistrict = districts.find(d => d.name === user.district);
         if (!userDistrict) {
           toast.error("You don't have permission to access any assets");
@@ -82,7 +84,7 @@ export function AccessControlWrapper({
   if (type === 'inspection') {
     // For inspection list view, check if user has access to any inspections
     if (!inspectionId) {
-      if (user?.role === 'district_engineer') {
+      if (user?.role === 'district_engineer' || user?.role === 'technician') {
         const userDistrict = districts.find(d => d.name === user.district);
         if (!userDistrict) {
           toast.error("You don't have permission to access any inspections");

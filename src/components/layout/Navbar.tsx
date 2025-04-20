@@ -1,10 +1,12 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import { Menu, X, User, LogOut, Database, ChevronDown } from "lucide-react";
+import { Link, useNavigate, useLocation, NavLink } from "react-router-dom";
+import { Menu, X, User, LogOut, Database, ChevronDown, BarChart3 } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { hasRequiredRole } from "@/utils/security";
+import { UserRole } from "@/lib/types";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -32,111 +34,135 @@ export function Navbar() {
     return location.pathname.startsWith(route);
   };
 
+  const showMenuItem = (requiredRole: UserRole) => {
+    if (!user?.role) return false;
+    if (user.role === "system_admin") return true;
+    // Allow technicians to access asset management
+    if (user.role === "technician" && requiredRole === "district_engineer") {
+      return true;
+    }
+    return hasRequiredRole(user.role, requiredRole);
+  };
+
   const NavLinks = () => (
     <>
-      <Link to="/" className="text-foreground hover:text-primary transition-colors">
+      <NavLink
+        to="/"
+        className={({ isActive }: { isActive: boolean }) =>
+          `${isActive ? "text-ecg-blue" : "text-gray-700"} hover:text-ecg-blue transition-colors`
+        }
+      >
         Home
-      </Link>
+      </NavLink>
       {isAuthenticated && (
         <>
-          <Link to="/dashboard" className="text-foreground hover:text-primary transition-colors">
+          <NavLink to="/dashboard" className="text-foreground hover:text-primary transition-colors">
             Dashboard
-          </Link>
-          <Link to="/report-fault" className="text-foreground hover:text-primary transition-colors">
+          </NavLink>
+          <NavLink to="/report-fault" className="text-foreground hover:text-primary transition-colors">
             Report Fault
-          </Link>
+          </NavLink>
           {/* Allow all engineers (including district) to access analytics */}
-          <Link to="/analytics" className="text-foreground hover:text-primary transition-colors">
-            Analytics
-          </Link>
+          {showMenuItem("district_engineer") && (
+            <NavLink
+              to="/analytics"
+              className={({ isActive }: { isActive: boolean }) =>
+                `${isActive ? "text-ecg-blue" : "text-gray-700"} hover:text-ecg-blue transition-colors`
+              }
+            >
+              Analytics
+            </NavLink>
+          )}
           
           {/* Asset Management Dropdown - Only shown in desktop navigation */}
-          <div className="hidden md:block">
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className={cn(
-                    "text-foreground hover:text-primary transition-colors",
-                    isActiveRoute("/asset-management") && "bg-accent text-primary"
-                  )}>
-                    Asset Management
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid w-[200px] gap-3 p-4">
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link
-                            to="/asset-management/load-monitoring"
-                            className={cn(
-                              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-                              isActiveRoute("/asset-management/load-monitoring") && "bg-accent"
-                            )}
-                          >
-                            <div className="text-sm font-medium leading-none">Load Monitoring</div>
-                            <div className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Monitor load distribution across the grid
-                            </div>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link
-                            to="/asset-management/inspection-management"
-                            className={cn(
-                              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-                              isActiveRoute("/asset-management/inspection-management") && "bg-accent"
-                            )}
-                          >
-                            <div className="text-sm font-medium leading-none">Substation Inspection</div>
-                            <div className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Manage and track substation inspections
-                            </div>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link
-                            to="/asset-management/vit-inspection"
-                            className={cn(
-                              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-                              isActiveRoute("/asset-management/vit-inspection") && "bg-accent"
-                            )}
-                          >
-                            <div className="text-sm font-medium leading-none">VITs Inspection</div>
-                            <div className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Manage and monitor VIT assets and inspections
-                            </div>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                      <li>
-                        <NavigationMenuLink asChild>
-                          <Link
-                            to="/asset-management/overhead-line"
-                            className={cn(
-                              "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-                              isActiveRoute("/asset-management/overhead-line") && "bg-accent"
-                            )}
-                          >
-                            <div className="text-sm font-medium leading-none">Overhead Line Inspection</div>
-                            <div className="line-clamp-2 text-sm leading-snug text-muted-foreground">
-                              Manage and monitor overhead line inspections
-                            </div>
-                          </Link>
-                        </NavigationMenuLink>
-                      </li>
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
-          </div>
+          {showMenuItem("district_engineer") && (
+            <div className="hidden md:block">
+              <NavigationMenu>
+                <NavigationMenuList>
+                  <NavigationMenuItem>
+                    <NavigationMenuTrigger className={cn(
+                      "text-foreground hover:text-primary transition-colors",
+                      isActiveRoute("/asset-management") && "bg-accent text-primary"
+                    )}>
+                      Asset Management
+                    </NavigationMenuTrigger>
+                    <NavigationMenuContent>
+                      <ul className="grid w-[200px] gap-3 p-4">
+                        <li>
+                          <NavigationMenuLink asChild>
+                            <NavLink
+                              to="/asset-management/load-monitoring"
+                              className={cn(
+                                "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                                isActiveRoute("/asset-management/load-monitoring") && "bg-accent"
+                              )}
+                            >
+                              <div className="text-sm font-medium leading-none">Load Monitoring</div>
+                              <div className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                Monitor load distribution across the grid
+                              </div>
+                            </NavLink>
+                          </NavigationMenuLink>
+                        </li>
+                        <li>
+                          <NavigationMenuLink asChild>
+                            <NavLink
+                              to="/asset-management/inspection-management"
+                              className={cn(
+                                "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                                isActiveRoute("/asset-management/inspection-management") && "bg-accent"
+                              )}
+                            >
+                              <div className="text-sm font-medium leading-none">Substation Inspection</div>
+                              <div className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                Manage and track substation inspections
+                              </div>
+                            </NavLink>
+                          </NavigationMenuLink>
+                        </li>
+                        <li>
+                          <NavigationMenuLink asChild>
+                            <NavLink
+                              to="/asset-management/vit-inspection"
+                              className={cn(
+                                "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                                isActiveRoute("/asset-management/vit-inspection") && "bg-accent"
+                              )}
+                            >
+                              <div className="text-sm font-medium leading-none">VITs Inspection</div>
+                              <div className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                Manage and monitor VIT assets and inspections
+                              </div>
+                            </NavLink>
+                          </NavigationMenuLink>
+                        </li>
+                        <li>
+                          <NavigationMenuLink asChild>
+                            <NavLink
+                              to="/asset-management/overhead-line"
+                              className={cn(
+                                "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
+                                isActiveRoute("/asset-management/overhead-line") && "bg-accent"
+                              )}
+                            >
+                              <div className="text-sm font-medium leading-none">Overhead Line Inspection</div>
+                              <div className="line-clamp-2 text-sm leading-snug text-muted-foreground">
+                                Manage and monitor overhead line inspections
+                              </div>
+                            </NavLink>
+                          </NavigationMenuLink>
+                        </li>
+                      </ul>
+                    </NavigationMenuContent>
+                  </NavigationMenuItem>
+                </NavigationMenuList>
+              </NavigationMenu>
+            </div>
+          )}
           
           {/* District Population Menu */}
-          {user && (user.role === "global_engineer" || user.role === "district_engineer" || user.role === "regional_engineer") && (
-            <Link 
+          {showMenuItem("global_engineer") && (
+            <NavLink 
               to="/district-population" 
               className={cn(
                 "text-foreground hover:text-primary transition-colors",
@@ -144,14 +170,14 @@ export function Navbar() {
               )}
             >
               District Population
-            </Link>
+            </NavLink>
           )}
           
           {/* Only show User Management for global and regional engineers */}
-          {user && (user.role === "global_engineer" || user.role === "regional_engineer") && (
-            <Link to="/user-management" className="text-foreground hover:text-primary transition-colors">
+          {showMenuItem("system_admin") && (
+            <NavLink to="/user-management" className="text-foreground hover:text-primary transition-colors">
               User Management
-            </Link>
+            </NavLink>
           )}
         </>
       )}
@@ -215,30 +241,30 @@ export function Navbar() {
                   <div className="space-y-3">
                     <div className="font-medium">Asset Management</div>
                     <div className="pl-4 space-y-2">
-                      <Link 
+                      <NavLink 
                         to="/asset-management/load-monitoring" 
                         className="block text-sm text-muted-foreground hover:text-foreground"
                       >
                         Load Monitoring
-                      </Link>
-                      <Link 
+                      </NavLink>
+                      <NavLink 
                         to="/asset-management/inspection-management" 
                         className="block text-sm text-muted-foreground hover:text-foreground"
                       >
                         Substation Inspection
-                      </Link>
-                      <Link 
+                      </NavLink>
+                      <NavLink 
                         to="/asset-management/vit-inspection" 
                         className="block text-sm text-muted-foreground hover:text-foreground"
                       >
                         VITs Inspection
-                      </Link>
-                      <Link 
+                      </NavLink>
+                      <NavLink 
                         to="/asset-management/overhead-line" 
                         className="block text-sm text-muted-foreground hover:text-foreground"
                       >
                         Overhead Line Inspection
-                      </Link>
+                      </NavLink>
                     </div>
                   </div>
                 )}

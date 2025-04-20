@@ -87,14 +87,14 @@ export function OP5Form({ defaultRegionId = "", defaultDistrictId = "", onSubmit
   
   // Initialize region and district based on user's assigned values
   useEffect(() => {
-    if (user?.role === "district_engineer" || user?.role === "regional_engineer") {
+    if (user?.role === "district_engineer" || user?.role === "regional_engineer" || user?.role === "technician") {
       // Find region ID based on user's assigned region name
       const userRegion = regions.find(r => r.name === user.region);
       if (userRegion) {
         setRegionId(userRegion.id);
         
-        // For district engineer, also set the district
-        if (user.role === "district_engineer" && user.district) {
+        // For district engineer and technician, also set the district
+        if ((user.role === "district_engineer" || user.role === "technician") && user.district) {
           const userDistrict = districts.find(d => 
             d.regionId === userRegion.id && d.name === user.district
           );
@@ -128,8 +128,8 @@ export function OP5Form({ defaultRegionId = "", defaultDistrictId = "", onSubmit
         // First check if district belongs to selected region
         if (d.regionId !== regionId) return false;
         
-        // For district engineers, only show their assigned district
-        if (user?.role === "district_engineer") {
+        // For district engineers and technicians, only show their assigned district
+        if (user?.role === "district_engineer" || user?.role === "technician") {
           return d.name === user.district;
         }
         
@@ -443,7 +443,7 @@ export function OP5Form({ defaultRegionId = "", defaultDistrictId = "", onSubmit
               <Select 
                 value={regionId} 
                 onValueChange={setRegionId}
-                disabled={user?.role === "district_engineer" || user?.role === "regional_engineer"}
+                disabled={user?.role === "district_engineer" || user?.role === "regional_engineer" || user?.role === "technician"}
               >
                 <SelectTrigger className="h-12 text-base bg-background/50 border-muted">
                   <SelectValue placeholder="Select region" />
@@ -463,7 +463,7 @@ export function OP5Form({ defaultRegionId = "", defaultDistrictId = "", onSubmit
               <Select 
                 value={districtId} 
                 onValueChange={setDistrictId}
-                disabled={user?.role === "district_engineer" || !regionId}
+                disabled={user?.role === "district_engineer" || user?.role === "technician" || !regionId}
               >
                 <SelectTrigger className="h-12 text-base bg-background/50 border-muted">
                   <SelectValue placeholder="Select district" />

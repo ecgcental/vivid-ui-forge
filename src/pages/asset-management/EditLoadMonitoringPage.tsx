@@ -351,7 +351,7 @@ export default function EditLoadMonitoringPage() {
                       value={formData.regionId || ""}
                       onValueChange={handleRegionChange}
                       required
-                      disabled={user?.role === "district_engineer" || user?.role === "regional_engineer"}
+                      disabled={user?.role === "district_engineer" || user?.role === "regional_engineer" || user?.role === "technician"}
                     >
                       <SelectTrigger id="region">
                         <SelectValue placeholder="Select Region" />
@@ -371,7 +371,7 @@ export default function EditLoadMonitoringPage() {
                       value={formData.districtId || ""}
                       onValueChange={handleDistrictChange}
                       required
-                      disabled={user?.role === "district_engineer" || !formData.region || filteredDistricts.length === 0}
+                      disabled={user?.role === "district_engineer" || user?.role === "technician" || !formData.region || filteredDistricts.length === 0}
                     >
                       <SelectTrigger id="district">
                         <SelectValue placeholder="Select District" />

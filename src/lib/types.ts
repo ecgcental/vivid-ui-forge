@@ -1,7 +1,7 @@
 import { type ClassValue } from "clsx";
 import { LoadMonitoringData } from "./asset-types";
 
-export type UserRole = "district_engineer" | "regional_engineer" | "global_engineer" | null;
+export type UserRole = "district_engineer" | "regional_engineer" | "global_engineer" | "technician" | "system_admin" | null;
 
 export type User = {
   id: string;
@@ -13,6 +13,8 @@ export type User = {
   tempPassword?: string;
   mustChangePassword?: boolean;
   password?: string;
+  staffId?: string;
+  disabled?: boolean;
 };
 
 export type RegionPopulation = {

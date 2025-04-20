@@ -21,7 +21,7 @@ export const userSchema = z.object({
     .regex(/[0-9]/, "Password must contain at least one number")
     .regex(/^[A-Za-z0-9]+$/, "Password can only contain letters and numbers"),
   name: z.string().min(2),
-  role: z.enum(['district_engineer', 'regional_engineer', 'global_engineer']),
+  role: z.enum(['district_engineer', 'regional_engineer', 'global_engineer', 'system_admin', 'technician']),
   region: z.string().optional(),
   district: z.string().optional()
 });
@@ -73,11 +73,20 @@ export const sanitizeInput = (input: string): string => {
 
 // Role-based access validation
 export const hasRequiredRole = (userRole: UserRole, requiredRole: UserRole): boolean => {
-  const roleHierarchy: { [key in UserRole]: number } = {
-    'district_engineer': 1,
-    'regional_engineer': 2,
-    'global_engineer': 3
+  if (!userRole || !requiredRole) return false;
+  
+  const roleHierarchy: { [key in Exclude<UserRole, null>]: number } = {
+    'technician': 1,
+    'district_engineer': 2,
+    'regional_engineer': 3,
+    'global_engineer': 4,
+    'system_admin': 5
   };
+
+  // System admin has access to everything
+  if (userRole === 'system_admin') {
+    return true;
+  }
 
   return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
 };

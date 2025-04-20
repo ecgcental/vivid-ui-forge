@@ -11,8 +11,8 @@ export function getUserRegionAndDistrict(
   let regionId: string | null = null;
   let districtId: string | null = null;
 
-  // For district engineers, find both region and district
-  if (user.role === "district_engineer" && user.region && user.district) {
+  // For district engineers and technicians, find both region and district
+  if ((user.role === "district_engineer" || user.role === "technician") && user.region && user.district) {
     const userRegion = regions.find(r => r.name === user.region);
     if (userRegion) {
       regionId = userRegion.id;
@@ -40,12 +40,12 @@ export function validateUserRoleAssignment(
   regions: Region[],
   districts: District[]
 ): { isValid: boolean; error?: string } {
-  // For global engineers, no region/district needed
-  if (role === "global_engineer") {
+  // For global engineers and system admins, no region/district needed
+  if (role === "global_engineer" || role === "system_admin") {
     return { isValid: true };
   }
 
-  // For regional and district engineers, region is required
+  // For regional engineers, technicians, and district engineers, region is required
   if (!region) {
     return { isValid: false, error: "Region is required" };
   }
@@ -56,10 +56,10 @@ export function validateUserRoleAssignment(
     return { isValid: false, error: "Invalid region selected" };
   }
 
-  // For district engineers, district is required
-  if (role === "district_engineer") {
+  // For district engineers and technicians, district is required
+  if (role === "district_engineer" || role === "technician") {
     if (!district) {
-      return { isValid: false, error: "District is required for District Engineers" };
+      return { isValid: false, error: "District is required for District Engineers and Technicians" };
     }
 
     // Validate district exists and belongs to selected region
@@ -80,8 +80,8 @@ export function getFilteredRegionsAndDistricts(
   districts: District[],
   selectedRegionId?: string
 ): { filteredRegions: Region[]; filteredDistricts: District[] } {
-  // For global engineers, show all regions
-  const filteredRegions = user?.role === "global_engineer"
+  // For global engineers and system admins, show all regions
+  const filteredRegions = (user?.role === "global_engineer" || user?.role === "system_admin")
     ? regions
     : regions.filter(r => user?.region ? r.name === user.region : true);
 

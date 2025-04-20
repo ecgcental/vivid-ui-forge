@@ -44,8 +44,8 @@ export function Footer() {
               <p>P.O. Box 521, Accra</p>
               <p>Ghana, West Africa</p>
               <p className="pt-2">
-                <a href="mailto:info@ecgfaultmaster.com" className="hover:text-ecg-blue transition-colors">
-                  info@ecgfaultmaster.com
+                <a href="mailto:info@ecgoperations.com" className="hover:text-ecg-blue transition-colors">
+                  info@ecgoperations.com
                 </a>
               </p>
               <p>

@@ -47,6 +47,9 @@ export function UsersList() {
   const [tempPassword, setTempPassword] = useState<string>("");
   const [showCredentials, setShowCredentials] = useState(false);
   
+  // Check if current user is system admin
+  const isSystemAdmin = currentUser?.role === "system_admin";
+  
   const getRoleBadgeColor = (role: UserRole) => {
     switch (role) {
       case "district_engineer":
@@ -55,6 +58,10 @@ export function UsersList() {
         return "bg-blue-100 text-blue-800 hover:bg-blue-100";
       case "global_engineer":
         return "bg-purple-100 text-purple-800 hover:bg-purple-100";
+      case "system_admin":
+        return "bg-red-100 text-red-800 hover:bg-red-100";
+      case "technician":
+        return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
       default:
         return "bg-gray-100 text-gray-800 hover:bg-gray-100";
     }
@@ -68,6 +75,10 @@ export function UsersList() {
         return "Regional Engineer";
       case "global_engineer":
         return "Global Engineer";
+      case "system_admin":
+        return "System Administrator";
+      case "technician":
+        return "Technician";
       default:
         return "Unknown Role";
     }
@@ -91,10 +102,13 @@ export function UsersList() {
       return;
     }
     
-    const validation = validateUserRoleAssignment(newRole, newRegion, newDistrict, regions, districts);
-    if (!validation.isValid) {
-      toast.error(validation.error);
-      return;
+    // For system admin and global engineer, skip region/district validation
+    if (newRole !== "system_admin" && newRole !== "global_engineer") {
+      const validation = validateUserRoleAssignment(newRole, newRegion, newDistrict, regions, districts);
+      if (!validation.isValid) {
+        toast.error(validation.error);
+        return;
+      }
     }
 
     // Generate temporary password
@@ -106,11 +120,11 @@ export function UsersList() {
       name: newName,
       email: newEmail,
       role: newRole,
-      region: newRole !== "global_engineer" ? newRegion : undefined,
+      region: (newRole !== "system_admin" && newRole !== "global_engineer") ? newRegion : undefined,
       district: newRole === "district_engineer" ? newDistrict : undefined,
-      tempPassword: tempPass, // Store the temporary password
+      tempPassword: tempPass,
       mustChangePassword: true,
-      password: hashPassword(tempPass) // Hash the temporary password
+      password: hashPassword(tempPass)
     };
     
     // Add to users state
@@ -130,10 +144,13 @@ export function UsersList() {
       return;
     }
     
-    const validation = validateUserRoleAssignment(newRole, newRegion, newDistrict, regions, districts);
-    if (!validation.isValid) {
-      toast.error(validation.error);
-      return;
+    // For system admin and global engineer, skip region/district validation
+    if (newRole !== "system_admin" && newRole !== "global_engineer") {
+      const validation = validateUserRoleAssignment(newRole, newRegion, newDistrict, regions, districts);
+      if (!validation.isValid) {
+        toast.error(validation.error);
+        return;
+      }
     }
     
     // Update user in state
@@ -144,7 +161,7 @@ export function UsersList() {
             name: newName,
             email: newEmail,
             role: newRole,
-            region: newRole !== "global_engineer" ? newRegion : undefined,
+            region: (newRole !== "system_admin" && newRole !== "global_engineer") ? newRegion : undefined,
             district: newRole === "district_engineer" ? newDistrict : undefined
           }
         : user
@@ -156,13 +173,29 @@ export function UsersList() {
   };
   
   const handleDeleteUser = () => {
-    if (!selectedUser) return;
+    if (!selectedUser || !isSystemAdmin) return;
     
     // Remove user from state
     setUsers(prevUsers => prevUsers.filter(user => user.id !== selectedUser.id));
     setSelectedUser(null);
     setIsDeleteDialogOpen(false);
     toast.success("User deleted successfully");
+  };
+  
+  const handleDisableUser = (user: User) => {
+    if (!user || !isSystemAdmin) return;
+    
+    // Update user in state
+    setUsers(prevUsers => prevUsers.map(u => 
+      u.id === user.id
+        ? {
+            ...u,
+            disabled: !u.disabled
+          }
+        : u
+    ));
+    
+    toast.success(`User ${user.disabled ? 'enabled' : 'disabled'} successfully`);
   };
   
   const openEditDialog = (user: User) => {
@@ -259,12 +292,13 @@ export function UsersList() {
             <TableHead>Role</TableHead>
             <TableHead>Region</TableHead>
             <TableHead>District</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {users.map(user => (
-            <TableRow key={user.id}>
+            <TableRow key={user.id} className={user.disabled ? "opacity-50" : ""}>
               <TableCell className="font-medium">{user.name}</TableCell>
               <TableCell>{user.email}</TableCell>
               <TableCell>
@@ -274,21 +308,39 @@ export function UsersList() {
               </TableCell>
               <TableCell>{user.region || "-"}</TableCell>
               <TableCell>{user.district || "-"}</TableCell>
+              <TableCell>
+                <Badge variant={user.disabled ? "destructive" : "default"}>
+                  {user.disabled ? "Disabled" : "Active"}
+                </Badge>
+              </TableCell>
               <TableCell className="text-right space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => openEditDialog(user)}
+                  disabled={user.disabled}
                 >
                   <EditIcon size={16} />
                 </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => openDeleteDialog(user)}
-                >
-                  <Trash2 size={16} />
-                </Button>
+                {isSystemAdmin && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDisableUser(user)}
+                    >
+                      {user.disabled ? "Enable" : "Disable"}
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => openDeleteDialog(user)}
+                      disabled={user.disabled}
+                    >
+                      <Trash2 size={16} />
+                    </Button>
+                  </>
+                )}
               </TableCell>
             </TableRow>
           ))}
@@ -334,9 +386,11 @@ export function UsersList() {
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="district_engineer">District Engineer</SelectItem>
-                  <SelectItem value="regional_engineer">Regional Engineer</SelectItem>
+                  <SelectItem value="system_admin">System Administrator</SelectItem>
                   <SelectItem value="global_engineer">Global Engineer</SelectItem>
+                  <SelectItem value="regional_engineer">Regional Engineer</SelectItem>
+                  <SelectItem value="district_engineer">District Engineer</SelectItem>
+                  <SelectItem value="technician">Technician</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -466,9 +520,11 @@ export function UsersList() {
                   <SelectValue placeholder="Select role" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="district_engineer">District Engineer</SelectItem>
-                  <SelectItem value="regional_engineer">Regional Engineer</SelectItem>
+                  <SelectItem value="system_admin">System Administrator</SelectItem>
                   <SelectItem value="global_engineer">Global Engineer</SelectItem>
+                  <SelectItem value="regional_engineer">Regional Engineer</SelectItem>
+                  <SelectItem value="district_engineer">District Engineer</SelectItem>
+                  <SelectItem value="technician">Technician</SelectItem>
                 </SelectContent>
               </Select>
             </div>

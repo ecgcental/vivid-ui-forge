@@ -140,7 +140,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
     };
 
     // Initialize region and district for district and regional engineers
-    if (user?.role === "district_engineer" && user.region && user.district) {
+    if ((user?.role === "district_engineer" || user?.role === "technician") && user.region && user.district) {
       const userRegion = regions.find(r => r.name === user.region);
       if (userRegion) {
         const userDistrict = districts.find(d => 
@@ -175,7 +175,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
     if (user?.role === "regional_engineer") {
       return regions.filter(r => r.name === user.region);
     }
-    if (user?.role === "district_engineer") {
+    if (user?.role === "district_engineer" || user?.role === "technician") {
       return regions.filter(r => r.name === user.region);
     }
     return [];
@@ -189,7 +189,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
     if (user?.role === "regional_engineer") {
       return districts.filter(d => d.regionId === formData.regionId);
     }
-    if (user?.role === "district_engineer") {
+    if (user?.role === "district_engineer" || user?.role === "technician") {
       return districts.filter(d => d.name === user.district);
     }
     return [];
@@ -197,7 +197,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
 
   // Handle region change
   const handleRegionChange = (value: string) => {
-    if (user?.role === "district_engineer" || user?.role === "regional_engineer") return;
+    if (user?.role === "district_engineer" || user?.role === "regional_engineer" || user?.role === "technician") return;
     
     setFormData(prev => ({ 
       ...prev, 
@@ -208,7 +208,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
 
   // Handle district change
   const handleDistrictChange = (value: string) => {
-    if (user?.role === "district_engineer") return;
+    if (user?.role === "district_engineer" || user?.role === "technician") return;
     setFormData(prev => ({ ...prev, districtId: value }));
   };
 
@@ -504,7 +504,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
             <Select
               value={formData.regionId}
               onValueChange={handleRegionChange}
-              disabled={user?.role === "district_engineer" || user?.role === "regional_engineer"}
+              disabled={user?.role === "district_engineer" || user?.role === "regional_engineer" || user?.role === "technician"}
               required
             >
               <SelectTrigger>
@@ -525,7 +525,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
             <Select
               value={formData.districtId}
               onValueChange={handleDistrictChange}
-              disabled={user?.role === "district_engineer" || !formData.regionId}
+              disabled={user?.role === "district_engineer" || user?.role === "technician" || !formData.regionId}
               required
             >
               <SelectTrigger>

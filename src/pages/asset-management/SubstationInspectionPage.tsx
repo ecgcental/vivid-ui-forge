@@ -107,15 +107,15 @@ export default function SubstationInspectionPage() {
 
   // Initialize region and district based on user's assigned values
   useEffect(() => {
-    if (user?.role === "district_engineer" || user?.role === "regional_engineer") {
+    if (user?.role === "district_engineer" || user?.role === "regional_engineer" || user?.role === "technician") {
       // Find region ID based on user's assigned region name
       const userRegion = regions.find(r => r.name === user.region);
       if (userRegion) {
         setRegionId(userRegion.id);
         setFormData(prev => ({ ...prev, region: userRegion.name }));
         
-        // For district engineer, also set the district
-        if (user.role === "district_engineer" && user.district) {
+        // For district engineer and technician, also set the district
+        if ((user.role === "district_engineer" || user?.role === "technician") && user.district) {
           const userDistrict = districts.find(d => 
             d.regionId === userRegion.id && d.name === user.district
           );
@@ -128,9 +128,9 @@ export default function SubstationInspectionPage() {
     }
   }, [user, regions, districts]);
 
-  // Ensure district engineer's district is always set correctly
+  // Ensure district engineer's and technician's district is always set correctly
   useEffect(() => {
-    if (user?.role === "district_engineer" && user.district && user.region) {
+    if ((user?.role === "district_engineer" || user?.role === "technician") && user.district && user.region) {
       const userRegion = regions.find(r => r.name === user.region);
       if (userRegion) {
         const userDistrict = districts.find(d => 
@@ -159,8 +159,8 @@ export default function SubstationInspectionPage() {
         // First check if district belongs to selected region
         if (d.regionId !== regionId) return false;
         
-        // For district engineers, only show their assigned district
-        if (user?.role === "district_engineer") {
+        // For district engineers and technicians, only show their assigned district
+        if (user?.role === "district_engineer" || user?.role === "technician") {
           return d.name === user.district;
         }
         
@@ -169,9 +169,9 @@ export default function SubstationInspectionPage() {
       })
     : [];
 
-  // Handle region change - prevent district engineers from changing region
+  // Handle region change - prevent district engineers and technicians from changing region
   const handleRegionChange = (value: string) => {
-    if (user?.role === "district_engineer") return; // Prevent district engineers from changing region
+    if (user?.role === "district_engineer" || user?.role === "technician") return; // Prevent district engineers and technicians from changing region
     
     setRegionId(value);
     const region = regions.find(r => r.id === value);
@@ -180,9 +180,9 @@ export default function SubstationInspectionPage() {
     setFormData(prev => ({ ...prev, district: "" }));
   };
 
-  // Handle district change - prevent district engineers from changing district
+  // Handle district change - prevent district engineers and technicians from changing district
   const handleDistrictChange = (value: string) => {
-    if (user?.role === "district_engineer") return; // Prevent district engineers from changing district
+    if (user?.role === "district_engineer" || user?.role === "technician") return; // Prevent district engineers and technicians from changing district
     
     setDistrictId(value);
     const district = districts.find(d => d.id === value);
@@ -315,7 +315,7 @@ export default function SubstationInspectionPage() {
                     value={regionId}
                     onValueChange={handleRegionChange}
                     required
-                    disabled={user?.role === "district_engineer" || user?.role === "regional_engineer"}
+                    disabled={user?.role === "district_engineer" || user?.role === "regional_engineer" || user?.role === "technician"}
                   >
                     <SelectTrigger id="region">
                       <SelectValue placeholder="Select Region" />
@@ -336,7 +336,7 @@ export default function SubstationInspectionPage() {
                     value={districtId}
                     onValueChange={handleDistrictChange}
                     required
-                    disabled={user?.role === "district_engineer" || !regionId}
+                    disabled={user?.role === "district_engineer" || user?.role === "technician" || !regionId}
                   >
                     <SelectTrigger id="district">
                       <SelectValue placeholder="Select District" />

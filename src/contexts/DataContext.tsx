@@ -718,7 +718,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         return region?.name === user.region;
       }
       
-      if (user.role === "district_engineer") {
+      if (user.role === "district_engineer" || user.role === "technician") {
         const district = districts.find(d => d.id === asset.districtId);
         return district?.name === user.district;
       }
@@ -729,7 +729,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         return region === user.region;
       }
       
-      if (user.role === "district_engineer") {
+      if (user.role === "district_engineer" || user.role === "technician") {
         return district === user.district;
       }
     }
