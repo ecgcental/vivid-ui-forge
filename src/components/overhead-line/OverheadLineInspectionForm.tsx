@@ -16,7 +16,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Loader2, MapPin } from "lucide-react";
-import { OverheadLineInspection } from "@/lib/types";
+import { OverheadLineInspection, ConditionStatus } from "@/lib/types";
 import { getRegions, getDistricts } from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
 import { showNotification, showServiceWorkerNotification } from '@/utils/notifications';
@@ -58,8 +58,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
       inspector: {
         id: user?.id || "",
         name: user?.name || "",
-        email: user?.email || "",
-        phone: ""
+        email: user?.email || ""
       },
       poleId: "",
       poleHeight: "8m",
@@ -140,7 +139,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
     };
 
     // Initialize region and district for district and regional engineers
-    if ((user?.role === "district_engineer" || user?.role === "technician") && user.region && user.district) {
+    if ((user?.role === "district_engineer" || user?.role === "technician" || user?.role === "system_admin") && user.region && user.district) {
       const userRegion = regions.find(r => r.name === user.region);
       if (userRegion) {
         const userDistrict = districts.find(d => 
@@ -151,10 +150,16 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
           defaultFormData.districtId = userDistrict.id;
         }
       }
-    } else if (user?.role === "regional_engineer" && user.region) {
+    } else if ((user?.role === "regional_engineer" || user?.role === "system_admin") && user.region) {
       const userRegion = regions.find(r => r.name === user.region);
       if (userRegion) {
         defaultFormData.regionId = userRegion.id;
+      }
+    } else if (user?.role === "system_admin" && regions.length > 0) {
+      // For system admin without assigned region, use the first region
+      defaultFormData.regionId = regions[0].id;
+      if (districts.length > 0) {
+        defaultFormData.districtId = districts[0].id;
       }
     }
 
@@ -162,7 +167,9 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
       return {
         ...defaultFormData,
         ...inspection,
-        updatedAt: new Date().toISOString()
+        date: inspection.date ? inspection.date.split('T')[0] : new Date().toISOString().split('T')[0],
+        time: inspection.time,
+        status: inspection.status || "pending"
       };
     }
 
@@ -171,7 +178,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
 
   // Filter regions and districts based on user role
   const filteredRegions = useMemo(() => {
-    if (user?.role === "global_engineer") return regions;
+    if (user?.role === "global_engineer" || user?.role === "system_admin") return regions;
     if (user?.role === "regional_engineer") {
       return regions.filter(r => r.name === user.region);
     }
@@ -183,7 +190,7 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
 
   const filteredDistricts = useMemo(() => {
     if (!formData.regionId) return [];
-    if (user?.role === "global_engineer") {
+    if (user?.role === "global_engineer" || user?.role === "system_admin") {
       return districts.filter(d => d.regionId === formData.regionId);
     }
     if (user?.role === "regional_engineer") {
@@ -225,20 +232,21 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
         inspector: {
           id: user.id,
           name: user.name,
-          email: user.email,
-          phone: ""
+          email: user.email
         }
       }));
     }
   }, [user, inspection]);
 
-  // Add useEffect to update form data when inspection prop changes
+  // Update form data when inspection prop changes
   useEffect(() => {
     if (inspection) {
-      setFormData(prev => ({
-        ...prev,
+      setFormData(currentData => ({
+        ...currentData,
         ...inspection,
-        updatedAt: new Date().toISOString(),
+        date: inspection.date ? inspection.date.split('T')[0] : new Date().toISOString().split('T')[0],
+        time: inspection.time,
+        status: inspection.status || "pending"
       }));
     }
   }, [inspection]);
@@ -278,23 +286,16 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
     );
   }, [toast]);
 
-  const handleStatusChange = (status: ConditionStatus) => {
-    setFormData(prev => ({
-      ...prev,
+  const handleStatusChange = (status: "pending" | "in-progress" | "completed" | "rejected") => {
+    setFormData(currentData => ({
+      ...currentData,
       status
     }));
 
     // Show notification for status change
     const notificationTitle = 'Inspection Status Updated';
     const notificationBody = `Status changed to ${status}`;
-    
-    // Try service worker notification first, fallback to regular notification
-    showServiceWorkerNotification(notificationTitle, {
-      body: notificationBody,
-      data: { url: window.location.href }
-    }).catch(() => {
-      showNotification(notificationTitle, notificationBody);
-    });
+    showNotification(notificationTitle, { body: notificationBody });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -444,33 +445,15 @@ export function OverheadLineInspectionForm({ inspection, onSubmit, onCancel }: O
   // Memoize form sections
   const renderInspectorInfo = useMemo(() => (
     <Card>
-      <CardContent className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Inspector Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <CardContent className="pt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="inspectorName">Inspector Name</Label>
-            <Input
-              id="inspectorName"
-              value={formData.inspector?.name || ""}
-              onChange={(e) => setFormData({
-                ...formData,
-                inspector: { ...formData.inspector, name: e.target.value }
-              })}
-              placeholder="Enter inspector name"
-            />
+            <Label className="text-sm font-medium text-muted-foreground">Inspector Name</Label>
+            <p className="text-sm">{formData.inspector.name}</p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="inspectorEmail">Email</Label>
-            <Input
-              id="inspectorEmail"
-              type="email"
-              value={formData.inspector?.email || ""}
-              onChange={(e) => setFormData({
-                ...formData,
-                inspector: { ...formData.inspector, email: e.target.value }
-              })}
-              placeholder="Enter inspector email"
-            />
+            <Label className="text-sm font-medium text-muted-foreground">Inspector Email</Label>
+            <p className="text-sm">{formData.inspector.email}</p>
           </div>
         </div>
       </CardContent>

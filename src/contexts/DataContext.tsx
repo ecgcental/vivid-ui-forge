@@ -30,6 +30,7 @@ import {
 } from "@/lib/types";
 import { LoadMonitoringData } from "@/lib/asset-types";
 import { calculateUnservedEnergy, calculateOutageDuration, calculateMTTR } from "@/utils/calculations";
+import { PermissionService } from '@/services/PermissionService';
 
 export interface DataContextType {
   op5Faults: OP5Fault[];
@@ -448,22 +449,16 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const canEditFault = (fault: OP5Fault | ControlSystemOutage): boolean => {
     if (!user) return false;
     
-    // Global engineers can edit any fault
-    if (user.role === "global_engineer") return true;
+    const region = regions.find(r => r.id === fault.regionId);
+    const district = districts.find(d => d.id === fault.districtId);
     
-    // Regional engineers can edit faults in their region
-    if (user.role === "regional_engineer") {
-      const region = regions.find(r => r.id === fault.regionId);
-      return region?.name === user.region;
-    }
-    
-    // District engineers can edit faults in their district
-    if (user.role === "district_engineer") {
-      const district = districts.find(d => d.id === fault.districtId);
-      return district?.name === user.district;
-    }
-    
-    return false;
+    return PermissionService.getInstance().canEditAsset(
+      user.role,
+      user.region,
+      user.district,
+      region?.name || '',
+      district?.name || ''
+    );
   };
 
   // Function to check if user can resolve a fault
@@ -615,58 +610,48 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const canEditAsset = (asset: VITAsset): boolean => {
     if (!user) return false;
     
-    // Global engineers can edit any asset
-    if (user.role === "global_engineer") return true;
+    const region = regions.find(r => r.id === asset.regionId);
+    const district = districts.find(d => d.id === asset.districtId);
     
-    // Regional engineers can edit assets in their region
-    if (user.role === "regional_engineer") {
-      const region = regions.find(r => r.id === asset.regionId);
-      return region?.name === user.region;
-    }
-    
-    // District engineers can edit assets in their district
-    if (user.role === "district_engineer") {
-      const district = districts.find(d => d.id === asset.districtId);
-      return district?.name === user.district;
-    }
-    
-    return false;
+    return PermissionService.getInstance().canEditAsset(
+      user.role,
+      user.region,
+      user.district,
+      region?.name || '',
+      district?.name || ''
+    );
   };
 
   // Function to check if user can edit an inspection
   const canEditInspection = (inspection: VITInspectionChecklist | SubstationInspection): boolean => {
     if (!user) return false;
     
-    // Global engineers can edit any inspection
-    if (user.role === "global_engineer") return true;
-    
     // For VIT inspections, check the associated asset's region/district
     if ('vitAssetId' in inspection) {
       const asset = vitAssets.find(a => a.id === inspection.vitAssetId);
       if (!asset) return false;
       
-      if (user.role === "regional_engineer") {
-        const region = regions.find(r => r.id === asset.regionId);
-        return region?.name === user.region;
-      }
+      const region = regions.find(r => r.id === asset.regionId);
+      const district = districts.find(d => d.id === asset.districtId);
       
-      if (user.role === "district_engineer") {
-        const district = districts.find(d => d.id === asset.districtId);
-        return district?.name === user.district;
-      }
+      return PermissionService.getInstance().canEditInspection(
+        user.role,
+        user.region,
+        user.district,
+        region?.name || '',
+        district?.name || ''
+      );
     }
     // For substation inspections, check the region/district directly
     else {
-      if (user.role === "regional_engineer") {
-        return inspection.region === user.region;
-      }
-      
-      if (user.role === "district_engineer") {
-        return inspection.district === user.district;
-      }
+      return PermissionService.getInstance().canEditInspection(
+        user.role,
+        user.region,
+        user.district,
+        inspection.region,
+        inspection.district
+      );
     }
-    
-    return false;
   };
 
   // Function to check if user can delete an asset
@@ -683,58 +668,32 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const canAddAsset = (regionId: string, districtId: string): boolean => {
     if (!user) return false;
     
-    // Global engineers can add assets anywhere
-    if (user.role === "global_engineer") return true;
+    const region = regions.find(r => r.id === regionId);
+    const district = districts.find(d => d.id === districtId);
     
-    // Regional engineers can add assets in their region
-    if (user.role === "regional_engineer") {
-      const region = regions.find(r => r.id === regionId);
-      return region?.name === user.region;
-    }
-    
-    // District engineers can add assets in their district
-    if (user.role === "district_engineer") {
-      const district = districts.find(d => d.id === districtId);
-      return district?.name === user.district;
-    }
-    
-    return false;
+    return PermissionService.getInstance().canEditAsset(
+      user.role,
+      user.region,
+      user.district,
+      region?.name || '',
+      district?.name || ''
+    );
   };
 
   // Function to check if user can add an inspection
-  const canAddInspection = (assetId?: string, region?: string, district?: string): boolean => {
+  const canAddInspection = (regionId: string, districtId: string): boolean => {
     if (!user) return false;
     
-    // Global engineers can add inspections anywhere
-    if (user.role === "global_engineer") return true;
+    const region = regions.find(r => r.id === regionId);
+    const district = districts.find(d => d.id === districtId);
     
-    // For VIT inspections, check the asset's region/district
-    if (assetId) {
-      const asset = vitAssets.find(a => a.id === assetId);
-      if (!asset) return false;
-      
-      if (user.role === "regional_engineer") {
-        const region = regions.find(r => r.id === asset.regionId);
-        return region?.name === user.region;
-      }
-      
-      if (user.role === "district_engineer" || user.role === "technician") {
-        const district = districts.find(d => d.id === asset.districtId);
-        return district?.name === user.district;
-      }
-    }
-    // For substation inspections, check the region/district directly
-    else if (region && district) {
-      if (user.role === "regional_engineer") {
-        return region === user.region;
-      }
-      
-      if (user.role === "district_engineer" || user.role === "technician") {
-        return district === user.district;
-      }
-    }
-    
-    return false;
+    return PermissionService.getInstance().canEditInspection(
+      user.role,
+      user.region,
+      user.district,
+      region?.name || '',
+      district?.name || ''
+    );
   };
 
   // Function to resolve a fault

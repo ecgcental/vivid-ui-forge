@@ -63,7 +63,7 @@ export default function UserManagementPage() {
               <Settings className="w-4 h-4" />
               District Population
             </TabsTrigger>
-            {user?.role === "system_admin" && (
+            {(user?.role === "system_admin" || user?.role === "global_engineer") && (
               <TabsTrigger value="staff-ids" className="flex items-center gap-2">
                 <IdCard className="w-4 h-4" />
                 Staff IDs
@@ -84,7 +84,7 @@ export default function UserManagementPage() {
           </TabsContent>
           
           <TabsContent value="staff-ids">
-            <AccessControlWrapper requiredRole="system_admin">
+            <AccessControlWrapper requiredRole="global_engineer">
               <StaffIdManagement />
             </AccessControlWrapper>
           </TabsContent>

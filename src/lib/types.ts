@@ -171,6 +171,8 @@ export type VITAsset = {
 export type VITInspectionChecklist = {
   id: string;
   vitAssetId: string;
+  region: string;
+  district: string;
   inspectionDate: string;
   inspectedBy: string;
   rodentTermiteEncroachment: YesNoOption;
@@ -357,6 +359,8 @@ export interface OverheadLineInspection {
   id: string;
   createdAt: string;
   updatedAt: string;
+  date?: string;
+  time?: string;
   regionId: string;
   districtId: string;
   feederName: string;

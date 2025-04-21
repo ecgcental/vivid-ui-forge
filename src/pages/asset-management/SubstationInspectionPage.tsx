@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,23 +18,19 @@ import { toast } from "sonner";
 import { SubstationInspection, ConditionStatus, InspectionItem } from "@/lib/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { useData } from "@/contexts/DataContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 interface Category {
   id: string;
   name: string;
-  items: {
-    id: string;
-    name: string;
-    status: ConditionStatus;
-    remarks: string;
-  }[];
+  items: InspectionItem[];
 }
 
 export default function SubstationInspectionPage() {
   const { user } = useAuth();
-  const { regions, districts, saveInspection } = useData();
+  const { regions, districts, saveInspection, getSavedInspection, savedInspections } = useData();
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [regionId, setRegionId] = useState<string>("");
@@ -58,52 +54,60 @@ export default function SubstationInspectionPage() {
     createdAt: new Date().toISOString(),
     inspectedBy: user?.name || ""
   });
-  const [categories, setCategories] = useState<Category[]>([
-    {
-      id: uuidv4(),
-      name: "General Building",
-      items: [
-        { id: uuidv4(), name: "Building Structure", status: "" as ConditionStatus, remarks: "" },
-        { id: uuidv4(), name: "Cleanliness", status: "" as ConditionStatus, remarks: "" },
-        { id: uuidv4(), name: "Lighting", status: "" as ConditionStatus, remarks: "" },
-        { id: uuidv4(), name: "Ventilation", status: "" as ConditionStatus, remarks: "" },
-        { id: uuidv4(), name: "Fire Safety", status: "" as ConditionStatus, remarks: "" },
-      ],
-    },
-    {
-      id: uuidv4(),
-      name: "Control Equipment",
-      items: [
-        { id: uuidv4(), name: "Control Panels", status: "" as ConditionStatus, remarks: "" },
-        { id: uuidv4(), name: "Wiring", status: "" as ConditionStatus, remarks: "" },
-        { id: uuidv4(), name: "Relays", status: "" as ConditionStatus, remarks: "" },
-        { id: uuidv4(), name: "Batteries", status: "" as ConditionStatus, remarks: "" },
-        { id: uuidv4(), name: "Communication Systems", status: "" as ConditionStatus, remarks: "" },
-      ],
-    },
-    {
-      id: uuidv4(),
-      name: "Power Transformer",
-      items: [
-        { id: uuidv4(), name: "Oil Level", status: "" as ConditionStatus, remarks: "" },
-        { id: uuidv4(), name: "Bushings", status: "" as ConditionStatus, remarks: "" },
-        { id: uuidv4(), name: "Cooling System", status: "" as ConditionStatus, remarks: "" },
-        { id: uuidv4(), name: "Insulation", status: "" as ConditionStatus, remarks: "" },
-        { id: uuidv4(), name: "Load Tap Changer", status: "" as ConditionStatus, remarks: "" },
-      ],
-    },
-    {
-      id: uuidv4(),
-      name: "Outdoor Equipment",
-      items: [
-        { id: uuidv4(), name: "Circuit Breakers", status: "" as ConditionStatus, remarks: "" },
-        { id: uuidv4(), name: "Disconnect Switches", status: "" as ConditionStatus, remarks: "" },
-        { id: uuidv4(), name: "Surge Arresters", status: "" as ConditionStatus, remarks: "" },
-        { id: uuidv4(), name: "Grounding System", status: "" as ConditionStatus, remarks: "" },
-        { id: uuidv4(), name: "Fencing", status: "" as ConditionStatus, remarks: "" },
-      ],
-    },
-  ]);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  // Update item status
+  const updateItemStatus = (categoryIndex: number, itemIndex: number, status: ConditionStatus) => {
+    const categoryName = categories[categoryIndex].name.toLowerCase().replace(" ", "");
+    const categoryKey = categoryName as keyof SubstationInspection;
+
+    // Create updated items array
+    const updatedItems = [...categories[categoryIndex].items];
+    updatedItems[itemIndex] = { ...updatedItems[itemIndex], status };
+
+    // Update categories state
+    const newCategories = [...categories];
+    newCategories[categoryIndex] = {
+      ...newCategories[categoryIndex],
+      items: updatedItems,
+    };
+    setCategories(newCategories);
+
+    // Update formData with only the changed category
+    setFormData(prev => ({
+      ...prev,
+      [categoryKey]: updatedItems,
+    }));
+  };
+
+  // Add calculateStatusSummary function
+  const calculateStatusSummary = () => {
+    // Get items from each category separately to avoid duplication
+    const generalBuildingItems = categories.find(c => c.name === "General Building")?.items || [];
+    const controlEquipmentItems = categories.find(c => c.name === "Control Equipment")?.items || [];
+    const powerTransformerItems = categories.find(c => c.name === "Power Transformer")?.items || [];
+    const outdoorEquipmentItems = categories.find(c => c.name === "Outdoor Equipment")?.items || [];
+
+    // Calculate totals for each status
+    const total = generalBuildingItems.length + controlEquipmentItems.length + 
+                 powerTransformerItems.length + outdoorEquipmentItems.length;
+    
+    const good = [
+      ...generalBuildingItems,
+      ...controlEquipmentItems,
+      ...powerTransformerItems,
+      ...outdoorEquipmentItems
+    ].filter(item => item.status === "good").length;
+    
+    const bad = [
+      ...generalBuildingItems,
+      ...controlEquipmentItems,
+      ...powerTransformerItems,
+      ...outdoorEquipmentItems
+    ].filter(item => item.status === "bad").length;
+
+    return { total, good, bad };
+  };
 
   // Initialize region and district based on user's assigned values
   useEffect(() => {
@@ -197,19 +201,128 @@ export default function SubstationInspectionPage() {
     }));
   };
 
-  // Update item status
-  const updateItemStatus = (categoryIndex: number, itemIndex: number, status: ConditionStatus) => {
-    setCategories(prevCategories => {
-      const newCategories = [...prevCategories];
-      newCategories[categoryIndex] = {
-        ...newCategories[categoryIndex],
-        items: newCategories[categoryIndex].items.map((item, index) =>
-          index === itemIndex ? { ...item, status } : item
-        ),
-      };
-      return newCategories;
-    });
-  };
+  // Initialize formData with categories
+  useEffect(() => {
+    if (id) {
+      // Edit mode - load existing inspection
+      const inspection = getSavedInspection(id);
+      if (inspection) {
+        // Set formData without items array to avoid duplication
+        const { items, ...formDataWithoutItems } = inspection;
+        setFormData({
+          ...formDataWithoutItems,
+          id: inspection.id,
+          items: [] // Clear items array to avoid duplication
+        });
+        
+        // Set categories with the items, preserving original IDs
+        setCategories([
+          {
+            id: inspection.generalBuilding?.[0]?.category || uuidv4(),
+            name: "General Building",
+            items: (inspection.generalBuilding || []).map(item => ({
+              id: item.id,  // Preserve original ID
+              name: item.name,
+              category: "general building",
+              status: item.status || undefined,
+              remarks: item.remarks || ""
+            })),
+          },
+          {
+            id: inspection.controlEquipment?.[0]?.category || uuidv4(),
+            name: "Control Equipment",
+            items: (inspection.controlEquipment || []).map(item => ({
+              id: item.id,  // Preserve original ID
+              name: item.name,
+              category: "control equipment",
+              status: item.status || undefined,
+              remarks: item.remarks || ""
+            })),
+          },
+          {
+            id: inspection.powerTransformer?.[0]?.category || uuidv4(),
+            name: "Power Transformer",
+            items: (inspection.powerTransformer || []).map(item => ({
+              id: item.id,  // Preserve original ID
+              name: item.name,
+              category: "power transformer",
+              status: item.status || undefined,
+              remarks: item.remarks || ""
+            })),
+          },
+          {
+            id: inspection.outdoorEquipment?.[0]?.category || uuidv4(),
+            name: "Outdoor Equipment",
+            items: (inspection.outdoorEquipment || []).map(item => ({
+              id: item.id,  // Preserve original ID
+              name: item.name,
+              category: "outdoor equipment",
+              status: item.status || undefined,
+              remarks: item.remarks || ""
+            })),
+          },
+        ]);
+      }
+    } else {
+      // Create mode - generate unique IDs for new items
+      const defaultItems = [
+        {
+          id: `general-building-${uuidv4()}`,
+          name: "General Building",
+          items: [
+            { id: `gb-structure-${uuidv4()}`, name: "Building Structure", status: undefined, remarks: "", category: "general building" },
+            { id: `gb-clean-${uuidv4()}`, name: "Cleanliness", status: undefined, remarks: "", category: "general building" },
+            { id: `gb-light-${uuidv4()}`, name: "Lighting", status: undefined, remarks: "", category: "general building" },
+            { id: `gb-vent-${uuidv4()}`, name: "Ventilation", status: undefined, remarks: "", category: "general building" },
+            { id: `gb-fire-${uuidv4()}`, name: "Fire Safety", status: undefined, remarks: "", category: "general building" },
+          ],
+        },
+        {
+          id: `control-equipment-${uuidv4()}`,
+          name: "Control Equipment",
+          items: [
+            { id: `ce-panels-${uuidv4()}`, name: "Control Panels", status: undefined, remarks: "", category: "control equipment" },
+            { id: `ce-wiring-${uuidv4()}`, name: "Wiring", status: undefined, remarks: "", category: "control equipment" },
+            { id: `ce-relays-${uuidv4()}`, name: "Relays", status: undefined, remarks: "", category: "control equipment" },
+            { id: `ce-batteries-${uuidv4()}`, name: "Batteries", status: undefined, remarks: "", category: "control equipment" },
+            { id: `ce-comms-${uuidv4()}`, name: "Communication Systems", status: undefined, remarks: "", category: "control equipment" },
+          ],
+        },
+        {
+          id: `power-transformer-${uuidv4()}`,
+          name: "Power Transformer",
+          items: [
+            { id: `pt-oil-${uuidv4()}`, name: "Oil Level", status: undefined, remarks: "", category: "power transformer" },
+            { id: `pt-bushings-${uuidv4()}`, name: "Bushings", status: undefined, remarks: "", category: "power transformer" },
+            { id: `pt-cooling-${uuidv4()}`, name: "Cooling System", status: undefined, remarks: "", category: "power transformer" },
+            { id: `pt-insulation-${uuidv4()}`, name: "Insulation", status: undefined, remarks: "", category: "power transformer" },
+            { id: `pt-tap-${uuidv4()}`, name: "Load Tap Changer", status: undefined, remarks: "", category: "power transformer" },
+          ],
+        },
+        {
+          id: `outdoor-equipment-${uuidv4()}`,
+          name: "Outdoor Equipment",
+          items: [
+            { id: `oe-breakers-${uuidv4()}`, name: "Circuit Breakers", status: undefined, remarks: "", category: "outdoor equipment" },
+            { id: `oe-switches-${uuidv4()}`, name: "Disconnect Switches", status: undefined, remarks: "", category: "outdoor equipment" },
+            { id: `oe-arresters-${uuidv4()}`, name: "Surge Arresters", status: undefined, remarks: "", category: "outdoor equipment" },
+            { id: `oe-grounding-${uuidv4()}`, name: "Grounding System", status: undefined, remarks: "", category: "outdoor equipment" },
+            { id: `oe-fencing-${uuidv4()}`, name: "Fencing", status: undefined, remarks: "", category: "outdoor equipment" },
+          ],
+        },
+      ];
+      
+      setCategories(defaultItems);
+      setFormData(prev => ({
+        ...prev,
+        items: [],
+        generalBuilding: defaultItems[0].items,
+        controlEquipment: defaultItems[1].items,
+        powerTransformer: defaultItems[2].items,
+        outdoorEquipment: defaultItems[3].items,
+      }));
+    }
+  }, [id, getSavedInspection]);
 
   // Update item remarks
   const updateItemRemarks = (categoryIndex: number, itemIndex: number, remarks: string) => {
@@ -240,6 +353,39 @@ export default function SubstationInspectionPage() {
     
     const selectedRegion = regionFound?.name || "";
     const selectedDistrict = districtFound?.name || "";
+
+    // Get all items from categories
+    const generalBuildingItems = categories.find(c => c.name === "General Building")?.items.map(item => ({
+      id: item.id,
+      category: "general building",
+      name: item.name,
+      status: item.status,
+      remarks: item.remarks || ""
+    })) || [];
+
+    const controlEquipmentItems = categories.find(c => c.name === "Control Equipment")?.items.map(item => ({
+      id: item.id,
+      category: "control equipment",
+      name: item.name,
+      status: item.status,
+      remarks: item.remarks || ""
+    })) || [];
+
+    const powerTransformerItems = categories.find(c => c.name === "Power Transformer")?.items.map(item => ({
+      id: item.id,
+      category: "power transformer",
+      name: item.name,
+      status: item.status,
+      remarks: item.remarks || ""
+    })) || [];
+
+    const outdoorEquipmentItems = categories.find(c => c.name === "Outdoor Equipment")?.items.map(item => ({
+      id: item.id,
+      category: "outdoor equipment",
+      name: item.name,
+      status: item.status,
+      remarks: item.remarks || ""
+    })) || [];
     
     const inspectionData: Omit<SubstationInspection, "id"> = {
       region: selectedRegion,
@@ -249,35 +395,16 @@ export default function SubstationInspectionPage() {
       substationNo: formData.substationNo || "",
       substationName: formData.substationName || "",
       type: formData.type || "indoor",
-      items: [],
-      generalBuilding: categories.find(c => c.name === "General Building")?.items.map(item => ({
-        id: item.id,
-        category: "general building",
-        name: item.name,
-        status: item.status,
-        remarks: item.remarks || ""
-      })) || [],
-      controlEquipment: categories.find(c => c.name === "Control Equipment")?.items.map(item => ({
-        id: item.id,
-        category: "control equipment",
-        name: item.name,
-        status: item.status,
-        remarks: item.remarks || ""
-      })) || [],
-      powerTransformer: categories.find(c => c.name === "Power Transformer")?.items.map(item => ({
-        id: item.id,
-        category: "power transformer",
-        name: item.name,
-        status: item.status,
-        remarks: item.remarks || ""
-      })) || [],
-      outdoorEquipment: categories.find(c => c.name === "Outdoor Equipment")?.items.map(item => ({
-        id: item.id,
-        category: "outdoor equipment",
-        name: item.name,
-        status: item.status,
-        remarks: item.remarks || ""
-      })) || [],
+      items: [
+        ...generalBuildingItems,
+        ...controlEquipmentItems,
+        ...powerTransformerItems,
+        ...outdoorEquipmentItems
+      ],
+      generalBuilding: generalBuildingItems,
+      controlEquipment: controlEquipmentItems,
+      powerTransformer: powerTransformerItems,
+      outdoorEquipment: outdoorEquipmentItems,
       remarks: "",
       createdBy: user?.name || "Unknown",
       createdAt: new Date().toISOString(),
@@ -288,6 +415,16 @@ export default function SubstationInspectionPage() {
     toast.success("Inspection saved successfully");
     navigate("/asset-management/inspection-management");
   };
+
+  const filteredInspections = useMemo(() => {
+    if (!savedInspections) return [];
+    return savedInspections.filter(inspection => {
+      if (user?.role === 'global_engineer' || user?.role === 'system_admin') return true;
+      if (user?.role === 'regional_engineer') return inspection.region === user.region;
+      if (user?.role === 'district_engineer' || user?.role === 'technician') return inspection.district === user.district;
+      return false;
+    });
+  }, [savedInspections, user]);
 
   return (
     <Layout>

@@ -37,9 +37,9 @@ export function Navbar() {
   const showMenuItem = (requiredRole: UserRole) => {
     if (!user?.role) return false;
     if (user.role === "system_admin") return true;
-    // Allow technicians to access asset management
-    if (user.role === "technician" && requiredRole === "district_engineer") {
-      return true;
+    // Allow technicians to access asset management but not analytics
+    if (user.role === "technician") {
+      return requiredRole === "district_engineer" && !location.pathname.startsWith("/analytics");
     }
     return hasRequiredRole(user.role, requiredRole);
   };
@@ -175,9 +175,14 @@ export function Navbar() {
           
           {/* Only show User Management for global and regional engineers */}
           {showMenuItem("system_admin") && (
-            <NavLink to="/user-management" className="text-foreground hover:text-primary transition-colors">
-              User Management
-            </NavLink>
+            <>
+              <NavLink to="/user-management" className="text-foreground hover:text-primary transition-colors">
+                User Management
+              </NavLink>
+              <NavLink to="/system-admin/permissions" className="text-foreground hover:text-primary transition-colors">
+                Permission Management
+              </NavLink>
+            </>
           )}
         </>
       )}

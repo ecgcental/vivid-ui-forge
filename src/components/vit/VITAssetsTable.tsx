@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -27,23 +26,24 @@ import { MoreHorizontal, FileText, Edit, Trash2, Download, Search, Plus } from "
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 interface VITAssetsTableProps {
+  assets?: VITAsset[];
   onAddAsset: () => void;
   onEditAsset: (asset: VITAsset) => void;
   onInspect: (assetId: string) => void;
 }
 
-export function VITAssetsTable({ onAddAsset, onEditAsset, onInspect }: VITAssetsTableProps) {
+export function VITAssetsTable({ assets: propAssets, onAddAsset, onEditAsset, onInspect }: VITAssetsTableProps) {
   const { vitAssets, deleteVITAsset, regions, districts } = useData();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredAssets, setFilteredAssets] = useState<VITAsset[]>(vitAssets);
+  const [filteredAssets, setFilteredAssets] = useState<VITAsset[]>(propAssets || vitAssets);
   const [assetToDelete, setAssetToDelete] = useState<VITAsset | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (searchTerm) {
       setFilteredAssets(
-        vitAssets.filter(
+        (propAssets || vitAssets).filter(
           (asset) =>
             asset.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
             asset.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -53,9 +53,9 @@ export function VITAssetsTable({ onAddAsset, onEditAsset, onInspect }: VITAssets
         )
       );
     } else {
-      setFilteredAssets(vitAssets);
+      setFilteredAssets(propAssets || vitAssets);
     }
-  }, [searchTerm, vitAssets, regions, districts]);
+  }, [searchTerm, propAssets, vitAssets, regions, districts]);
 
   const getRegionName = (regionId: string) => {
     const region = regions.find((r) => r.id === regionId);

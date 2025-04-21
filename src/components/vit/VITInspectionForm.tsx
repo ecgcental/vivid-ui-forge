@@ -38,7 +38,7 @@ export function VITInspectionForm({
   onSubmit,
   onCancel,
 }: VITInspectionFormProps) {
-  const { vitAssets, addVITInspection, updateVITInspection } = useData();
+  const { vitAssets, addVITInspection, updateVITInspection, regions, districts } = useData();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -129,14 +129,18 @@ export function VITInspectionForm({
 
   // Filter assets based on user role
   const filteredAssets = vitAssets.filter(asset => {
-    if (user?.role === "global_engineer") return true;
+    if (user?.role === "global_engineer" || user?.role === "system_admin") return true;
     if (user?.role === "regional_engineer" && user.region) {
-      return asset.regionId === user.region;
+      const userRegion = regions.find(r => r.name === user.region);
+      return userRegion ? asset.regionId === userRegion.id : false;
     }
-    if (user?.role === "district_engineer" && user.region && user.district) {
-      return asset.regionId === user.region && asset.districtId === user.district;
+    if ((user?.role === "district_engineer" || user?.role === "technician") && user.region && user.district) {
+      const userRegion = regions.find(r => r.name === user.region);
+      const userDistrict = districts.find(d => d.name === user.district);
+      return userRegion && userDistrict ? 
+        asset.regionId === userRegion.id && asset.districtId === userDistrict.id : false;
     }
-    return true;
+    return false; // Default to no access if role doesn't match
   });
 
   // Handle asset selection
@@ -183,10 +187,24 @@ export function VITInspectionForm({
     setIsSubmitting(true);
     
     try {
+      // Get the selected asset to access its region and district
+      const selectedAsset = vitAssets.find(asset => asset.id === selectedAssetId);
+      if (!selectedAsset) {
+        alert("Selected asset not found");
+        setIsSubmitting(false);
+        return;
+      }
+      
+      // Get region and district names
+      const region = regions.find(r => r.id === selectedAsset.regionId)?.name || "";
+      const district = districts.find(d => d.id === selectedAsset.districtId)?.name || "";
+      
       const inspectionFormData = {
         vitAssetId: selectedAssetId,
         inspectionDate: new Date(inspectionDate).toISOString(),
         inspectedBy,
+        region,
+        district,
         rodentTermiteEncroachment: rodentTermiteEncroachment || "No",
         cleanDustFree: cleanDustFree || "No",
         protectionButtonEnabled: protectionButtonEnabled || "No",

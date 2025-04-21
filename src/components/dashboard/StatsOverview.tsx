@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useData } from "@/contexts/DataContext";
 import { Zap, Users, Clock, MonitorSmartphone } from "lucide-react";
 import { OP5Fault, ControlSystemOutage, StatsOverviewProps } from "@/lib/types";
+import { calculateOutageDuration } from "@/lib/calculations";
 
 export function StatsOverview({ op5Faults, controlOutages }: StatsOverviewProps) {
   const [totalFaults, setTotalFaults] = useState(0);
@@ -24,14 +25,18 @@ export function StatsOverview({ op5Faults, controlOutages }: StatsOverviewProps)
     });
     setAffectedPopulation(totalAffected);
 
-    // Calculate average outage time (in minutes)
+    // Calculate average outage time (in hours)
     let totalDuration = 0;
-    const faultsWithDuration = op5Faults.filter(fault => fault.outrageDuration !== undefined);
+    const faultsWithDuration = op5Faults.filter(fault => 
+      fault.occurrenceDate && fault.restorationDate && 
+      new Date(fault.restorationDate) > new Date(fault.occurrenceDate)
+    );
+    
     faultsWithDuration.forEach(fault => {
-      if (fault.outrageDuration) {
-        totalDuration += fault.outrageDuration;
-      }
+      const duration = calculateOutageDuration(fault.occurrenceDate, fault.restorationDate);
+      totalDuration += duration;
     });
+    
     const avgDuration = faultsWithDuration.length > 0 ? totalDuration / faultsWithDuration.length : 0;
     setAverageOutageTime(avgDuration);
 
@@ -75,11 +80,11 @@ export function StatsOverview({ op5Faults, controlOutages }: StatsOverviewProps)
       <Card>
         <CardHeader>
           <CardTitle>Avg. Outage Time</CardTitle>
-          <CardDescription>Average time to resolve a fault (minutes)</CardDescription>
+          <CardDescription>Average time to resolve a fault (hours)</CardDescription>
         </CardHeader>
         <CardContent className="flex items-center space-x-4">
           <Clock className="h-8 w-8 text-green-500" />
-          <div className="text-3xl font-bold">{averageOutageTime.toFixed(0)}</div>
+          <div className="text-3xl font-bold">{averageOutageTime.toFixed(1)}</div>
         </CardContent>
       </Card>
     </div>

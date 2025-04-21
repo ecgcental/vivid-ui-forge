@@ -3,8 +3,8 @@ import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/sonner';
 import { useNavigate } from 'react-router-dom';
-import { hasRequiredRole } from '@/utils/security';
 import { UserRole } from '@/lib/types';
+import { PermissionService } from '@/services/PermissionService';
 
 interface AccessControlWrapperProps {
   children: React.ReactNode;
@@ -27,11 +27,6 @@ export function AccessControlWrapper({
 }: AccessControlWrapperProps) {
   const { user } = useAuth();
   const { 
-    canEditAsset, 
-    canEditInspection, 
-    canEditFault,
-    canAddAsset,
-    canAddInspection,
     vitAssets,
     vitInspections,
     savedInspections,
@@ -41,9 +36,10 @@ export function AccessControlWrapper({
     districts
   } = useData();
   const navigate = useNavigate();
+  const permissionService = PermissionService.getInstance();
 
   // Check if user has the required role
-  if (requiredRole && user?.role && !hasRequiredRole(user.role, requiredRole)) {
+  if (requiredRole && user?.role && !permissionService.hasRequiredRole(user.role, requiredRole)) {
     toast.error("You don't have permission to access this page");
     navigate('/');
     return null;
@@ -53,29 +49,30 @@ export function AccessControlWrapper({
   if (type === 'asset') {
     // For asset list view, check if user has access to any assets
     if (!assetId) {
-      if (user?.role === 'district_engineer' || user?.role === 'technician') {
-        const userDistrict = districts.find(d => d.name === user.district);
-        if (!userDistrict) {
-          toast.error("You don't have permission to access any assets");
-          navigate('/');
-          return null;
-        }
-      } else if (user?.role === 'regional_engineer') {
-        const userRegion = regions.find(r => r.name === user.region);
-        if (!userRegion) {
-          toast.error("You don't have permission to access any assets");
-          navigate('/');
-          return null;
-        }
+      if (!permissionService.canAccessFeature(user?.role || null, 'asset_management')) {
+        toast.error("You don't have permission to access any assets");
+        navigate('/');
+        return null;
       }
     }
     // For specific asset view, check if user has access to that asset
     else {
       const asset = vitAssets.find(a => a.id === assetId);
-      if (asset && !canEditAsset(asset)) {
-        toast.error("You don't have permission to access this asset");
-        navigate('/asset-management');
-        return null;
+      if (asset) {
+        const region = regions.find(r => r.id === asset.regionId);
+        const district = districts.find(d => d.id === asset.districtId);
+        
+        if (!permissionService.canViewAsset(
+          user?.role || null,
+          user?.region || null,
+          user?.district || null,
+          region?.name || '',
+          district?.name || ''
+        )) {
+          toast.error("You don't have permission to access this asset");
+          navigate('/asset-management');
+          return null;
+        }
       }
     }
   }
@@ -84,20 +81,10 @@ export function AccessControlWrapper({
   if (type === 'inspection') {
     // For inspection list view, check if user has access to any inspections
     if (!inspectionId) {
-      if (user?.role === 'district_engineer' || user?.role === 'technician') {
-        const userDistrict = districts.find(d => d.name === user.district);
-        if (!userDistrict) {
-          toast.error("You don't have permission to access any inspections");
-          navigate('/');
-          return null;
-        }
-      } else if (user?.role === 'regional_engineer') {
-        const userRegion = regions.find(r => r.name === user.region);
-        if (!userRegion) {
-          toast.error("You don't have permission to access any inspections");
-          navigate('/');
-          return null;
-        }
+      if (!permissionService.canAccessFeature(user?.role || null, 'inspection_management')) {
+        toast.error("You don't have permission to access any inspections");
+        navigate('/');
+        return null;
       }
     }
     // For specific inspection view, check if user has access to that inspection
@@ -105,79 +92,88 @@ export function AccessControlWrapper({
       const vitInspection = vitInspections.find(i => i.id === inspectionId);
       const substationInspection = savedInspections?.find(i => i.id === inspectionId);
       
-      if (vitInspection && !canEditInspection(vitInspection)) {
-        toast.error("You don't have permission to access this inspection");
-        navigate('/asset-management');
-        return null;
+      if (vitInspection) {
+        const asset = vitAssets.find(a => a.id === vitInspection.vitAssetId);
+        if (asset) {
+          const region = regions.find(r => r.id === asset.regionId);
+          const district = districts.find(d => d.id === asset.districtId);
+          
+          if (!permissionService.canViewInspection(
+            user?.role || null,
+            user?.region || null,
+            user?.district || null,
+            region?.name || '',
+            district?.name || ''
+          )) {
+            toast.error("You don't have permission to access this inspection");
+            navigate('/asset-management');
+            return null;
+          }
+        }
       }
       
-      if (substationInspection && !canEditInspection(substationInspection)) {
-        toast.error("You don't have permission to access this inspection");
-        navigate('/asset-management');
-        return null;
+      if (substationInspection) {
+        if (!permissionService.canViewInspection(
+          user?.role || null,
+          user?.region || null,
+          user?.district || null,
+          substationInspection.region,
+          substationInspection.district
+        )) {
+          toast.error("You don't have permission to access this inspection");
+          navigate('/asset-management');
+          return null;
+        }
       }
     }
   }
 
   // Check load monitoring permissions
   if (type === 'load-monitoring') {
-    if (user?.role === 'district_engineer') {
-      const userDistrict = districts.find(d => d.name === user.district);
-      if (!userDistrict) {
-        toast.error("You don't have permission to access load monitoring data");
-        navigate('/');
-        return null;
-      }
-    } else if (user?.role === 'regional_engineer') {
-      const userRegion = regions.find(r => r.name === user.region);
-      if (!userRegion) {
-        toast.error("You don't have permission to access load monitoring data");
-        navigate('/');
-        return null;
-      }
+    if (!permissionService.canAccessFeature(user?.role || null, 'load_monitoring')) {
+      toast.error("You don't have permission to access load monitoring data");
+      navigate('/');
+      return null;
     }
   }
 
   // Check fault permissions
   if (type === 'fault' && assetId) {
     const fault = op5Faults.find(f => f.id === assetId);
-    if (fault && !canEditFault(fault)) {
-      toast.error("You don't have permission to access this fault");
-      navigate('/');
-      return null;
+    if (fault) {
+      const region = regions.find(r => r.id === fault.regionId);
+      const district = districts.find(d => d.id === fault.districtId);
+      
+      if (!permissionService.canViewAsset(
+        user?.role || null,
+        user?.region || null,
+        user?.district || null,
+        region?.name || '',
+        district?.name || ''
+      )) {
+        toast.error("You don't have permission to access this fault");
+        navigate('/');
+        return null;
+      }
     }
   }
 
   // Check outage permissions
   if (type === 'outage' && assetId) {
     const outage = controlOutages.find(o => o.id === assetId);
-    if (outage && !canEditFault(outage)) {
-      toast.error("You don't have permission to access this outage");
-      navigate('/');
-      return null;
-    }
-  }
-
-  // Check add permissions
-  if (type === 'asset' && regionId && districtId && !canAddAsset(regionId, districtId)) {
-    toast.error("You don't have permission to add assets in this location");
-    navigate('/asset-management');
-    return null;
-  }
-
-  if (type === 'inspection') {
-    if (user?.role === 'district_engineer') {
-      const userDistrict = districts.find(d => d.name === user.district);
-      if (!userDistrict) {
-        toast.error("You don't have permission to add inspections");
-        navigate('/asset-management');
-        return null;
-      }
-    } else if (user?.role === 'regional_engineer') {
-      const userRegion = regions.find(r => r.name === user.region);
-      if (!userRegion) {
-        toast.error("You don't have permission to add inspections");
-        navigate('/asset-management');
+    if (outage) {
+      const region = regions.find(r => r.id === outage.regionId);
+      const district = districts.find(d => d.id === outage.districtId);
+      
+      if (!permissionService.canViewAsset(
+        user?.role || null,
+        user?.region || null,
+        user?.district || null,
+        region?.name || '',
+        district?.name || ''
+      )) {
+        toast.error("You don't have permission to access this outage");
+        navigate('/');
         return null;
       }
     }

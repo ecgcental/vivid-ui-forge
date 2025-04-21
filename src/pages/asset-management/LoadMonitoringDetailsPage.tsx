@@ -19,6 +19,53 @@ const DetailItem = ({ label, value }: { label: string; value: string | number | 
   </div>
 );
 
+// Helper function to calculate warning levels
+const calculateWarningLevels = (record: LoadMonitoringData) => {
+  // Calculate neutral warning level
+  let neutralWarningLevel: "normal" | "warning" | "critical" = "normal";
+  let neutralWarningMessage = "";
+  
+  if (record.calculatedNeutral > record.tenPercentFullLoadNeutral * 2) {
+    neutralWarningLevel = "critical";
+    neutralWarningMessage = "Critical: Neutral current exceeds 200% of rated neutral";
+  } else if (record.calculatedNeutral > record.tenPercentFullLoadNeutral) {
+    neutralWarningLevel = "warning";
+    neutralWarningMessage = "Warning: Neutral current exceeds rated neutral";
+  }
+  
+  // Calculate phase imbalance and phase currents
+  const redPhaseBulkLoad = record.redPhaseBulkLoad || 0;
+  const yellowPhaseBulkLoad = record.yellowPhaseBulkLoad || 0;
+  const bluePhaseBulkLoad = record.bluePhaseBulkLoad || 0;
+  
+  const maxPhaseCurrent = Math.max(redPhaseBulkLoad, yellowPhaseBulkLoad, bluePhaseBulkLoad);
+  const minPhaseCurrent = Math.max(0, Math.min(redPhaseBulkLoad, yellowPhaseBulkLoad, bluePhaseBulkLoad));
+  const avgPhaseCurrent = (redPhaseBulkLoad + yellowPhaseBulkLoad + bluePhaseBulkLoad) / 3;
+  const imbalancePercentage = maxPhaseCurrent > 0 ? ((maxPhaseCurrent - minPhaseCurrent) / maxPhaseCurrent) * 100 : 0;
+  
+  // Calculate phase imbalance warning level
+  let imbalanceWarningLevel: "normal" | "warning" | "critical" = "normal";
+  let imbalanceWarningMessage = "";
+  
+  if (imbalancePercentage > 50) {
+    imbalanceWarningLevel = "critical";
+    imbalanceWarningMessage = "Critical: Severe phase imbalance detected";
+  } else if (imbalancePercentage > 30) {
+    imbalanceWarningLevel = "warning";
+    imbalanceWarningMessage = "Warning: Significant phase imbalance detected";
+  }
+  
+  return {
+    neutralWarningLevel,
+    neutralWarningMessage,
+    imbalanceWarningLevel,
+    imbalanceWarningMessage,
+    imbalancePercentage,
+    maxPhaseCurrent,
+    minPhaseCurrent,
+    avgPhaseCurrent
+  };
+};
 
 export default function LoadMonitoringDetailsPage() {
   const { getLoadMonitoringRecord } = useData();
@@ -27,12 +74,34 @@ export default function LoadMonitoringDetailsPage() {
 
   const [record, setRecord] = useState<LoadMonitoringData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [formattedPercentageLoad, setFormattedPercentageLoad] = useState<string>("0.00");
+  const [warningLevels, setWarningLevels] = useState<{
+    neutralWarningLevel: "normal" | "warning" | "critical";
+    neutralWarningMessage: string;
+    imbalanceWarningLevel: "normal" | "warning" | "critical";
+    imbalanceWarningMessage: string;
+    imbalancePercentage: number;
+    maxPhaseCurrent: number;
+    minPhaseCurrent: number;
+    avgPhaseCurrent: number;
+  }>({
+    neutralWarningLevel: "normal",
+    neutralWarningMessage: "",
+    imbalanceWarningLevel: "normal",
+    imbalanceWarningMessage: "",
+    imbalancePercentage: 0,
+    maxPhaseCurrent: 0,
+    minPhaseCurrent: 0,
+    avgPhaseCurrent: 0
+  });
 
   useEffect(() => {
     if (id && getLoadMonitoringRecord) {
       const fetchedRecord = getLoadMonitoringRecord(id);
       if (fetchedRecord) {
         setRecord(fetchedRecord);
+        setFormattedPercentageLoad(fetchedRecord.percentageLoad?.toFixed(2) ?? "0.00");
+        setWarningLevels(calculateWarningLevels(fetchedRecord));
       } else {
         toast.error("Load monitoring record not found.");
         navigate("/asset-management/load-monitoring"); // Redirect if not found
@@ -82,6 +151,7 @@ export default function LoadMonitoringDetailsPage() {
                  <DetailItem label="Location" value={record.location} />
                  <DetailItem label="Rating (KVA)" value={record.rating} />
                  <DetailItem label="Peak Load Status" value={record.peakLoadStatus} />
+                 <DetailItem label="Created By" value={record.createdBy?.name || 'Unknown'} />
               </CardContent>
             </Card>
 
@@ -111,14 +181,48 @@ export default function LoadMonitoringDetailsPage() {
                 <CardTitle>Calculated Load Information</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <DetailItem label="Rated Load (A)" value={record.ratedLoad.toFixed(2)} />
-                <DetailItem label="Avg. Current (A)" value={record.averageCurrent.toFixed(2)} />
-                <DetailItem label="% Load" value={`${record.percentageLoad.toFixed(2)} %`} />
-                <DetailItem label="Calculated Neutral (A)" value={record.calculatedNeutral.toFixed(2)} />
-                <DetailItem label="10% Rated Neutral (A)" value={record.tenPercentFullLoadNeutral.toFixed(2)} />
-                <DetailItem label="Red Phase Bulk (A)" value={record.redPhaseBulkLoad.toFixed(2)} />
-                <DetailItem label="Yellow Phase Bulk (A)" value={record.yellowPhaseBulkLoad.toFixed(2)} />
-                <DetailItem label="Blue Phase Bulk (A)" value={record.bluePhaseBulkLoad.toFixed(2)} />
+                <DetailItem label="Rated Load (A)" value={record.ratedLoad?.toFixed(2) ?? 'N/A'} />
+                <DetailItem label="Avg. Current (A)" value={record.averageCurrent?.toFixed(2) ?? 'N/A'} />
+                <DetailItem label="% Load" value={`${formattedPercentageLoad} %`} />
+                <div className="flex flex-col space-y-1.5">
+                  <Label className="text-sm font-medium text-muted-foreground">Calculated Neutral (A)</Label>
+                  <p className={`text-base ${
+                    warningLevels.neutralWarningLevel === "critical" ? "text-red-500" : 
+                    warningLevels.neutralWarningLevel === "warning" ? "text-yellow-500" : ""
+                  }`}>
+                    {record.calculatedNeutral?.toFixed(2) ?? 'N/A'}
+                  </p>
+                  {warningLevels.neutralWarningMessage && (
+                    <p className={`text-sm ${
+                      warningLevels.neutralWarningLevel === "critical" ? "text-red-500" : "text-yellow-500"
+                    }`}>
+                      {warningLevels.neutralWarningMessage}
+                    </p>
+                  )}
+                </div>
+                <DetailItem label="10% Rated Neutral (A)" value={record.tenPercentFullLoadNeutral?.toFixed(2) ?? 'N/A'} />
+                <div className="flex flex-col space-y-1.5">
+                  <Label className="text-sm font-medium text-muted-foreground">Phase Imbalance (%)</Label>
+                  <p className={`text-base ${
+                    warningLevels.imbalanceWarningLevel === "critical" ? "text-red-500" : 
+                    warningLevels.imbalanceWarningLevel === "warning" ? "text-yellow-500" : ""
+                  }`}>
+                    {warningLevels.imbalancePercentage.toFixed(2)}%
+                  </p>
+                  {warningLevels.imbalanceWarningMessage && (
+                    <p className={`text-sm ${
+                      warningLevels.imbalanceWarningLevel === "critical" ? "text-red-500" : "text-yellow-500"
+                    }`}>
+                      {warningLevels.imbalanceWarningMessage}
+                    </p>
+                  )}
+                </div>
+                <DetailItem label="Red Phase Bulk (A)" value={record.redPhaseBulkLoad?.toFixed(2) ?? 'N/A'} />
+                <DetailItem label="Yellow Phase Bulk (A)" value={record.yellowPhaseBulkLoad?.toFixed(2) ?? 'N/A'} />
+                <DetailItem label="Blue Phase Bulk (A)" value={record.bluePhaseBulkLoad?.toFixed(2) ?? 'N/A'} />
+                <DetailItem label="Max Phase Current (A)" value={warningLevels.maxPhaseCurrent.toFixed(2)} />
+                <DetailItem label="Min Phase Current (A)" value={warningLevels.minPhaseCurrent.toFixed(2)} />
+                <DetailItem label="Avg Phase Current (A)" value={warningLevels.avgPhaseCurrent.toFixed(2)} />
               </CardContent>
             </Card>
 

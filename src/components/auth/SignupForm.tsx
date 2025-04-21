@@ -29,13 +29,13 @@ export function SignupForm() {
   const navigate = useNavigate();
   const [isFieldsLocked, setIsFieldsLocked] = useState(false);
 
-  const regionOptions = regions.map(r => ({
+  const regionOptions = regions?.map(r => ({
     value: r.id,
     label: r.name
-  }));
+  })) || [];
 
   const districtOptions = region 
-    ? regions.find(r => r.id === region)?.districts.map(d => ({
+    ? districts?.filter(d => d.regionId === region).map(d => ({
         value: d.id,
         label: d.name
       })) || []
@@ -69,7 +69,7 @@ export function SignupForm() {
         // For custom staff IDs (not ECGXXX format)
         if (!/^ECG\d{3}$/.test(newStaffId)) {
           // Check if it exists in the staff ID management system
-          const customStaff = staffIds.find(s => s.id === newStaffId);
+          const customStaff = staffIds?.find(s => s.id === newStaffId);
           if (customStaff) {
             // Auto-populate fields for existing custom staff IDs
             setName(customStaff.name);
@@ -78,13 +78,15 @@ export function SignupForm() {
             
             if (customStaff.region) {
               // Find the region ID that matches the region name
-              const regionMatch = regions.find(r => r.name === customStaff.region);
+              const regionMatch = regions?.find(r => r.name === customStaff.region);
               if (regionMatch) {
                 setRegion(regionMatch.id);
                 
                 // If there's a district, find and set it
                 if (customStaff.district) {
-                  const districtMatch = regionMatch.districts.find(d => d.name === customStaff.district);
+                  const districtMatch = districts?.find(d => 
+                    d.regionId === regionMatch.id && d.name === customStaff.district
+                  );
                   if (districtMatch) {
                     setDistrict(districtMatch.id);
                   }
@@ -94,12 +96,13 @@ export function SignupForm() {
             return;
           }
           
-          // For new custom staff IDs, don't auto-populate fields
+          // For new custom staff IDs that are not in the database
           setIsFieldsLocked(false);
+          setStaffIdError("Staff ID not found in database. Please contact the administrator.");
           return;
         }
         
-        // For ECGXXX format staff IDs, auto-populate fields
+        // For ECGXXX format staff IDs
         if (staffInfo) {
           // Auto-populate fields
           setName(staffInfo.name);
@@ -108,13 +111,15 @@ export function SignupForm() {
           
           if (staffInfo.region) {
             // Find the region ID that matches the region name
-            const regionMatch = regions.find(r => r.name === staffInfo.region);
+            const regionMatch = regions?.find(r => r.name === staffInfo.region);
             if (regionMatch) {
               setRegion(regionMatch.id);
               
               // If there's a district, find and set it
               if (staffInfo.district) {
-                const districtMatch = regionMatch.districts.find(d => d.name === staffInfo.district);
+                const districtMatch = districts?.find(d => 
+                  d.regionId === regionMatch.id && d.name === staffInfo.district
+                );
                 if (districtMatch) {
                   setDistrict(districtMatch.id);
                 }
@@ -191,7 +196,7 @@ export function SignupForm() {
         }
 
         if (staffInfo.region) {
-          const regionMatch = regions.find(r => r.name === staffInfo.region);
+          const regionMatch = regions?.find(r => r.name === staffInfo.region);
           if (!regionMatch || regionMatch.id !== region) {
             setRegionError(`Staff ID is registered for ${staffInfo.region} region`);
             return false;
@@ -199,8 +204,10 @@ export function SignupForm() {
         }
 
         if (staffInfo.district) {
-          const regionMatch = regions.find(r => r.id === region);
-          const districtMatch = regionMatch?.districts.find(d => d.name === staffInfo.district);
+          const regionMatch = regions?.find(r => r.id === region);
+          const districtMatch = districts?.find(d => 
+            d.regionId === regionMatch?.id && d.name === staffInfo.district
+          );
           if (!districtMatch || districtMatch.id !== district) {
             setDistrictError(`Staff ID is registered for ${staffInfo.district} district`);
             return false;
@@ -239,8 +246,8 @@ export function SignupForm() {
 
     try {
       // Get the region and district names from the selected IDs
-      const regionName = region ? regions.find(r => r.id === region)?.name : undefined;
-      const districtName = region && district ? regions.find(r => r.id === region)?.districts.find(d => d.id === district)?.name : undefined;
+      const regionName = region ? regions?.find(r => r.id === region)?.name : undefined;
+      const districtName = district ? districts?.find(d => d.id === district)?.name : undefined;
 
       // Verify staff ID one final time before submitting
       if (role !== "global_engineer" && staffId) {
@@ -307,11 +314,10 @@ export function SignupForm() {
                 value={staffId}
                 onChange={handleStaffIdChange}
                 placeholder="Enter your staff ID"
-                disabled={role === "global_engineer"}
               />
               {staffIdError && <p className="text-sm text-red-500 mt-1">{staffIdError}</p>}
               <p className="text-xs text-muted-foreground mt-1">
-                Required for all roles except Global Engineer. Used for ECG staff identity verification.
+                Used for ECG staff identity verification.
               </p>
             </div>
             
@@ -392,9 +398,9 @@ export function SignupForm() {
                     <SelectValue placeholder="Select your district" />
                   </SelectTrigger>
                   <SelectContent>
-                    {regions
-                      .find((r) => r.id === region)
-                      ?.districts.map((district) => (
+                    {districts
+                      .filter(d => d.regionId === region)
+                      .map((district) => (
                         <SelectItem key={district.id} value={district.id}>
                           {district.name}
                         </SelectItem>

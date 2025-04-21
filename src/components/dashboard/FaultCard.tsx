@@ -100,8 +100,8 @@ export function FaultCard({ fault, type }: FaultCardProps) {
       return user.region === region?.name;
     }
     
-    // Global engineers can resolve anywhere
-    return user?.role === "global_engineer";
+    // Global engineers and system admins can resolve anywhere
+    return user?.role === "global_engineer" || user?.role === "system_admin";
   };
 
   const canEdit = canEditFault(fault);

@@ -162,7 +162,7 @@ export function UsersList() {
             email: newEmail,
             role: newRole,
             region: (newRole !== "system_admin" && newRole !== "global_engineer") ? newRegion : undefined,
-            district: newRole === "district_engineer" ? newDistrict : undefined
+            district: (newRole === "district_engineer" || newRole === "technician") ? newDistrict : undefined
           }
         : user
     ));
@@ -395,7 +395,7 @@ export function UsersList() {
               </Select>
             </div>
             
-            {(newRole === "district_engineer" || newRole === "regional_engineer") && (
+            {(newRole === "district_engineer" || newRole === "regional_engineer" || newRole === "technician") && (
               <div className="space-y-2">
                 <Label htmlFor="region">Region</Label>
                 <Select value={newRegion} onValueChange={setNewRegion}>
@@ -413,7 +413,7 @@ export function UsersList() {
               </div>
             )}
             
-            {newRole === "district_engineer" && newRegion && (
+            {(newRole === "district_engineer" || newRole === "technician") && newRegion && (
               <div className="space-y-2">
                 <Label htmlFor="district">District</Label>
                 <Select value={newDistrict} onValueChange={setNewDistrict}>
@@ -529,7 +529,7 @@ export function UsersList() {
               </Select>
             </div>
             
-            {(newRole === "district_engineer" || newRole === "regional_engineer") && (
+            {(newRole === "district_engineer" || newRole === "regional_engineer" || newRole === "technician") && (
               <div className="space-y-2">
                 <Label htmlFor="edit-region">Region</Label>
                 <Select value={newRegion} onValueChange={setNewRegion}>
@@ -547,7 +547,7 @@ export function UsersList() {
               </div>
             )}
             
-            {newRole === "district_engineer" && newRegion && (
+            {(newRole === "district_engineer" || newRole === "technician") && newRegion && (
               <div className="space-y-2">
                 <Label htmlFor="edit-district">District</Label>
                 <Select value={newDistrict} onValueChange={setNewDistrict}>

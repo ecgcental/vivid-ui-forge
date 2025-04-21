@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +25,7 @@ import { v4 as uuidv4 } from "uuid";
 export default function EditInspectionPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { getSavedInspection, updateInspection, regions, districts } = useData();
+  const { getSavedInspection, updateSubstationInspection, regions, districts } = useData();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("general");
   const [formData, setFormData] = useState<Partial<SubstationInspection>>({
@@ -41,6 +41,15 @@ export default function EditInspectionPage() {
     if (id) {
       const inspection = getSavedInspection(id);
       if (inspection) {
+        // Combine all items from both the general items array and specific category arrays
+        const allItems = [
+          ...(inspection.items || []),
+          ...(inspection.generalBuilding || []),
+          ...(inspection.controlEquipment || []),
+          ...(inspection.powerTransformer || []),
+          ...(inspection.outdoorEquipment || [])
+        ];
+
         // Ensure all required fields are properly initialized
         setFormData({
           ...inspection,
@@ -48,7 +57,7 @@ export default function EditInspectionPage() {
           district: inspection.district || "",
           date: inspection.date || new Date().toISOString().split('T')[0],
           type: inspection.type || "indoor",
-          items: inspection.items || []
+          items: allItems
         });
         setLoading(false);
       } else {
@@ -57,49 +66,6 @@ export default function EditInspectionPage() {
       }
     }
   }, [id, getSavedInspection, navigate]);
-
-  // Initialize default inspection items if none exist
-  useEffect(() => {
-    if (!loading && (!formData.items || formData.items.length === 0)) {
-      const defaultItems: InspectionItem[] = [
-        // General Building items
-        { id: uuidv4(), category: "general building", name: "Building Structure", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "general building", name: "Roof Condition", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "general building", name: "Floor Condition", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "general building", name: "Walls Condition", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "general building", name: "Doors and Windows", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "general building", name: "Lighting", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "general building", name: "Ventilation", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "general building", name: "Fire Safety Equipment", status: "pending", remarks: "" },
-        
-        // Control Equipment items
-        { id: uuidv4(), category: "control equipment", name: "Control Panels", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "control equipment", name: "Protection Relays", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "control equipment", name: "Metering Equipment", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "control equipment", name: "Communication Equipment", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "control equipment", name: "Battery Systems", status: "pending", remarks: "" },
-        
-        // Power Transformer items
-        { id: uuidv4(), category: "power transformer", name: "Transformer Body", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "power transformer", name: "Cooling System", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "power transformer", name: "Bushings", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "power transformer", name: "Tap Changer", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "power transformer", name: "Oil Level", status: "pending", remarks: "" },
-        
-        // Outdoor Equipment items
-        { id: uuidv4(), category: "outdoor equipment", name: "Circuit Breakers", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "outdoor equipment", name: "Isolators", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "outdoor equipment", name: "Lightning Arresters", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "outdoor equipment", name: "Busbars", status: "pending", remarks: "" },
-        { id: uuidv4(), category: "outdoor equipment", name: "Earthing System", status: "pending", remarks: "" }
-      ];
-      
-      setFormData(prev => ({
-        ...prev,
-        items: defaultItems
-      }));
-    }
-  }, [loading, formData.items]);
 
   // Handle generic form input changes
   const handleInputChange = (field: keyof SubstationInspection, value: any) => {
@@ -127,7 +93,7 @@ export default function EditInspectionPage() {
       "transformer": "power transformer",
       "outdoor": "outdoor equipment"
     };
-    return formData.items?.filter(item => item.category === categoryMap[category]) || [];
+    return formData.items?.filter(item => item.category.toLowerCase() === categoryMap[category].toLowerCase()) || [];
   };
 
   // Handle form submission
@@ -145,7 +111,7 @@ export default function EditInspectionPage() {
       };
       
       // Update the inspection data
-      updateInspection(id, updatedData);
+      updateSubstationInspection(id, updatedData);
       
       // Navigate to the details page
       navigate(`/asset-management/inspection-details/${id}`);
@@ -190,9 +156,6 @@ export default function EditInspectionPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Inspection Details</CardTitle>
-                <CardDescription>
-                  Basic information about the inspection
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -289,9 +252,6 @@ export default function EditInspectionPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Inspection Checklist</CardTitle>
-                <CardDescription>
-                  Update the inspection checklist for all substation components
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 <Tabs 
@@ -320,10 +280,6 @@ export default function EditInspectionPage() {
                             onValueChange={(value) => updateInspectionItem(item.id, 'status', value as ConditionStatus)}
                             className="flex items-center space-x-4"
                           >
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="pending" id={`${item.id}-pending`} />
-                              <Label htmlFor={`${item.id}-pending`}>Pending</Label>
-                            </div>
                             <div className="flex items-center space-x-2">
                               <RadioGroupItem value="good" id={`${item.id}-good`} />
                               <Label htmlFor={`${item.id}-good`}>Good</Label>
@@ -362,10 +318,6 @@ export default function EditInspectionPage() {
                             className="flex items-center space-x-4"
                           >
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="pending" id={`${item.id}-pending`} />
-                              <Label htmlFor={`${item.id}-pending`}>Pending</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
                               <RadioGroupItem value="good" id={`${item.id}-good`} />
                               <Label htmlFor={`${item.id}-good`}>Good</Label>
                             </div>
@@ -403,10 +355,6 @@ export default function EditInspectionPage() {
                             className="flex items-center space-x-4"
                           >
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="pending" id={`${item.id}-pending`} />
-                              <Label htmlFor={`${item.id}-pending`}>Pending</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
                               <RadioGroupItem value="good" id={`${item.id}-good`} />
                               <Label htmlFor={`${item.id}-good`}>Good</Label>
                             </div>
@@ -443,10 +391,6 @@ export default function EditInspectionPage() {
                             onValueChange={(value) => updateInspectionItem(item.id, 'status', value as ConditionStatus)}
                             className="flex items-center space-x-4"
                           >
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="pending" id={`${item.id}-pending`} />
-                              <Label htmlFor={`${item.id}-pending`}>Pending</Label>
-                            </div>
                             <div className="flex items-center space-x-2">
                               <RadioGroupItem value="good" id={`${item.id}-good`} />
                               <Label htmlFor={`${item.id}-good`}>Good</Label>

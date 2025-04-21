@@ -4,7 +4,7 @@ import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { SubstationInspection } from "@/lib/types";
+import { SubstationInspection, InspectionItem } from "@/lib/types";
 import { useData } from "@/contexts/DataContext";
 import { format } from "date-fns";
 import { ChevronLeft, Pencil, CheckCircle2, AlertCircle, ClipboardList } from "lucide-react";
@@ -30,17 +30,34 @@ export default function InspectionDetailsPage() {
   }, [id, getSavedInspection, navigate]);
 
   const getItemsByCategory = (categoryName: string) => {
-    if (!inspection?.items) return [];
-    return inspection.items.filter(item => item.category.toLowerCase() === categoryName.toLowerCase());
+    switch (categoryName.toLowerCase()) {
+      case "general building":
+        return inspection?.generalBuilding || [];
+      case "control equipment":
+        return inspection?.controlEquipment || [];
+      case "power transformer":
+        return inspection?.powerTransformer || [];
+      case "outdoor equipment":
+        return inspection?.outdoorEquipment || [];
+      default:
+        return [];
+    }
   };
 
   const getStatusSummary = () => {
-    if (!inspection?.items) return { good: 0, requiresAttention: 0 };
+    if (!inspection) return { good: 0, requiresAttention: 0 };
     
-    return inspection.items.reduce((acc: { good: number; requiresAttention: number }, item) => {
+    const allItems = [
+      ...(inspection.generalBuilding || []),
+      ...(inspection.controlEquipment || []),
+      ...(inspection.powerTransformer || []),
+      ...(inspection.outdoorEquipment || [])
+    ];
+    
+    return allItems.reduce((acc: { good: number; requiresAttention: number }, item) => {
       if (item.status === 'good') {
         acc.good++;
-      } else {
+      } else if (item.status === 'bad') {
         acc.requiresAttention++;
       }
       return acc;
@@ -51,19 +68,10 @@ export default function InspectionDetailsPage() {
   useEffect(() => {
     if (inspection) {
       console.log('Inspection Data:', inspection);
-      console.log('Items:', inspection.items);
-      if (inspection.items) {
-        const categories = [...new Set(inspection.items.map(item => item.category))];
-        categories.forEach(category => {
-          const categoryItems = inspection.items.filter(item => item.category === category);
-          console.log(`Category: ${category}`, {
-            items: categoryItems,
-            count: categoryItems.length,
-            goodItems: categoryItems.filter(item => item.status === "good").length,
-            badItems: categoryItems.filter(item => item.status === "bad").length
-          });
-        });
-      }
+      if (inspection.generalBuilding) console.log('General Building:', inspection.generalBuilding);
+      if (inspection.controlEquipment) console.log('Control Equipment:', inspection.controlEquipment);
+      if (inspection.powerTransformer) console.log('Power Transformer:', inspection.powerTransformer);
+      if (inspection.outdoorEquipment) console.log('Outdoor Equipment:', inspection.outdoorEquipment);
     }
   }, [inspection]);
 
@@ -162,7 +170,12 @@ export default function InspectionDetailsPage() {
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-green-700">
-                        {inspection.items?.filter(item => item.status === "good").length || 0}
+                        {[
+                          ...(inspection.generalBuilding || []),
+                          ...(inspection.controlEquipment || []),
+                          ...(inspection.powerTransformer || []),
+                          ...(inspection.outdoorEquipment || [])
+                        ].filter(item => item.status === "good").length}
                       </p>
                       <p className="text-sm text-green-600">Good Items</p>
                     </div>
@@ -175,7 +188,12 @@ export default function InspectionDetailsPage() {
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-red-700">
-                        {inspection.items?.filter(item => item.status === "bad").length || 0}
+                        {[
+                          ...(inspection.generalBuilding || []),
+                          ...(inspection.controlEquipment || []),
+                          ...(inspection.powerTransformer || []),
+                          ...(inspection.outdoorEquipment || [])
+                        ].filter(item => item.status === "bad").length}
                       </p>
                       <p className="text-sm text-red-600">Items Requiring Attention</p>
                     </div>
@@ -188,7 +206,10 @@ export default function InspectionDetailsPage() {
                     </div>
                     <div>
                       <p className="text-2xl font-bold text-blue-700">
-                        {inspection.items?.length || 0}
+                        {(inspection.generalBuilding?.length || 0) +
+                         (inspection.controlEquipment?.length || 0) +
+                         (inspection.powerTransformer?.length || 0) +
+                         (inspection.outdoorEquipment?.length || 0)}
                       </p>
                       <p className="text-sm text-blue-600">Total Items</p>
                     </div>
@@ -207,17 +228,17 @@ export default function InspectionDetailsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-4 mb-6">
-                <TabsTrigger value="general">General Building</TabsTrigger>
-                <TabsTrigger value="control">Control Equipment</TabsTrigger>
-                <TabsTrigger value="transformer">Power Transformer</TabsTrigger>
-                <TabsTrigger value="outdoor">Outdoor Equipment</TabsTrigger>
+                <TabsTrigger value="general" key="general-tab">General Building</TabsTrigger>
+                <TabsTrigger value="control" key="control-tab">Control Equipment</TabsTrigger>
+                <TabsTrigger value="transformer" key="transformer-tab">Power Transformer</TabsTrigger>
+                <TabsTrigger value="outdoor" key="outdoor-tab">Outdoor Equipment</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="general" className="space-y-4">
+              <TabsContent value="general" key="general-content" className="space-y-4">
                 {getItemsByCategory("General Building").map((item) => (
-                  <div key={item.id} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+                  <div key={`general-${item.id}`} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <h3 className="font-medium text-lg mb-2">{item.name}</h3>
@@ -242,9 +263,9 @@ export default function InspectionDetailsPage() {
                 ))}
               </TabsContent>
 
-              <TabsContent value="control" className="space-y-4">
+              <TabsContent value="control" key="control-content" className="space-y-4">
                 {getItemsByCategory("Control Equipment").map((item) => (
-                  <div key={item.id} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+                  <div key={`control-${item.id}`} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <h3 className="font-medium text-lg mb-2">{item.name}</h3>
@@ -269,9 +290,9 @@ export default function InspectionDetailsPage() {
                 ))}
               </TabsContent>
 
-              <TabsContent value="transformer" className="space-y-4">
+              <TabsContent value="transformer" key="transformer-content" className="space-y-4">
                 {getItemsByCategory("Power Transformer").map((item) => (
-                  <div key={item.id} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+                  <div key={`transformer-${item.id}`} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <h3 className="font-medium text-lg mb-2">{item.name}</h3>
@@ -296,9 +317,9 @@ export default function InspectionDetailsPage() {
                 ))}
               </TabsContent>
 
-              <TabsContent value="outdoor" className="space-y-4">
+              <TabsContent value="outdoor" key="outdoor-content" className="space-y-4">
                 {getItemsByCategory("Outdoor Equipment").map((item) => (
-                  <div key={item.id} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
+                  <div key={`outdoor-${item.id}`} className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <h3 className="font-medium text-lg mb-2">{item.name}</h3>

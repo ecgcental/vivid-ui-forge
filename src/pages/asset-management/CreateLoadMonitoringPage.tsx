@@ -80,7 +80,24 @@ export default function CreateLoadMonitoringPage() {
     }
   }, [user, regions, districts]);
 
-  const [loadInfo, setLoadInfo] = useState({
+  const [loadInfo, setLoadInfo] = useState<{
+    ratedLoad: number;
+    redPhaseBulkLoad: number;
+    yellowPhaseBulkLoad: number;
+    bluePhaseBulkLoad: number;
+    averageCurrent: number;
+    percentageLoad: number;
+    tenPercentFullLoadNeutral: number;
+    calculatedNeutral: number;
+    neutralWarningLevel: "normal" | "warning" | "critical";
+    neutralWarningMessage: string;
+    imbalancePercentage: number;
+    imbalanceWarningLevel: "normal" | "warning" | "critical";
+    imbalanceWarningMessage: string;
+    maxPhaseCurrent: number;
+    minPhaseCurrent: number;
+    avgPhaseCurrent: number;
+  }>({
     ratedLoad: 0,
     redPhaseBulkLoad: 0,
     yellowPhaseBulkLoad: 0,
@@ -88,7 +105,15 @@ export default function CreateLoadMonitoringPage() {
     averageCurrent: 0,
     percentageLoad: 0,
     tenPercentFullLoadNeutral: 0,
-    calculatedNeutral: 0
+    calculatedNeutral: 0,
+    neutralWarningLevel: "normal",
+    neutralWarningMessage: "",
+    imbalancePercentage: 0,
+    imbalanceWarningLevel: "normal",
+    imbalanceWarningMessage: "",
+    maxPhaseCurrent: 0,
+    minPhaseCurrent: 0,
+    avgPhaseCurrent: 0
   });
 
   // --- Form Handling Functions ---
@@ -201,7 +226,15 @@ export default function CreateLoadMonitoringPage() {
         averageCurrent: 0,
         percentageLoad: 0,
         tenPercentFullLoadNeutral: 0,
-        calculatedNeutral: 0
+        calculatedNeutral: 0,
+        neutralWarningLevel: "normal",
+        neutralWarningMessage: "",
+        imbalancePercentage: 0,
+        imbalanceWarningLevel: "normal",
+        imbalanceWarningMessage: "",
+        maxPhaseCurrent: 0,
+        minPhaseCurrent: 0,
+        avgPhaseCurrent: 0
       });
       return;
     }
@@ -216,17 +249,56 @@ export default function CreateLoadMonitoringPage() {
     const percentageLoad = ratedLoad > 0 ? (averageCurrent * 100) / ratedLoad : 0;
     const tenPercentFullLoadNeutral = 0.1 * ratedLoad;
 
-    // Simplified neutral calculation
+    // Standard neutral current calculation for three-phase systems
+    console.log("Calculating neutral with standard formula:", {
+      redPhaseBulkLoad,
+      yellowPhaseBulkLoad,
+      bluePhaseBulkLoad
+    });
+    
+    // Standard formula: In = √(IR² + IY² + IB² - IR·IY - IR·IB - IY·IB)
     const calculatedNeutral = Math.sqrt(
-       Math.max(0, // Ensure result is not negative
-          Math.pow(redPhaseBulkLoad, 2) +
-          Math.pow(yellowPhaseBulkLoad, 2) +
-          Math.pow(bluePhaseBulkLoad, 2) -
-          (redPhaseBulkLoad * yellowPhaseBulkLoad) -
-          (redPhaseBulkLoad * bluePhaseBulkLoad) -
-          (yellowPhaseBulkLoad * bluePhaseBulkLoad)
-       )
+      Math.max(0,
+        Math.pow(redPhaseBulkLoad, 2) + 
+        Math.pow(yellowPhaseBulkLoad, 2) + 
+        Math.pow(bluePhaseBulkLoad, 2) - 
+        (redPhaseBulkLoad * yellowPhaseBulkLoad) - 
+        (redPhaseBulkLoad * bluePhaseBulkLoad) - 
+        (yellowPhaseBulkLoad * bluePhaseBulkLoad)
+      )
     );
+    
+    console.log("Calculated neutral result:", calculatedNeutral);
+
+    // Calculate phase imbalance analysis
+    const maxPhaseCurrent = Math.max(redPhaseBulkLoad, yellowPhaseBulkLoad, bluePhaseBulkLoad);
+    const minPhaseCurrent = Math.max(0, Math.min(redPhaseBulkLoad, yellowPhaseBulkLoad, bluePhaseBulkLoad));
+    const avgPhaseCurrent = (redPhaseBulkLoad + yellowPhaseBulkLoad + bluePhaseBulkLoad) / 3;
+    const imbalancePercentage = maxPhaseCurrent > 0 ? ((maxPhaseCurrent - minPhaseCurrent) / maxPhaseCurrent) * 100 : 0;
+    
+    // Determine neutral current warning level
+    let neutralWarningLevel: "normal" | "warning" | "critical" = "normal";
+    let neutralWarningMessage = "";
+    
+    if (calculatedNeutral > tenPercentFullLoadNeutral * 2) {
+      neutralWarningLevel = "critical";
+      neutralWarningMessage = "Critical: Neutral current exceeds 200% of rated neutral";
+    } else if (calculatedNeutral > tenPercentFullLoadNeutral) {
+      neutralWarningLevel = "warning";
+      neutralWarningMessage = "Warning: Neutral current exceeds rated neutral";
+    }
+    
+    // Determine phase imbalance warning level
+    let imbalanceWarningLevel: "normal" | "warning" | "critical" = "normal";
+    let imbalanceWarningMessage = "";
+    
+    if (imbalancePercentage > 50) {
+      imbalanceWarningLevel = "critical";
+      imbalanceWarningMessage = "Critical: Severe phase imbalance detected";
+    } else if (imbalancePercentage > 30) {
+      imbalanceWarningLevel = "warning";
+      imbalanceWarningMessage = "Warning: Significant phase imbalance detected";
+    }
 
     setLoadInfo({
       ratedLoad,
@@ -236,7 +308,15 @@ export default function CreateLoadMonitoringPage() {
       averageCurrent,
       percentageLoad,
       tenPercentFullLoadNeutral,
-      calculatedNeutral: isNaN(calculatedNeutral) ? 0 : calculatedNeutral
+      calculatedNeutral: isNaN(calculatedNeutral) ? 0 : calculatedNeutral,
+      neutralWarningLevel,
+      neutralWarningMessage,
+      imbalancePercentage,
+      imbalanceWarningLevel,
+      imbalanceWarningMessage,
+      maxPhaseCurrent,
+      minPhaseCurrent,
+      avgPhaseCurrent
     });
   }, [formData.rating, formData.feederLegs]);
 
@@ -277,17 +357,16 @@ export default function CreateLoadMonitoringPage() {
     const completeData: Omit<LoadMonitoringData, 'id'> = {
       date: formData.date,
       time: formData.time,
-      regionId: formData.regionId, // Add regionId
-      districtId: formData.districtId, // Add districtId
+      regionId: formData.regionId,
+      districtId: formData.districtId,
       region: formData.region,
       district: formData.district,
       substationName: formData.substationName,
       substationNumber: formData.substationNumber,
-      location: formData.location || "", // Ensure location is string
-      rating: formData.rating, // Already validated as number > 0
-      peakLoadStatus: formData.peakLoadStatus || "day", // Default if somehow missing
-      feederLegs: processedFeederLegs, // Use processed legs
-      // Add calculated fields
+      location: formData.location || "",
+      rating: formData.rating,
+      peakLoadStatus: formData.peakLoadStatus || "day",
+      feederLegs: processedFeederLegs,
       ratedLoad: loadInfo.ratedLoad,
       redPhaseBulkLoad: loadInfo.redPhaseBulkLoad,
       yellowPhaseBulkLoad: loadInfo.yellowPhaseBulkLoad,
@@ -295,7 +374,19 @@ export default function CreateLoadMonitoringPage() {
       averageCurrent: loadInfo.averageCurrent,
       percentageLoad: loadInfo.percentageLoad,
       tenPercentFullLoadNeutral: loadInfo.tenPercentFullLoadNeutral,
-      calculatedNeutral: loadInfo.calculatedNeutral
+      calculatedNeutral: loadInfo.calculatedNeutral,
+      neutralWarningLevel: loadInfo.neutralWarningLevel,
+      neutralWarningMessage: loadInfo.neutralWarningMessage,
+      imbalancePercentage: loadInfo.imbalancePercentage,
+      imbalanceWarningLevel: loadInfo.imbalanceWarningLevel,
+      imbalanceWarningMessage: loadInfo.imbalanceWarningMessage,
+      maxPhaseCurrent: loadInfo.maxPhaseCurrent,
+      minPhaseCurrent: loadInfo.minPhaseCurrent,
+      avgPhaseCurrent: loadInfo.avgPhaseCurrent,
+      createdBy: {
+        id: user?.id || '',
+        name: user?.name || 'Unknown'
+      }
     };
 
 
@@ -568,23 +659,51 @@ export default function CreateLoadMonitoringPage() {
                 </div>
                 <div className="p-3 bg-muted rounded-md">
                   <Label className="text-sm font-medium text-muted-foreground">Calculated Neutral (A)</Label>
-                  <p className="text-lg font-semibold">{loadInfo.calculatedNeutral.toFixed(2)}</p>
+                  <p className={`text-lg font-semibold ${
+                    loadInfo.neutralWarningLevel === "critical" ? "text-red-500" : 
+                    loadInfo.neutralWarningLevel === "warning" ? "text-yellow-500" : ""
+                  }`}>
+                    {loadInfo.calculatedNeutral.toFixed(2)}
+                  </p>
+                  {loadInfo.neutralWarningMessage && (
+                    <p className={`text-sm ${
+                      loadInfo.neutralWarningLevel === "critical" ? "text-red-500" : "text-yellow-500"
+                    }`}>
+                      {loadInfo.neutralWarningMessage}
+                    </p>
+                  )}
                 </div>
                 <div className="p-3 bg-muted rounded-md">
                   <Label className="text-sm font-medium text-muted-foreground">10% Rated Neutral (A)</Label>
                   <p className="text-lg font-semibold">{loadInfo.tenPercentFullLoadNeutral.toFixed(2)}</p>
                 </div>
                 <div className="p-3 bg-muted rounded-md">
-                  <Label className="text-sm font-medium text-muted-foreground">Red Phase Bulk (A)</Label>
-                  <p className="text-lg font-semibold">{loadInfo.redPhaseBulkLoad.toFixed(2)}</p>
+                  <Label className="text-sm font-medium text-muted-foreground">Phase Imbalance (%)</Label>
+                  <p className={`text-lg font-semibold ${
+                    loadInfo.imbalanceWarningLevel === "critical" ? "text-red-500" : 
+                    loadInfo.imbalanceWarningLevel === "warning" ? "text-yellow-500" : ""
+                  }`}>
+                    {loadInfo.imbalancePercentage.toFixed(2)}%
+                  </p>
+                  {loadInfo.imbalanceWarningMessage && (
+                    <p className={`text-sm ${
+                      loadInfo.imbalanceWarningLevel === "critical" ? "text-red-500" : "text-yellow-500"
+                    }`}>
+                      {loadInfo.imbalanceWarningMessage}
+                    </p>
+                  )}
                 </div>
-                 <div className="p-3 bg-muted rounded-md">
-                  <Label className="text-sm font-medium text-muted-foreground">Yellow Phase Bulk (A)</Label>
-                  <p className="text-lg font-semibold">{loadInfo.yellowPhaseBulkLoad.toFixed(2)}</p>
+                <div className="p-3 bg-muted rounded-md">
+                  <Label className="text-sm font-medium text-muted-foreground">Max Phase Current (A)</Label>
+                  <p className="text-lg font-semibold">{loadInfo.maxPhaseCurrent.toFixed(2)}</p>
                 </div>
-                 <div className="p-3 bg-muted rounded-md">
-                  <Label className="text-sm font-medium text-muted-foreground">Blue Phase Bulk (A)</Label>
-                  <p className="text-lg font-semibold">{loadInfo.bluePhaseBulkLoad.toFixed(2)}</p>
+                <div className="p-3 bg-muted rounded-md">
+                  <Label className="text-sm font-medium text-muted-foreground">Min Phase Current (A)</Label>
+                  <p className="text-lg font-semibold">{loadInfo.minPhaseCurrent.toFixed(2)}</p>
+                </div>
+                <div className="p-3 bg-muted rounded-md">
+                  <Label className="text-sm font-medium text-muted-foreground">Avg Phase Current (A)</Label>
+                  <p className="text-lg font-semibold">{loadInfo.avgPhaseCurrent.toFixed(2)}</p>
                 </div>
               </CardContent>
             </Card>

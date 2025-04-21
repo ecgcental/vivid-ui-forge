@@ -28,7 +28,7 @@ export default function OverheadLineInspectionPage() {
     if (!overheadLineInspections) return [];
     
     return overheadLineInspections.filter(inspection => {
-      if (user?.role === 'district_engineer') {
+      if (user?.role === 'district_engineer' || user?.role === 'technician') {
         const userDistrict = districts.find(d => d.name === user.district);
         return userDistrict && inspection.districtId === userDistrict.id;
       } else if (user?.role === 'regional_engineer') {
@@ -95,7 +95,7 @@ export default function OverheadLineInspectionPage() {
                 Manage and monitor overhead line inspections
               </p>
             </div>
-            {(user?.role === 'global_engineer' || user?.role === 'district_engineer' || user?.role === 'regional_engineer' || user?.role === 'technician') && (
+            {(user?.role === 'global_engineer' || user?.role === 'district_engineer' || user?.role === 'regional_engineer' || user?.role === 'technician' || user?.role === 'system_admin') && (
               <Button onClick={handleAddInspection} className="mt-4 md:mt-0">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 New Inspection

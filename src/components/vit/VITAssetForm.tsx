@@ -112,7 +112,7 @@ export function VITAssetForm({ asset, onSubmit, onCancel }: VITAssetFormProps) {
   const filteredDistricts = regionId
     ? districts.filter(d => {
         const region = regions.find(r => r.id === regionId);
-        return region?.districts.some(rd => rd.id === d.id) && (
+        return region && (
           user?.role === "district_engineer" || user?.role === "technician"
             ? user.district === d.name 
             : true

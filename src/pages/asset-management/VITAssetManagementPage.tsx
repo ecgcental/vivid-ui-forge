@@ -17,7 +17,7 @@ export function VITAssetManagementPage() {
       const userRegion = regions.find(r => r.name === user.region);
       return userRegion && asset.regionId === userRegion.id;
     }
-    if (user?.role === 'district_engineer') {
+    if (user?.role === 'district_engineer' || user?.role === 'technician') {
       const userDistrict = districts.find(d => d.name === user.district);
       return userDistrict && asset.districtId === userDistrict.id;
     }

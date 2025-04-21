@@ -1378,26 +1378,26 @@ export default function AnalyticsPage() {
         {/* Rest of the content with responsive adjustments */}
         <div className="mt-8 sm:mt-12">
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid grid-cols-5">
-              <TabsTrigger value="overview" className="flex items-center gap-2">
+            <TabsList className="flex flex-wrap w-full gap-2 p-2 bg-muted/30 rounded-lg border border-border/50 shadow-sm">
+              <TabsTrigger value="overview" className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md transition-colors hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <ActivityIcon className="h-4 w-4" />
-                Overview
+                <span className="hidden sm:inline">Overview</span>
               </TabsTrigger>
-              <TabsTrigger value="faults" className="flex items-center gap-2">
+              <TabsTrigger value="faults" className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md transition-colors hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <AlertTriangle className="h-4 w-4" />
-                Faults
+                <span className="hidden sm:inline">Faults</span>
               </TabsTrigger>
-              <TabsTrigger value="reliability" className="flex items-center gap-2">
+              <TabsTrigger value="reliability" className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md transition-colors hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <TrendingUp className="h-4 w-4" />
-                Reliability
+                <span className="hidden sm:inline">Reliability</span>
               </TabsTrigger>
-              <TabsTrigger value="performance" className="flex items-center gap-2">
+              <TabsTrigger value="performance" className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md transition-colors hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Clock className="h-4 w-4" />
-                Performance
+                <span className="hidden sm:inline">Performance</span>
               </TabsTrigger>
-              <TabsTrigger value="materials" className="flex items-center gap-2">
+              <TabsTrigger value="materials" className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-md transition-colors hover:bg-muted/50 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                 <Package className="h-4 w-4" />
-                Materials
+                <span className="hidden sm:inline">Materials</span>
               </TabsTrigger>
             </TabsList>
 

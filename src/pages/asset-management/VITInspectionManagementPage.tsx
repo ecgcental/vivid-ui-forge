@@ -51,6 +51,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AccessControlWrapper } from '@/components/access-control/AccessControlWrapper';
+import { useAuth } from "@/contexts/AuthContext";
 
 // Add type declaration for jsPDF with autotable extensions
 declare module "jspdf" {
@@ -349,28 +350,48 @@ function InspectionRecordsTable({ onViewDetails, onEditInspection, onViewAsset }
   onViewAsset: (assetId: string) => void;
 }) {
   const { vitInspections, vitAssets, regions, districts, deleteVITInspection } = useData();
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
-  // Filter inspections based on search term
-  const filteredInspections = searchTerm 
-    ? vitInspections.filter(inspection => {
-        const asset = vitAssets.find(a => a.id === inspection.vitAssetId);
-        if (!asset) return false;
-        
-        const lowercaseSearch = searchTerm.toLowerCase();
-        const region = regions.find(r => r.id === asset.regionId)?.name || "";
-        const district = districts.find(d => d.id === asset.districtId)?.name || "";
-        
-        return (
-          asset.serialNumber.toLowerCase().includes(lowercaseSearch) ||
-          asset.location.toLowerCase().includes(lowercaseSearch) ||
-          region.toLowerCase().includes(lowercaseSearch) ||
-          district.toLowerCase().includes(lowercaseSearch) ||
-          inspection.inspectedBy.toLowerCase().includes(lowercaseSearch)
-        );
-      })
-    : vitInspections;
+  // Filter inspections based on user role and search term
+  const filteredInspections = vitInspections.filter(inspection => {
+    const asset = vitAssets.find(a => a.id === inspection.vitAssetId);
+    if (!asset) return false;
+
+    // First apply role-based filtering
+    let roleBasedAccess = true;
+    if (user?.role === "global_engineer") {
+      roleBasedAccess = true;
+    } else if (user?.role === "regional_engineer" && user.region) {
+      const userRegion = regions.find(r => r.name === user.region);
+      roleBasedAccess = userRegion ? asset.regionId === userRegion.id : false;
+    } else if ((user?.role === "district_engineer" || user?.role === "technician") && user.region && user.district) {
+      const userRegion = regions.find(r => r.name === user.region);
+      const userDistrict = districts.find(d => d.name === user.district);
+      roleBasedAccess = userRegion && userDistrict ? 
+        asset.regionId === userRegion.id && asset.districtId === userDistrict.id : false;
+    }
+
+    if (!roleBasedAccess) return false;
+
+    // Then apply search filtering if there's a search term
+    if (searchTerm) {
+      const lowercaseSearch = searchTerm.toLowerCase();
+      const region = regions.find(r => r.id === asset.regionId)?.name || "";
+      const district = districts.find(d => d.id === asset.districtId)?.name || "";
+      
+      return (
+        asset.serialNumber.toLowerCase().includes(lowercaseSearch) ||
+        asset.location.toLowerCase().includes(lowercaseSearch) ||
+        region.toLowerCase().includes(lowercaseSearch) ||
+        district.toLowerCase().includes(lowercaseSearch) ||
+        inspection.inspectedBy.toLowerCase().includes(lowercaseSearch)
+      );
+    }
+
+    return true;
+  });
 
   const handleDeleteInspection = (id: string) => {
     if (window.confirm("Are you sure you want to delete this inspection record?")) {

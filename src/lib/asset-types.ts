@@ -36,6 +36,22 @@ export interface LoadMonitoringData {
   percentageLoad: number;
   tenPercentFullLoadNeutral: number;
   calculatedNeutral: number;
+  
+  // Warning Information (optional calculated values)
+  neutralWarningLevel?: "normal" | "warning" | "critical";
+  neutralWarningMessage?: string;
+  imbalancePercentage?: number;
+  imbalanceWarningLevel?: "normal" | "warning" | "critical";
+  imbalanceWarningMessage?: string;
+  maxPhaseCurrent?: number;
+  minPhaseCurrent?: number;
+  avgPhaseCurrent?: number;
+
+  // User Information
+  createdBy: {
+    id: string;
+    name: string;
+  };
 }
 
 export type ConditionStatus = 'good' | 'bad';

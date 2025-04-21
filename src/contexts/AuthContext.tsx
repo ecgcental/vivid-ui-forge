@@ -36,13 +36,29 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Mock users with hashed passwords
 const INITIAL_MOCK_USERS: User[] = [
   {
+    id: "admin2",
+    email: "admin2@ecg.com",
+    name: "System Administrator 2",
+    role: "system_admin",
+    password: hashPassword("Admin@123"),
+    staffId: "ECGADMIN2"
+  },
+  {
+    id: "admin",
+    email: "admin@ecg.com",
+    name: "System Administrator",
+    role: "system_admin",
+    password: "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8", // hash of "password"
+    staffId: "ECGADMIN"
+  },
+  {
     id: "1",
     email: "district@ecg.com",
     name: "District Engineer",
     role: "district_engineer",
     region: "ACCRA EAST REGION",
     district: "MAKOLA",
-    password: SHA256("password").toString(),
+    password: hashPassword("password"),
     staffId: "ECG001"
   },
   {
@@ -51,7 +67,7 @@ const INITIAL_MOCK_USERS: User[] = [
     name: "Regional Engineer",
     role: "regional_engineer",
     region: "ACCRA EAST REGION",
-    password: SHA256("password").toString(),
+    password: hashPassword("password"),
     staffId: "ECG002"
   },
   {
@@ -59,7 +75,7 @@ const INITIAL_MOCK_USERS: User[] = [
     email: "global@ecg.com",
     name: "Global Engineer",
     role: "global_engineer",
-    password: SHA256("password").toString(),
+    password: hashPassword("password"),
     staffId: "ECG003"
   },
   {
@@ -69,7 +85,7 @@ const INITIAL_MOCK_USERS: User[] = [
     role: "district_engineer",
     region: "TEMA REGION",
     district: "TEMA NORTH",
-    password: SHA256("password").toString(),
+    password: hashPassword("password"),
     staffId: "ECG004"
   },
   {
@@ -79,7 +95,7 @@ const INITIAL_MOCK_USERS: User[] = [
     role: "district_engineer",
     region: "ASHANTI EAST REGION",
     district: "KUMASI EAST",
-    password: SHA256("password").toString(),
+    password: hashPassword("password"),
     staffId: "ECG005"
   },
   {
@@ -88,7 +104,7 @@ const INITIAL_MOCK_USERS: User[] = [
     name: "Ashanti Regional Engineer",
     role: "regional_engineer",
     region: "ASHANTI EAST REGION",
-    password: SHA256("password").toString(),
+    password: hashPassword("password"),
     staffId: "ECG006"
   },
   {
@@ -98,13 +114,18 @@ const INITIAL_MOCK_USERS: User[] = [
     role: "technician",
     region: "ACCRA EAST REGION",
     district: "MAKOLA",
-    password: SHA256("password").toString(),
+    password: hashPassword("password"),
     staffId: "ECG007"
   }
 ];
 
 // Mock staff ID database for verification
 const STAFF_ID_DATABASE = [
+  {
+    id: "ECGADMIN2",
+    name: "System Administrator 2",
+    role: "system_admin" as UserRole
+  },
   {
     id: "ECG001",
     name: "District Engineer 1",
@@ -223,6 +244,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (validateSessionToken(session)) {
           const storedUser = users.find(u => u.id === session.userId);
           if (storedUser) {
+            // Check if user is disabled
+            if (storedUser.disabled) {
+              console.log("Session terminated - user is disabled");
+              localStorage.removeItem("ecg_session");
+              setUser(null);
+              return;
+            }
             const { password, ...userWithoutPassword } = storedUser;
             setUser(userWithoutPassword);
           }
@@ -275,8 +303,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       // Sanitize inputs
       const sanitizedEmail = sanitizeInput(email);
+      console.log("=== Login Debug ===");
       console.log("Attempting login for email:", sanitizedEmail);
       console.log("Input password:", password);
+      console.log("Current users list:", users.map(u => ({ email: u.email, role: u.role, disabled: u.disabled })));
       
       // Check login attempts
       if (!checkLoginAttempts(sanitizedEmail)) {
@@ -299,6 +329,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Check if user is disabled
       if (foundUser.disabled) {
+        console.log("User is disabled");
         throw new Error("Your account has been disabled. Please contact your system administrator.");
       }
 
@@ -340,7 +371,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Login failed: " + (error as Error).message);
-      throw error;
     } finally {
       setLoading(false);
     }

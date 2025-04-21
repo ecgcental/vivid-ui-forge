@@ -53,7 +53,7 @@ export function FilterBar({
   // Set initial values based on user role
   useEffect(() => {
     if (user) {
-      if (user.role === "district_engineer" && user.region && user.district) {
+      if ((user.role === "district_engineer" || user.role === "technician") && user.region && user.district) {
         const userRegion = regions.find(r => r.name === user.region);
         if (userRegion) {
           setSelectedRegion(userRegion.id);
@@ -95,8 +95,8 @@ export function FilterBar({
   };
   
   const handleClearFilters = () => {
-    // Don't clear region/district for district/regional engineers
-    if (user?.role === "global_engineer") {
+    // Don't clear region/district for district/regional engineers and technicians
+    if (user?.role === "global_engineer" || user?.role === "system_admin") {
       setSelectedRegion("");
       setFilterRegion("");
       setSelectedDistrict("");
@@ -115,7 +115,7 @@ export function FilterBar({
   };
   
   // Filter regions based on user role
-  const filteredRegions = user?.role === "global_engineer" 
+  const filteredRegions = (user?.role === "global_engineer" || user?.role === "system_admin")
     ? regions 
     : regions.filter(r => user?.region ? r.name === user.region : true);
   
@@ -123,7 +123,10 @@ export function FilterBar({
   const filteredDistricts = selectedRegion
     ? districts.filter(d => {
         const region = regions.find(r => r.id === selectedRegion);
-        return region?.districts.some(rd => rd.id === d.id);
+        if (user?.role === "district_engineer" || user?.role === "technician") {
+          return d.name === user.district;
+        }
+        return region?.districts?.some(rd => rd.id === d.id) ?? false;
       })
     : [];
   

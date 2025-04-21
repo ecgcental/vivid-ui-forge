@@ -39,7 +39,7 @@ export type StaffIdEntry = {
 
 export function StaffIdManagement() {
   const { staffIds, addStaffId, updateStaffId, deleteStaffId } = useAuth();
-  const { regions } = useData();
+  const { regions, districts } = useData();
   const [isAdding, setIsAdding] = useState(false);
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [newEntry, setNewEntry] = useState<Omit<StaffIdEntry, "id"> & { customId?: string }>({
@@ -348,7 +348,7 @@ Kwame Asante,technician,Central,Cape Coast,ECG005`;
                         <SelectValue placeholder="Select region" />
                       </SelectTrigger>
                       <SelectContent>
-                        {regions.map(region => (
+                        {regions?.map(region => (
                           <SelectItem key={region.id} value={region.name}>
                             {region.name}
                           </SelectItem>
@@ -367,9 +367,9 @@ Kwame Asante,technician,Central,Cape Coast,ECG005`;
                           <SelectValue placeholder="Select district" />
                         </SelectTrigger>
                         <SelectContent>
-                          {regions
-                            .find(r => r.name === newEntry.region)
-                            ?.districts.map(district => (
+                          {districts
+                            ?.filter(d => d.regionId === regions?.find(r => r.name === newEntry.region)?.id)
+                            ?.map(district => (
                               <SelectItem key={district.id} value={district.name}>
                                 {district.name}
                               </SelectItem>
@@ -453,7 +453,7 @@ Kwame Asante,technician,Central,Cape Coast,ECG005`;
                           <SelectValue placeholder="Select region" />
                         </SelectTrigger>
                         <SelectContent>
-                          {regions.map(region => (
+                          {regions?.map(region => (
                             <SelectItem key={region.id} value={region.name}>
                               {region.name}
                             </SelectItem>
@@ -477,9 +477,9 @@ Kwame Asante,technician,Central,Cape Coast,ECG005`;
                           <SelectValue placeholder="Select district" />
                         </SelectTrigger>
                         <SelectContent>
-                          {regions
-                            .find(r => r.name === entry.region)
-                            ?.districts.map(district => (
+                          {districts
+                            ?.filter(d => d.regionId === regions?.find(r => r.name === entry.region)?.id)
+                            ?.map(district => (
                               <SelectItem key={district.id} value={district.name}>
                                 {district.name}
                               </SelectItem>

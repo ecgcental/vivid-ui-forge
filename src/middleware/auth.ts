@@ -70,7 +70,7 @@ export const authorizeRegion = (req: Request, res: Response, next: NextFunction)
 
   const { region } = req.params;
   
-  if (req.user.role !== 'global_engineer' && req.user.region !== region) {
+  if (req.user.role !== 'global_engineer' && req.user.role !== 'system_admin' && req.user.region !== region) {
     return res.status(403).json({ error: 'Forbidden' });
   }
 

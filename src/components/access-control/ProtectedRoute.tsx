@@ -2,23 +2,19 @@ import { ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/lib/types';
-import { hasRequiredRole } from '@/utils/security';
+import { PermissionService } from '@/services/PermissionService';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredRole?: UserRole;
+  requiredRole?: UserRole | UserRole[];
   allowedRegion?: string;
   allowedDistrict?: string;
 }
 
-export function ProtectedRoute({ 
-  children, 
-  requiredRole, 
-  allowedRegion, 
-  allowedDistrict 
-}: ProtectedRouteProps) {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole, allowedRegion, allowedDistrict }) => {
   const { isAuthenticated, user } = useAuth();
   const location = useLocation();
+  const permissionService = PermissionService.getInstance();
 
   // Check if user is authenticated
   if (!isAuthenticated) {
@@ -26,8 +22,9 @@ export function ProtectedRoute({
   }
 
   // Check role-based access
-  if (requiredRole && user?.role) {
-    if (!hasRequiredRole(user.role, requiredRole)) {
+  if (requiredRole) {
+    const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    if (!roles.some(role => permissionService.hasRequiredRole(user.role, role))) {
       // Allow technicians to access asset management pages
       if (location.pathname.startsWith('/asset-management') && user.role === 'technician') {
         return <>{children}</>;
@@ -37,7 +34,7 @@ export function ProtectedRoute({
   }
 
   // Check region-based access
-  if (allowedRegion && user?.role !== 'global_engineer') {
+  if (allowedRegion && user?.role !== 'global_engineer' && user?.role !== 'system_admin') {
     if (user?.region !== allowedRegion) {
       return <Navigate to="/unauthorized" replace />;
     }
@@ -51,4 +48,6 @@ export function ProtectedRoute({
   }
 
   return <>{children}</>;
-} 
+};
+
+export default ProtectedRoute; 

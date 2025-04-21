@@ -341,8 +341,8 @@ export default function EditOP5FaultPage() {
         if (d.regionId !== formData.regionId) return false;
         
         // Role-based filtering
-        if (user?.role === "district_engineer") {
-          // District engineer sees only their assigned district
+        if (user?.role === "district_engineer" || user?.role === "technician") {
+          // District engineer and technician see only their assigned district
           return d.name === user.district;
         } else if (user?.role === "regional_engineer") {
            // Regional engineer sees all districts within their assigned region

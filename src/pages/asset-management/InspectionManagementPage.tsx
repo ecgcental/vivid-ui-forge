@@ -36,12 +36,20 @@ export default function InspectionManagementPage() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Filter inspections based on search term
-  const filteredInspections = savedInspections?.filter(inspection => 
-    inspection.substationNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    inspection.region.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    inspection.district.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+  // Filter inspections based on user role and search term
+  const filteredInspections = savedInspections?.filter(inspection => {
+    // First check role-based access
+    if (user?.role === 'district_engineer' || user?.role === 'technician') {
+      if (inspection.district !== user.district) return false;
+    } else if (user?.role === 'regional_engineer') {
+      if (inspection.region !== user.region) return false;
+    }
+    
+    // Then apply search filter
+    return inspection.substationNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           inspection.region.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           inspection.district.toLowerCase().includes(searchTerm.toLowerCase());
+  }) || [];
 
   const handleView = (id: string) => {
     navigate(`/asset-management/inspection-details/${id}`);

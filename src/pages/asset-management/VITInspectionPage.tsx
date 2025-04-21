@@ -1,6 +1,6 @@
-
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useData } from "@/contexts/DataContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,13 +12,55 @@ import { VITAsset } from "@/lib/types";
 import { useNavigate } from "react-router-dom";
 
 export default function VITInspectionPage() {
-  const { vitAssets } = useData();
+  const { vitAssets, vitInspections, regions, districts } = useData();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("assets");
   const [isAssetFormOpen, setIsAssetFormOpen] = useState(false);
   const [isInspectionFormOpen, setIsInspectionFormOpen] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<VITAsset | null>(null);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  
+  // Filter assets based on user role
+  const filteredAssets = useMemo(() => {
+    if (!vitAssets) return [];
+    return vitAssets.filter(asset => {
+      if (user?.role === 'global_engineer' || user?.role === 'system_admin') return true;
+      if (user?.role === 'regional_engineer' && user.region) {
+        const userRegion = regions.find(r => r.name === user.region);
+        return userRegion ? asset.regionId === userRegion.id : false;
+      }
+      if ((user?.role === 'district_engineer' || user?.role === 'technician') && user.region && user.district) {
+        const userRegion = regions.find(r => r.name === user.region);
+        const userDistrict = districts.find(d => d.name === user.district);
+        return userRegion && userDistrict ? 
+          asset.regionId === userRegion.id && asset.districtId === userDistrict.id : false;
+      }
+      return false;
+    });
+  }, [vitAssets, user, regions, districts]);
+
+  // Filter inspections based on user role
+  const filteredInspections = useMemo(() => {
+    if (!vitInspections) return [];
+    return vitInspections.filter(inspection => {
+      const asset = vitAssets.find(a => a.id === inspection.vitAssetId);
+      if (!asset) return false;
+
+      if (user?.role === 'global_engineer' || user?.role === 'system_admin') return true;
+      if (user?.role === 'regional_engineer' && user.region) {
+        const userRegion = regions.find(r => r.name === user.region);
+        return userRegion ? asset.regionId === userRegion.id : false;
+      }
+      if ((user?.role === 'district_engineer' || user?.role === 'technician') && user.region && user.district) {
+        const userRegion = regions.find(r => r.name === user.region);
+        const userDistrict = districts.find(d => d.name === user.district);
+        return userRegion && userDistrict ? 
+          asset.regionId === userRegion.id && asset.districtId === userDistrict.id : false;
+      }
+      return false;
+    });
+  }, [vitInspections, vitAssets, user, regions, districts]);
   
   const handleAddAsset = () => {
     setSelectedAsset(null);
@@ -69,6 +111,7 @@ export default function VITInspectionPage() {
           
           <TabsContent value="assets" className="space-y-6">
             <VITAssetsTable 
+              assets={filteredAssets}
               onAddAsset={handleAddAsset} 
               onEditAsset={handleEditAsset}
               onInspect={handleAddInspection}
@@ -76,20 +119,74 @@ export default function VITInspectionPage() {
           </TabsContent>
           
           <TabsContent value="inspections">
-            <div className="flex flex-col items-center justify-center py-12 space-y-4">
-              <div className="text-center space-y-2 max-w-md">
-                <h2 className="text-2xl font-semibold">View Inspection Records</h2>
-                <p className="text-muted-foreground">
-                  Select an asset from the Assets tab to view its inspection history, or click below to browse all inspections.
-                </p>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold">Inspection Records</h2>
+                <Button onClick={() => navigate("/asset-management/vit-inspection-management")}>
+                  View All Inspections
+                </Button>
               </div>
-              <Button
-                onClick={() => navigate("/asset-management/vit-inspection-management")}
-                size="lg"
-                className="mt-4"
-              >
-                Browse All Inspections
-              </Button>
+              
+              <div className="rounded-md border overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asset</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Region</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">District</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inspector</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredInspections.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                          No inspection records found
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredInspections.map(inspection => {
+                        const asset = vitAssets.find(a => a.id === inspection.vitAssetId);
+                        if (!asset) return null;
+                        
+                        const region = regions.find(r => r.id === asset.regionId)?.name || "Unknown";
+                        const district = districts.find(d => d.id === asset.districtId)?.name || "Unknown";
+                        
+                        return (
+                          <tr key={inspection.id}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {new Date(inspection.inspectionDate).toLocaleDateString()}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                              {asset.serialNumber}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {region}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {district}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                              {inspection.inspectedBy}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewInspections(asset.id)}
+                              >
+                                View Details
+                              </Button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
