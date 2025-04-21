@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import {
   Table,
@@ -23,7 +24,6 @@ import { format } from "date-fns";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "@/components/ui/sonner";
-import { ColumnDef } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
 interface OverheadLineInspectionsTableProps {
@@ -137,7 +137,7 @@ export function OverheadLineInspectionsTable({
         inspection.conductorCondition.notes || "-"
       ],
       ["Lightning Arrester", 
-        `${inspection.lightningArresterCondition.brokenOrCracked ? "Broken/Cracked" : ""} ${inspection.lightningArresterCondition.flashOver ? "Flash over" : ""} ${inspection.lightningArresterCondition.missing ? "Missing" : ""} ${inspection.lightningArresterCondition.noEarthing ? "No Earthing" : ""} ${inspection.lightningArresterCondition.byPassed ? "By-passed" : ""} ${inspection.lightningArresterCondition.noArrester ? "No Arrester" : ""}`,
+        `${inspection.lightningArresterCondition.brokenOrCracked ? "Broken/Cracked" : ""} ${inspection.lightningArresterCondition.flashOver ? "Flash over" : ""} ${inspection.lightningArresterCondition.missing ? "Missing" : ""} ${inspection.lightningArresterCondition.noEarthing ? "No Earthing" : ""} ${inspection.lightningArresterCondition.bypassed ? "By-passed" : ""} ${inspection.lightningArresterCondition.noArrester ? "No Arrester" : ""}`,
         inspection.lightningArresterCondition.notes || "-"
       ],
       ["Drop Out Fuse", 
@@ -149,7 +149,7 @@ export function OverheadLineInspectionsTable({
         inspection.transformerCondition.notes || "-"
       ],
       ["Recloser", 
-        `${inspection.recloserCondition.lowGasLevel ? "Low Gas Level" : ""} ${inspection.recloserCondition.lowBatteryLevel ? "Low Battery Level" : ""} ${inspection.recloserCondition.burntVoltageTransformers ? "Burnt Voltage Transformers" : ""} ${inspection.recloserCondition.protectionDisabled ? "Protection Disabled" : ""} ${inspection.recloserCondition.byPassed ? "By-passed" : ""} ${inspection.recloserCondition.others ? "Others" : ""}`,
+        `${inspection.recloserCondition.lowGasLevel ? "Low Gas Level" : ""} ${inspection.recloserCondition.lowBatteryLevel ? "Low Battery Level" : ""} ${inspection.recloserCondition.burntVoltageTransformers ? "Burnt Voltage Transformers" : ""} ${inspection.recloserCondition.protectionDisabled ? "Protection Disabled" : ""} ${inspection.recloserCondition.bypassed ? "By-passed" : ""} ${inspection.recloserCondition.others ? "Others" : ""}`,
         inspection.recloserCondition.notes || "-"
       ]
     ];
@@ -244,7 +244,7 @@ export function OverheadLineInspectionsTable({
       ["Flash over", inspection.lightningArresterCondition.flashOver ? "Yes" : "No"],
       ["Missing", inspection.lightningArresterCondition.missing ? "Yes" : "No"],
       ["No Earthing", inspection.lightningArresterCondition.noEarthing ? "Yes" : "No"],
-      ["By-passed", inspection.lightningArresterCondition.byPassed ? "Yes" : "No"],
+      ["By-passed", inspection.lightningArresterCondition.bypassed ? "Yes" : "No"],
       ["No Arrester", inspection.lightningArresterCondition.noArrester ? "Yes" : "No"],
       ["Notes", inspection.lightningArresterCondition.notes || "-"],
       [],
@@ -272,7 +272,7 @@ export function OverheadLineInspectionsTable({
       ["Low Battery Level", inspection.recloserCondition.lowBatteryLevel ? "Yes" : "No"],
       ["Burnt Voltage Transformers", inspection.recloserCondition.burntVoltageTransformers ? "Yes" : "No"],
       ["Protection Disabled", inspection.recloserCondition.protectionDisabled ? "Yes" : "No"],
-      ["By-passed", inspection.recloserCondition.byPassed ? "Yes" : "No"],
+      ["By-passed", inspection.recloserCondition.bypassed ? "Yes" : "No"],
       ["Others", inspection.recloserCondition.others ? "Yes" : "No"],
       ["Notes", inspection.recloserCondition.notes || "-"],
       [],
@@ -334,25 +334,25 @@ export function OverheadLineInspectionsTable({
         "Status",
         "Latitude",
         "Longitude",
-        "Pole Leaning",
-        "Pole Damaged",
-        "Pole Rotted",
+        "Pole Tilted",
+        "Pole Rotten",
+        "Pole Burnt",
         "Pole Notes",
-        "Stay Loose",
-        "Stay Damaged",
+        "Stay Required But Not Available",
+        "Stay Cut",
         "Stay Misaligned",
         "Stay Notes",
-        "Cross Arm Damaged",
-        "Cross Arm Rotted",
         "Cross Arm Misaligned",
+        "Cross Arm Bend",
+        "Cross Arm Corroded",
         "Cross Arm Notes",
-        "Insulator Broken",
-        "Insulator Cracked",
-        "Insulator Contaminated",
+        "Insulator Broken/Cracked",
+        "Insulator Burnt/FlashOver",
+        "Insulator Shattered",
         "Insulator Notes",
-        "Conductor Broken",
-        "Conductor Loose Connections",
-        "Conductor Tree Touching",
+        "Conductor Loose Connectors",
+        "Conductor Weak Jumpers",
+        "Conductor Burnt Lugs",
         "Conductor Notes",
         "Additional Notes",
         "Images Count"
@@ -373,25 +373,25 @@ export function OverheadLineInspectionsTable({
           inspection.status.charAt(0).toUpperCase() + inspection.status.slice(1),
           inspection.latitude,
           inspection.longitude,
-          inspection.poleCondition.leaning ? "Yes" : "No",
-          inspection.poleCondition.damaged ? "Yes" : "No",
-          inspection.poleCondition.rotted ? "Yes" : "No",
+          inspection.poleCondition.tilted ? "Yes" : "No",
+          inspection.poleCondition.rotten ? "Yes" : "No",
+          inspection.poleCondition.burnt ? "Yes" : "No",
           inspection.poleCondition.notes,
-          inspection.stayCondition.loose ? "Yes" : "No",
-          inspection.stayCondition.damaged ? "Yes" : "No",
+          inspection.stayCondition.requiredButNotAvailable ? "Yes" : "No",
+          inspection.stayCondition.cut ? "Yes" : "No",
           inspection.stayCondition.misaligned ? "Yes" : "No",
           inspection.stayCondition.notes,
-          inspection.crossArmCondition.damaged ? "Yes" : "No",
-          inspection.crossArmCondition.rotted ? "Yes" : "No",
           inspection.crossArmCondition.misaligned ? "Yes" : "No",
+          inspection.crossArmCondition.bend ? "Yes" : "No",
+          inspection.crossArmCondition.corroded ? "Yes" : "No",
           inspection.crossArmCondition.notes,
-          inspection.insulatorCondition.broken ? "Yes" : "No",
-          inspection.insulatorCondition.cracked ? "Yes" : "No",
-          inspection.insulatorCondition.contaminated ? "Yes" : "No",
+          inspection.insulatorCondition.brokenOrCracked ? "Yes" : "No",
+          inspection.insulatorCondition.burntOrFlashOver ? "Yes" : "No",
+          inspection.insulatorCondition.shattered ? "Yes" : "No",
           inspection.insulatorCondition.notes,
-          inspection.conductorCondition.broken ? "Yes" : "No",
-          inspection.conductorCondition.looseConnections ? "Yes" : "No",
-          inspection.conductorCondition.treeTouching ? "Yes" : "No",
+          inspection.conductorCondition.looseConnectors ? "Yes" : "No",
+          inspection.conductorCondition.weakJumpers ? "Yes" : "No",
+          inspection.conductorCondition.burntLugs ? "Yes" : "No",
           inspection.conductorCondition.notes,
           inspection.additionalNotes || "",
           inspection.images.length
@@ -426,124 +426,6 @@ export function OverheadLineInspectionsTable({
     
     toast.success("All inspections exported to CSV successfully");
   };
-
-  const columns: ColumnDef<OverheadLineInspection>[] = [
-    {
-      accessorKey: "id",
-      header: "ID",
-      cell: ({ row }) => <div className="font-medium">{row.getValue("id")}</div>,
-    },
-    {
-      accessorKey: "createdAt",
-      header: "Date",
-      cell: ({ row }) => (
-        <div>{format(new Date(row.getValue("createdAt")), "dd/MM/yyyy")}</div>
-      ),
-    },
-    {
-      accessorKey: "regionId",
-      header: "Region",
-      cell: ({ row }) => <div>{getRegionName(row.getValue("regionId"))}</div>,
-    },
-    {
-      accessorKey: "districtId",
-      header: "District",
-      cell: ({ row }) => <div>{getDistrictName(row.getValue("districtId"))}</div>,
-    },
-    {
-      accessorKey: "feederName",
-      header: "Feeder Name",
-      cell: ({ row }) => <div>{row.getValue("feederName") || "-"}</div>,
-    },
-    {
-      accessorKey: "voltageLevel",
-      header: "Voltage Level",
-      cell: ({ row }) => <div>{row.getValue("voltageLevel") || "-"}</div>,
-    },
-    {
-      accessorKey: "referencePole",
-      header: "Reference Pole",
-      cell: ({ row }) => <div>{row.getValue("referencePole") || "-"}</div>,
-    },
-    {
-      accessorKey: "poleId",
-      header: "Pole ID",
-      cell: ({ row }) => <div>{row.getValue("poleId") || "-"}</div>,
-    },
-    {
-      accessorKey: "poleHeight",
-      header: "Pole Height",
-      cell: ({ row }) => <div>{row.getValue("poleHeight") || "-"}</div>,
-    },
-    {
-      accessorKey: "poleType",
-      header: "Pole Type",
-      cell: ({ row }) => <div>{row.getValue("poleType") || "-"}</div>,
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => {
-        const status = row.getValue("status") as string;
-        return (
-          <Badge
-            className={
-              status === "completed"
-                ? "bg-green-500"
-                : status === "in-progress"
-                ? "bg-yellow-500"
-                : "bg-gray-500"
-            }
-          >
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Badge>
-        );
-      },
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => {
-        const inspection = row.original;
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                <span className="sr-only">Open menu</span>
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => onView(inspection)}>
-                <Eye className="mr-2 h-4 w-4" />
-                View Details
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onEdit(inspection)}>
-                <Pencil className="mr-2 h-4 w-4" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportToPDF(inspection)}>
-                <FileText className="mr-2 h-4 w-4" />
-                Export to PDF
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => exportToCSV(inspection)}>
-                <Download className="mr-2 h-4 w-4" />
-                Export to CSV
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={() => onDelete(inspection)}
-                className="text-red-600"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
-      },
-    },
-  ];
 
   return (
     <div className="rounded-md border">
@@ -641,4 +523,4 @@ export function OverheadLineInspectionsTable({
       </Table>
     </div>
   );
-} 
+}

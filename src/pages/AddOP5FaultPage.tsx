@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '@/contexts/DataContext';
 import OP5FaultForm from '@/components/faults/OP5FaultForm';
@@ -58,9 +59,6 @@ const AddOP5FaultPage: React.FC = () => {
             <Button onClick={() => navigate('/dashboard')} variant="outline" className="mr-2">
               Cancel
             </Button>
-            <Button type="submit" onClick={() => handleSubmit(formData)}>
-              Save
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -68,4 +66,4 @@ const AddOP5FaultPage: React.FC = () => {
   );
 };
 
-export default AddOP5FaultPage; 
+export default AddOP5FaultPage;
