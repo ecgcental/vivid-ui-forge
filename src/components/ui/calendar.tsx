@@ -1,3 +1,4 @@
+
 import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { DayPicker } from "react-day-picker"
@@ -67,6 +68,11 @@ function Calendar({
         Caption: ({ className, ...props }) => (
           <div className={cn("flex justify-center pt-1 relative items-center", className)} {...props} />
         ),
-        // IconLeft: ChevronLeft,
-        // IconRight: ChevronRight,
-        // ...components,
+      }}
+      {...props}
+    />
+  )
+}
+
+export { Calendar }
+
