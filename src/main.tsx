@@ -1,12 +1,13 @@
+
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
-import { initDB } from './utils/db'
+import { initDatabase } from './utils/sync' // Use the correct function name from sync.ts
 import './index.css'
 import { register as registerServiceWorker } from './serviceWorkerRegistration'
 
 // Initialize IndexedDB
-initDB().catch(err => {
+initDatabase().catch(err => {
   console.error('Failed to initialize IndexedDB:', err)
 })
 

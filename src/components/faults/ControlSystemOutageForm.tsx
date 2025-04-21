@@ -26,7 +26,7 @@ export function ControlSystemOutageForm() {
     const notificationTitle = 'Control System Outage Created';
     const notificationBody = 'New outage created';
     
-    // Show both types of notifications
+    // Fix notification options by passing an object with a body property
     showServiceWorkerNotification(notificationTitle, {
       body: notificationBody
     });

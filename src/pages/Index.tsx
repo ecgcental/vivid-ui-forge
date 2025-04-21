@@ -1,6 +1,6 @@
 
 import { Navigation } from "@/components/Navigation";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/button"; // Ensure Button is imported
 
 const Index = () => {
   return (

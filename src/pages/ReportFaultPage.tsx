@@ -8,6 +8,7 @@ import { ControlSystemOutageForm } from "@/components/faults/ControlSystemOutage
 import { Region, District } from '@/lib/types';
 import { useData } from '@/contexts/DataContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button"; // Add missing Button import
 
 export default function ReportFaultPage() {
   const navigate = useNavigate();

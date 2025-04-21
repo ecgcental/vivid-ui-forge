@@ -17,7 +17,7 @@ function Calendar({
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
-      className={cn("p-3", className)}
+      className={cn("p-3 pointer-events-auto", className)}
       classNames={{
         months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
         month: "space-y-4",
@@ -49,8 +49,9 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconNext: () => <ChevronRight className="h-4 w-4" />,
-        IconPrev: () => <ChevronLeft className="h-4 w-4" />,
+        // Fix: Change IconNext & IconPrev to icons prop names DayPicker accepts
+        IconRight: () => <ChevronRight className="h-4 w-4" />,
+        IconLeft: () => <ChevronLeft className="h-4 w-4" />,
         Caption: ({ ...props }) => (
           <div className="flex justify-center pt-1 relative items-center" {...props} />
         ),

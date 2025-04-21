@@ -28,7 +28,7 @@ export function OP5Form() {
     const notificationTitle = 'OP5 Fault Created';
     const notificationBody = 'New OP5 fault created';
     
-    // Show both types of notifications
+    // Fix notification options by passing an object with a body property
     showServiceWorkerNotification(notificationTitle, {
       body: notificationBody,
     });
