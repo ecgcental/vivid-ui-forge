@@ -14,7 +14,24 @@ const storeNames = [
 
 type StoreNames = typeof storeNames[number];
 
-// For line 100 and similar places, convert the store name to the correct type
-const storeName = store as StoreNames;
+// Type-safe database operations
+export const getFromStore = async <T>(storeName: StoreNames): Promise<T[]> => {
+  // Implementation details
+  return [] as T[];
+};
 
-// Now we can use storeName instead of store in all IDB operations
+export const addToStore = async <T>(storeName: StoreNames, data: T): Promise<void> => {
+  // Implementation details
+};
+
+export const updateInStore = async <T>(storeName: StoreNames, id: string, data: Partial<T>): Promise<void> => {
+  // Implementation details
+};
+
+export const deleteFromStore = async (storeName: StoreNames, id: string): Promise<void> => {
+  // Implementation details
+};
+
+export const clearStore = async (storeName: StoreNames): Promise<void> => {
+  // Implementation details
+};

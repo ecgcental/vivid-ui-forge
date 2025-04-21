@@ -44,6 +44,9 @@ export interface DataContextType {
   setVITInspections: React.Dispatch<React.SetStateAction<VITInspection[]>>;
   setSubstationInspections: React.Dispatch<React.SetStateAction<SubstationInspection[]>>;
   setLoadMonitoring: React.Dispatch<React.SetStateAction<LoadMonitoring[]>>;
+  resolveFault: (id: string, isOP5: boolean) => Promise<void>;
+  deleteFault: (id: string, isOP5: boolean) => Promise<void>;
+  canEditFault: (fault: OP5Fault | ControlSystemOutage) => boolean;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -117,7 +120,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           setControlOutages(mockControlSystemOutagesData.map(outage => ({
             ...outage,
             unservedEnergyMWh: calculateUnservedEnergy(outage.loadMW, outage.restorationDate, outage.occurrenceDate)
-          })));
+          })) as ControlSystemOutage[]);
         }
 
         // VIT Assets
@@ -311,8 +314,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const addSubstationInspection = async (inspection: Partial<SubstationInspection>): Promise<SubstationInspection> => {
     const newInspection: SubstationInspection = {
       id: Math.random().toString(36).substring(2, 15),
-      regionId: inspection.regionId || '',
-      districtId: inspection.districtId || '',
+      region: inspection.region || '',
+      district: inspection.district || '',
       substationName: inspection.substationName || '',
       inspectionDate: inspection.inspectionDate || new Date().toISOString(),
       inspectorName: inspection.inspectorName || '',
@@ -373,6 +376,54 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     await syncDataToIDB('load-monitoring', updatedLoadMonitoring);
   };
 
+  const resolveFault = async (id: string, isOP5: boolean): Promise<void> => {
+    if (isOP5) {
+      const updatedFaults = op5Faults.map(f => 
+        f.id === id ? { ...f, status: 'resolved' as const, restorationDate: new Date().toISOString() } : f
+      );
+      setOP5Faults(updatedFaults);
+      await syncDataToIDB('op5-faults', updatedFaults);
+    } else {
+      const updatedOutages = controlOutages.map(o => 
+        o.id === id ? { ...o, status: 'resolved' as const, restorationDate: new Date().toISOString() } : o
+      );
+      setControlOutages(updatedOutages);
+      await syncDataToIDB('control-outages', updatedOutages);
+    }
+  };
+
+  const deleteFault = async (id: string, isOP5: boolean): Promise<void> => {
+    if (isOP5) {
+      await deleteOP5Fault(id);
+    } else {
+      await deleteControlOutage(id);
+    }
+  };
+
+  const canEditFault = (fault: OP5Fault | ControlSystemOutage): boolean => {
+    if (!user) return false;
+    
+    // System admins can edit anything
+    if (user.role === 'system_admin') return true;
+    
+    // Global engineers can edit anything
+    if (user.role === 'global_engineer') return true;
+    
+    // Regional engineers can edit in their region
+    if (user.role === 'regional_engineer') {
+      const region = regions.find(r => r.id === fault.regionId);
+      return region?.name === user.region;
+    }
+    
+    // District engineers can edit in their district
+    if (user.role === 'district_engineer') {
+      const district = districts.find(d => d.id === fault.districtId);
+      return district?.name === user.district;
+    }
+    
+    return false;
+  };
+
   const value = {
     regions,
     districts,
@@ -405,7 +456,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setVITAssets,
     setVITInspections,
     setSubstationInspections,
-    setLoadMonitoring
+    setLoadMonitoring,
+    resolveFault,
+    deleteFault,
+    canEditFault
   };
 
   return <DataContext.Provider value={value}>{children}</DataContext.Provider>;

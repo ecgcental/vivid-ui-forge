@@ -13,11 +13,6 @@ import { OutageDetailsSection } from './form-sections/OutageDetailsSection';
 import { AffectedCustomersSection } from './form-sections/AffectedCustomersSection';
 import { showServiceWorkerNotification, showNotification } from '@/utils/notifications';
 import { FaultType } from '@/lib/types';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Calculator, Users, InfoIcon } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 
 export function ControlSystemOutageForm() {
   const navigate = useNavigate();
@@ -33,8 +28,7 @@ export function ControlSystemOutageForm() {
     
     // Show both types of notifications
     showServiceWorkerNotification(notificationTitle, {
-      body: notificationBody,
-      data: { url: window.location.href }
+      body: notificationBody
     });
     
     showNotification(notificationTitle, notificationBody);

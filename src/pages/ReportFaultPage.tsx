@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Calculator, Users, InfoIcon } from "lucide-react";
+import { FileText, Calculator } from "lucide-react";
 import { OP5Form } from "@/components/faults/OP5Form";
 import { ControlSystemOutageForm } from "@/components/faults/ControlSystemOutageForm";
 import { Region, District } from '@/lib/types';
@@ -13,18 +13,7 @@ export default function ReportFaultPage() {
   const navigate = useNavigate();
   const { regionId, districtId } = useParams<{ regionId?: string; districtId?: string }>();
   const { regions, districts } = useData();
-  const [defaultRegionId, setDefaultRegionId] = useState<string | undefined>(regionId);
-  const [defaultDistrictId, setDefaultDistrictId] = useState<string | undefined>(districtId);
-
-  useEffect(() => {
-    if (regionId) {
-      setDefaultRegionId(regionId);
-    }
-    if (districtId) {
-      setDefaultDistrictId(districtId);
-    }
-  }, [regionId, districtId]);
-
+  
   const region = regions.find((r) => r.id === regionId);
   const district = districts.find((d) => d.id === districtId);
 

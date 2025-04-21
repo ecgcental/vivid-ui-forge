@@ -49,6 +49,11 @@ function Calendar({
         ...classNames,
       }}
       components={{
+        IconNext: () => <ChevronRight className="h-4 w-4" />,
+        IconPrev: () => <ChevronLeft className="h-4 w-4" />,
+        Caption: ({ ...props }) => (
+          <div className="flex justify-center pt-1 relative items-center" {...props} />
+        ),
         Dropdown: ({ className, ...props }) => (
           <select
             className={cn(
@@ -57,12 +62,7 @@ function Calendar({
             )}
             {...props}
           />
-        ),
-        IconNext: () => <ChevronRight className="h-4 w-4" />,
-        IconPrev: () => <ChevronLeft className="h-4 w-4" />,
-        Caption: ({ ...props }) => (
-          <div className="flex justify-center pt-1 relative items-center" {...props} />
-        ),
+        )
       }}
       {...props}
     />

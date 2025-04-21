@@ -14,12 +14,7 @@ import { AffectedCustomersSection } from './form-sections/AffectedCustomersSecti
 import { ReliabilityIndicesSection } from './form-sections/ReliabilityIndicesSection';
 import { MaterialsUsedSection } from './form-sections/MaterialsUsedSection';
 import { showServiceWorkerNotification, showNotification } from '@/utils/notifications';
-import { FaultType, OP5Fault } from '@/lib/types';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Calculator, Users, InfoIcon } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { FaultType } from '@/lib/types';
 
 export function OP5Form() {
   const navigate = useNavigate();
@@ -36,7 +31,6 @@ export function OP5Form() {
     // Show both types of notifications
     showServiceWorkerNotification(notificationTitle, {
       body: notificationBody,
-      data: { url: window.location.href }
     });
     
     showNotification(notificationTitle, notificationBody);

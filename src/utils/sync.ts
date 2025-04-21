@@ -1,50 +1,99 @@
-import { getPendingSyncItems, clearPendingSyncItem } from './db';
 
-let isOnline = navigator.onLine;
-let syncInProgress = false;
+import { openDB } from 'idb';
+import { storeNames } from '@/utils/db';
 
-// Listen for online/offline events
-window.addEventListener('online', () => {
-  isOnline = true;
-  syncPendingChanges();
-});
+// Define database name
+const DB_NAME = 'fault-master-db';
+const DB_VERSION = 1;
 
-window.addEventListener('offline', () => {
-  isOnline = false;
-});
+/**
+ * Initialize the IndexedDB database
+ */
+export const initDatabase = async () => {
+  return openDB(DB_NAME, DB_VERSION, {
+    upgrade(db) {
+      // Create all stores if they don't exist
+      storeNames.forEach(storeName => {
+        if (!db.objectStoreNames.contains(storeName)) {
+          db.createObjectStore(storeName, { keyPath: 'id' });
+        }
+      });
+    },
+  });
+};
 
-export async function syncPendingChanges() {
-  if (!isOnline || syncInProgress) return;
-
-  syncInProgress = true;
+/**
+ * Get data from IndexedDB
+ */
+export const getDataFromIDB = async (storeName: string) => {
   try {
-    const pendingItems = await getPendingSyncItems();
+    const db = await initDatabase();
+    return await db.getAll(storeName);
+  } catch (error) {
+    console.error(`Error getting data from ${storeName}:`, error);
+    return null;
+  }
+};
+
+/**
+ * Sync data to IndexedDB
+ */
+export const syncDataToIDB = async (storeName: string, data: any[]) => {
+  try {
+    const db = await initDatabase();
+    const tx = db.transaction(storeName, 'readwrite');
+    const store = tx.objectStore(storeName);
     
-    for (const item of pendingItems) {
-      try {
-        // Here you would implement your actual API calls
-        // For example:
-        // await api[item.type][item.action](item.data);
-        
-        // After successful sync, remove from pending
-        await clearPendingSyncItem(item.timestamp);
-      } catch (error) {
-        console.error(`Failed to sync ${item.type} ${item.action}:`, error);
-        // Keep the item in pending sync for retry later
-      }
+    // Clear existing data
+    await store.clear();
+    
+    // Add new data
+    for (const item of data) {
+      await store.add(item);
     }
-  } finally {
-    syncInProgress = false;
+    
+    await tx.done;
+    return true;
+  } catch (error) {
+    console.error(`Error syncing data to ${storeName}:`, error);
+    return false;
   }
-}
+};
 
-// Start periodic sync when online
-setInterval(() => {
-  if (isOnline) {
-    syncPendingChanges();
+/**
+ * Queue an item for syncing to the server later
+ */
+export const queueForSync = async (item: any) => {
+  try {
+    const db = await initDatabase();
+    await db.add('pending-sync', item);
+    return true;
+  } catch (error) {
+    console.error('Error queueing item for sync:', error);
+    return false;
   }
-}, 30000); // Check every 30 seconds
+};
 
-export function isAppOnline() {
-  return isOnline;
-} 
+/**
+ * Process pending sync items
+ */
+export const processPendingSync = async () => {
+  try {
+    const db = await initDatabase();
+    const items = await db.getAll('pending-sync');
+    
+    if (items.length === 0) {
+      return true;
+    }
+    
+    // Process items
+    // Here you would implement actual server sync logic
+    
+    // For now, just clear the queue
+    await db.clear('pending-sync');
+    return true;
+  } catch (error) {
+    console.error('Error processing pending sync items:', error);
+    return false;
+  }
+};
