@@ -1,20 +1,20 @@
 
 import React, { useState } from 'react';
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { PlusIcon, TrashIcon } from "lucide-react";
 import { useFormContext } from '@/hooks/useOP5Form';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Trash, Plus } from "lucide-react";
 import { Material } from '@/types/faults';
-import { Textarea } from '@/components/ui/textarea';
+import { v4 as uuidv4 } from 'uuid';
 
-export const MaterialsUsedSection = () => {
+export function MaterialsUsedSection() {
   const { materials, addMaterial, removeMaterial } = useFormContext();
   const [materialType, setMaterialType] = useState<string>('');
   const [rating, setRating] = useState<string>('');
-  const [conductorType, setConductorType] = useState<string>('');
   const [quantity, setQuantity] = useState<string>('');
+  const [conductorType, setConductorType] = useState<string>('');
   const [length, setLength] = useState<string>('');
   const [description, setDescription] = useState<string>('');
 
@@ -22,55 +22,53 @@ export const MaterialsUsedSection = () => {
     if (!materialType) return;
 
     const newMaterial: Material = {
+      id: uuidv4(),
       type: materialType,
-      rating: rating || undefined,
-      conductorType: conductorType || undefined,
-      quantity: quantity ? parseInt(quantity) : undefined,
-      length: length ? parseInt(length) : undefined,
-      description: description || undefined
+      ...(materialType === 'Fuse' && { rating }),
+      ...(materialType === 'Fuse' && { quantity: quantity ? parseInt(quantity) : undefined }),
+      ...(materialType === 'Conductor' && { conductorType }),
+      ...(materialType === 'Conductor' && { length: length ? parseFloat(length) : undefined }),
+      ...(materialType === 'Others' && { description }),
+      ...(materialType === 'Others' && { quantity: quantity ? parseInt(quantity) : undefined })
     };
-    
+
     addMaterial(newMaterial);
     
     // Reset form
     setMaterialType('');
     setRating('');
-    setConductorType('');
     setQuantity('');
+    setConductorType('');
     setLength('');
     setDescription('');
   };
 
   return (
-    <div className="space-y-6">
-      <h3 className="text-lg font-semibold">Materials Used</h3>
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium">Materials Used</h3>
       
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="materialType">Material Type</Label>
-            <Select 
-              value={materialType} 
-              onValueChange={setMaterialType}
-            >
-              <SelectTrigger id="materialType">
-                <SelectValue placeholder="Select material type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Fuse">Fuse</SelectItem>
-                <SelectItem value="Conductor">Conductor</SelectItem>
-                <SelectItem value="Pole">Pole</SelectItem>
-                <SelectItem value="Transformer">Transformer</SelectItem>
-                <SelectItem value="Insulator">Insulator</SelectItem>
-                <SelectItem value="Terminal">Terminal</SelectItem>
-                <SelectItem value="Others">Others</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          {materialType === 'Fuse' && (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="materialType">Material Type</Label>
+          <Select
+            value={materialType}
+            onValueChange={setMaterialType}
+          >
+            <SelectTrigger id="materialType">
+              <SelectValue placeholder="Select material type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Fuse">Fuse</SelectItem>
+              <SelectItem value="Conductor">Conductor</SelectItem>
+              <SelectItem value="Others">Others</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        {materialType === 'Fuse' && (
+          <>
             <div className="space-y-2">
-              <Label htmlFor="rating">Rating</Label>
+              <Label htmlFor="rating">Fuse Rating</Label>
               <Input
                 id="rating"
                 value={rating}
@@ -78,34 +76,6 @@ export const MaterialsUsedSection = () => {
                 placeholder="Enter rating"
               />
             </div>
-          )}
-          
-          {materialType === 'Conductor' && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="conductorType">Conductor Type</Label>
-                <Input
-                  id="conductorType"
-                  value={conductorType}
-                  onChange={(e) => setConductorType(e.target.value)}
-                  placeholder="E.g., AAC, ACSR, etc."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="length">Length (m)</Label>
-                <Input
-                  id="length"
-                  type="number"
-                  min="0"
-                  value={length}
-                  onChange={(e) => setLength(e.target.value)}
-                  placeholder="Enter length in meters"
-                />
-              </div>
-            </>
-          )}
-          
-          {materialType && (
             <div className="space-y-2">
               <Label htmlFor="quantity">Quantity</Label>
               <Input
@@ -117,54 +87,106 @@ export const MaterialsUsedSection = () => {
                 placeholder="Enter quantity"
               />
             </div>
-          )}
-          
-          {materialType === 'Others' && (
-            <div className="space-y-2 md:col-span-2">
+          </>
+        )}
+        
+        {materialType === 'Conductor' && (
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="conductorType">Conductor Type</Label>
+              <Input
+                id="conductorType"
+                value={conductorType}
+                onChange={(e) => setConductorType(e.target.value)}
+                placeholder="Enter type"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="length">Length (m)</Label>
+              <Input
+                id="length"
+                type="number"
+                min="0"
+                step="0.1"
+                value={length}
+                onChange={(e) => setLength(e.target.value)}
+                placeholder="Enter length"
+              />
+            </div>
+          </>
+        )}
+        
+        {materialType === 'Others' && (
+          <>
+            <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
-              <Textarea
+              <Input
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Enter material description"
+                placeholder="Enter description"
               />
             </div>
-          )}
-        </div>
-        
-        <Button 
-          type="button" 
-          variant="secondary" 
-          onClick={handleAddMaterial}
-          disabled={!materialType}
-          className="mt-2"
-        >
-          <PlusIcon className="mr-2 h-4 w-4" />
-          Add Material
-        </Button>
+            <div className="space-y-2">
+              <Label htmlFor="otherQuantity">Quantity</Label>
+              <Input
+                id="otherQuantity"
+                type="number"
+                min="1"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="Enter quantity"
+              />
+            </div>
+          </>
+        )}
       </div>
       
+      <Button 
+        type="button" 
+        onClick={handleAddMaterial}
+        disabled={!materialType}
+        variant="outline"
+        className="mt-2"
+      >
+        <Plus className="h-4 w-4 mr-2" />
+        Add Material
+      </Button>
+      
       {materials.length > 0 && (
-        <div className="border rounded-md">
-          <h4 className="text-sm font-medium p-3 border-b bg-muted/50">Added Materials</h4>
-          <div className="p-2">
+        <div className="space-y-2 mt-4">
+          <h4 className="text-sm font-medium">Added Materials</h4>
+          <div className="space-y-2">
             {materials.map((material, index) => (
-              <div key={index} className="flex items-center justify-between p-2 border-b last:border-b-0">
+              <div key={material.id} className="flex items-center justify-between p-2 border rounded-md">
                 <div>
                   <span className="font-medium">{material.type}</span>
-                  {material.rating && <span className="text-sm text-muted-foreground ml-2">Rating: {material.rating}</span>}
-                  {material.conductorType && <span className="text-sm text-muted-foreground ml-2">{material.conductorType}</span>}
-                  {material.quantity && <span className="text-sm text-muted-foreground ml-2">Qty: {material.quantity}</span>}
-                  {material.length && <span className="text-sm text-muted-foreground ml-2">Length: {material.length}m</span>}
-                  {material.description && <span className="text-sm text-muted-foreground ml-2">{material.description}</span>}
+                  {material.type === 'Fuse' && (
+                    <span className="ml-2 text-sm">
+                      {material.rating && `${material.rating}A`}
+                      {material.quantity && `, Qty: ${material.quantity}`}
+                    </span>
+                  )}
+                  {material.type === 'Conductor' && (
+                    <span className="ml-2 text-sm">
+                      {material.conductorType}
+                      {material.length && `, ${material.length}m`}
+                    </span>
+                  )}
+                  {material.type === 'Others' && (
+                    <span className="ml-2 text-sm">
+                      {material.description}
+                      {material.quantity && `, Qty: ${material.quantity}`}
+                    </span>
+                  )}
                 </div>
-                <Button 
-                  type="button" 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => removeMaterial(index)}
                 >
-                  <TrashIcon className="h-4 w-4 text-red-500" />
+                  <Trash className="h-4 w-4 text-destructive" />
                 </Button>
               </div>
             ))}
@@ -173,4 +195,4 @@ export const MaterialsUsedSection = () => {
       )}
     </div>
   );
-};
+}

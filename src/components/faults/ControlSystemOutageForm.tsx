@@ -26,12 +26,14 @@ export function ControlSystemOutageForm() {
     const notificationTitle = 'Control System Outage Created';
     const notificationBody = 'New outage created';
     
-    // Fix notification options by passing an object with a body property
+    // Fix notification options by properly creating the options object
     showServiceWorkerNotification(notificationTitle, {
       body: notificationBody
     });
     
-    showNotification(notificationTitle, notificationBody);
+    showNotification(notificationTitle, {
+      body: notificationBody
+    });
     
     toast.success("Control system outage created successfully");
     navigate("/dashboard");

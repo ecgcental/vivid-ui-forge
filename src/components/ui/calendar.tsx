@@ -49,9 +49,9 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        // Fix: Change IconNext & IconPrev to icons prop names DayPicker accepts
-        IconRight: () => <ChevronRight className="h-4 w-4" />,
+        // Fix component naming to match what DayPicker expects
         IconLeft: () => <ChevronLeft className="h-4 w-4" />,
+        IconRight: () => <ChevronRight className="h-4 w-4" />,
         Caption: ({ ...props }) => (
           <div className="flex justify-center pt-1 relative items-center" {...props} />
         ),

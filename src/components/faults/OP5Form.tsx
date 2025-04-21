@@ -28,12 +28,14 @@ export function OP5Form() {
     const notificationTitle = 'OP5 Fault Created';
     const notificationBody = 'New OP5 fault created';
     
-    // Fix notification options by passing an object with a body property
+    // Fix notification options by properly creating the options object
     showServiceWorkerNotification(notificationTitle, {
-      body: notificationBody,
+      body: notificationBody
     });
     
-    showNotification(notificationTitle, notificationBody);
+    showNotification(notificationTitle, {
+      body: notificationBody
+    });
     
     toast.success("OP5 fault created successfully");
     navigate("/dashboard");

@@ -1,7 +1,6 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { FaultType, UnplannedFaultType, EmergencyFaultType } from '@/lib/types';
-import { calculateDurationHours, calculateUnservedEnergy } from '@/utils/calculations';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { FaultType } from '@/lib/types';
 
 interface ControlOutageFormContext {
   // Location
@@ -47,7 +46,12 @@ interface ControlOutageFormContext {
 
 const ControlOutageFormContext = createContext<ControlOutageFormContext | undefined>(undefined);
 
-export const ControlOutageFormProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const ControlOutageFormProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  // Make this context available globally for components that need to check
+  if (typeof window !== 'undefined') {
+    (window as any).__CONTROL_OUTAGE_FORM_CONTEXT__ = ControlOutageFormContext;
+  }
+  
   // Location state
   const [regionId, setRegionId] = useState("");
   const [districtId, setDistrictId] = useState("");
@@ -69,7 +73,7 @@ export const ControlOutageFormProvider: React.FC<{ children: React.ReactNode }> 
   const [reason, setReason] = useState("");
   const [indications, setIndications] = useState("");
   const [areaAffected, setAreaAffected] = useState("");
-  const [loadMW, setLoadMW] = useState(0);
+  const [loadMW, setLoadMW] = useState<number>(0);
   
   // Calculated Values
   const [durationHours, setDurationHours] = useState<number | null>(null);
@@ -78,11 +82,18 @@ export const ControlOutageFormProvider: React.FC<{ children: React.ReactNode }> 
   // Calculate metrics when dates or load changes
   useEffect(() => {
     if (occurrenceDate && restorationDate && loadMW > 0) {
-      const duration = calculateDurationHours(occurrenceDate, restorationDate);
-      setDurationHours(duration);
+      const startDate = new Date(occurrenceDate);
+      const endDate = new Date(restorationDate);
       
-      const unservedEnergy = calculateUnservedEnergy(loadMW, duration);
-      setUnservedEnergyMWh(unservedEnergy);
+      if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+        const durationMs = endDate.getTime() - startDate.getTime();
+        const durationHrs = durationMs / (1000 * 60 * 60);
+        
+        if (durationHrs >= 0) {
+          setDurationHours(durationHrs);
+          setUnservedEnergyMWh(loadMW * durationHrs);
+        }
+      }
     } else {
       setDurationHours(null);
       setUnservedEnergyMWh(null);

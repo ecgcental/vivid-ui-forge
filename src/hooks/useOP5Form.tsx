@@ -2,11 +2,12 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { FaultType } from '@/lib/types';
 import { Material } from '@/types/faults';
+import { v4 as uuidv4 } from 'uuid';
 
 interface OP5FormContextType {
   regionId: string;
-  districtId: string;
   setRegionId: (id: string) => void;
+  districtId: string;
   setDistrictId: (id: string) => void;
   faultType: FaultType;
   setFaultType: (type: FaultType) => void;
@@ -51,12 +52,17 @@ interface OP5FormProviderProps {
 }
 
 export const OP5FormProvider: React.FC<OP5FormProviderProps> = ({ children }) => {
+  // Make this context available globally for components that need to check
+  if (typeof window !== 'undefined') {
+    (window as any).__OP5_FORM_CONTEXT__ = OP5FormContext;
+  }
+  
   const [regionId, setRegionId] = useState<string>('');
   const [districtId, setDistrictId] = useState<string>('');
   const [faultType, setFaultType] = useState<FaultType>('Unplanned');
   const [specificFaultType, setSpecificFaultType] = useState<string>('');
   const [faultLocation, setFaultLocation] = useState<string>('');
-  const [occurrenceDate, setOccurrenceDate] = useState<string>(new Date().toISOString());
+  const [occurrenceDate, setOccurrenceDate] = useState<string>(new Date().toISOString().slice(0, 16));
   const [restorationDate, setRestorationDate] = useState<string | null>(null);
   const [ruralAffected, setRuralAffected] = useState<number | null>(0);
   const [urbanAffected, setUrbanAffected] = useState<number | null>(0);
@@ -67,6 +73,9 @@ export const OP5FormProvider: React.FC<OP5FormProviderProps> = ({ children }) =>
   const [materials, setMaterials] = useState<Material[]>([]);
 
   const addMaterial = (material: Material) => {
+    if (!material.id) {
+      material.id = uuidv4();
+    }
     setMaterials([...materials, material]);
   };
 
