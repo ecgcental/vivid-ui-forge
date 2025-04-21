@@ -1,116 +1,73 @@
-# FaultMaster - Power Distribution Asset Management System
+# Welcome to your Lovable project
 
-## Overview
-FaultMaster is a comprehensive asset management and fault tracking system designed for power distribution networks. It provides real-time asset inspection, fault tracking, advanced analytics, and detailed reporting capabilities for utility companies and power distribution operators.
+## Project info
 
-## Key Features
+**URL**: https://lovable.dev/projects/1599cfe9-b07d-4857-a07a-1083200b557b
 
-### Asset Management
-- **Overhead Line Inspections**
-  - Comprehensive pole condition assessment
-  - Stay, cross arm, and insulator condition tracking
-  - Conductor and lightning arrester inspection
-  - Detailed condition reporting with images
-  - PDF and CSV export capabilities
+## How can I edit this code?
 
-- **Substation Inspections**
-  - Transformer condition monitoring
-  - Switchgear and protection device inspection
-  - Detailed equipment condition reporting
+There are several ways of editing your application.
 
-- **Load Monitoring**
-  - Real-time load tracking
-  - Peak demand analysis
-  - Load balancing recommendations
+**Use Lovable**
 
-### Fault Management
-- Real-time fault tracking and management
-- Advanced analytics and reporting
-- MTTR (Mean Time To Repair) analysis
-- Reliability indices calculation (SAIDI, SAIFI, CAIDI)
+Simply visit the [Lovable Project](https://lovable.dev/projects/1599cfe9-b07d-4857-a07a-1083200b557b) and start prompting.
 
-### User Management
-- Multi-level user roles and permissions
-- Geographic region and district management
-- User activity tracking and audit logs
+Changes made via Lovable will be committed automatically to this repo.
 
-### Reporting
-- Detailed inspection reports
-- Fault analysis reports
-- Performance metrics
-- Export to PDF and CSV formats
-- Custom report generation
+**Use your preferred IDE**
 
-## Technical Stack
-- **Frontend**: React, TypeScript, Tailwind CSS
-- **State Management**: React Context
-- **UI Components**: Shadcn UI
-- **Charts**: Recharts
-- **PDF Generation**: jsPDF, jspdf-autotable
-- **Date Handling**: date-fns
-- **Form Handling**: React Hook Form
-- **Data Validation**: Zod
-- **Icons**: Lucide React
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
-## System Requirements
-- Node.js 16.x or higher
-- npm 7.x or higher
-- Modern web browser (Chrome, Firefox, Safari, Edge)
+The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
 
-## Installation
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/ECGOPS/OMS.git
-   cd OMS
-   ```
+Follow these steps:
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+```sh
+# Step 1: Clone the repository using the project's Git URL.
+git clone <YOUR_GIT_URL>
 
-3. Start the development server:
-   ```bash
-   npm run dev
-   ```
+# Step 2: Navigate to the project directory.
+cd <YOUR_PROJECT_NAME>
 
-4. Build for production:
-   ```bash
-   npm run build
-   ```
+# Step 3: Install the necessary dependencies.
+npm i
 
-## Project Structure
-```
-src/
-├── components/          # Reusable UI components
-│   ├── overhead-line/  # Overhead line inspection components
-│   ├── substation/     # Substation inspection components
-│   ├── load-monitoring/# Load monitoring components
-│   └── shared/         # Shared components
-├── contexts/           # React contexts for state management
-├── lib/               # Utility functions and types
-├── pages/             # Application pages
-├── utils/             # Helper functions
-└── data/              # JSON data files
+# Step 4: Start the development server with auto-reloading and an instant preview.
+npm run dev
 ```
 
-## Documentation
-- [User Guide](docs/user-guide.md)
-- [Technical Documentation](docs/technical.md)
-- [API Documentation](docs/api.md)
-- [Deployment Guide](docs/deployment.md)
+**Edit a file directly in GitHub**
 
-## Contributing
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+- Navigate to the desired file(s).
+- Click the "Edit" button (pencil icon) at the top right of the file view.
+- Make your changes and commit the changes.
 
-## License
-Proprietary - All rights reserved
+**Use GitHub Codespaces**
 
-## Support
-For support and inquiries, please contact:
-- Email: afiifi@ecggh.com
-- Phone: +233245003731
+- Navigate to the main page of your repository.
+- Click on the "Code" button (green button) near the top right.
+- Select the "Codespaces" tab.
+- Click on "New codespace" to launch a new Codespace environment.
+- Edit files directly within the Codespace and commit and push your changes once you're done.
+
+## What technologies are used for this project?
+
+This project is built with:
+
+- Vite
+- TypeScript
+- React
+- shadcn-ui
+- Tailwind CSS
+
+## How can I deploy this project?
+
+Simply open [Lovable](https://lovable.dev/projects/1599cfe9-b07d-4857-a07a-1083200b557b) and click on Share -> Publish.
+
+## Can I connect a custom domain to my Lovable project?
+
+Yes, you can!
+
+To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+
+Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
