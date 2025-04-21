@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useData } from "@/contexts/DataContext";
@@ -23,7 +24,7 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, InfoIcon, Users, MapPin, Calculator, FileText } from "lucide-react";
-import { FaultType, UnplannedFaultType, EmergencyFaultType } from "@/lib/types";
+import { FaultType, UnplannedFaultType, EmergencyFaultType, ControlSystemOutage } from "@/lib/types";
 import { 
   calculateDurationHours,
   calculateUnservedEnergy
@@ -185,7 +186,7 @@ export function ControlSystemOutageForm({ defaultRegionId = "", defaultDistrictI
           urban: urbanAffected || 0,
           metro: metroAffected || 0
         },
-        restorationDate: formattedRestorationDate,
+        restorationDate: formattedRestorationDate || "",
         reason: reason || "",
         controlPanelIndications: indications || "",
         areaAffected: areaAffected || "",

@@ -1,3 +1,4 @@
+
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 
 interface FaultMasterDB extends DBSchema {
@@ -41,6 +42,8 @@ interface FaultMasterDB extends DBSchema {
     };
   };
 }
+
+type StoreNames = keyof FaultMasterDB;
 
 let db: IDBPDatabase<FaultMasterDB> | null = null;
 
@@ -97,34 +100,34 @@ export async function getPendingSyncItems() {
 
 export async function clearPendingSyncItem(timestamp: number) {
   const db = await initDB();
-  await db.delete('pending-sync', timestamp);
+  await db.delete('pending-sync', timestamp.toString());
 }
 
 // Generic CRUD operations for each store
-export async function addItem(storeName: keyof FaultMasterDB, item: any) {
+export async function addItem(storeName: StoreNames, item: any) {
   const db = await initDB();
   await db.add(storeName, item);
-  await addToPendingSync(storeName, 'create', item);
+  await addToPendingSync(storeName.toString(), 'create', item);
 }
 
-export async function updateItem(storeName: keyof FaultMasterDB, item: any) {
+export async function updateItem(storeName: StoreNames, item: any) {
   const db = await initDB();
   await db.put(storeName, item);
-  await addToPendingSync(storeName, 'update', item);
+  await addToPendingSync(storeName.toString(), 'update', item);
 }
 
-export async function deleteItem(storeName: keyof FaultMasterDB, id: string) {
+export async function deleteItem(storeName: StoreNames, id: string) {
   const db = await initDB();
   await db.delete(storeName, id);
-  await addToPendingSync(storeName, 'delete', { id });
+  await addToPendingSync(storeName.toString(), 'delete', { id });
 }
 
-export async function getAllItems(storeName: keyof FaultMasterDB) {
+export async function getAllItems(storeName: StoreNames) {
   const db = await initDB();
   return db.getAll(storeName);
 }
 
-export async function getItem(storeName: keyof FaultMasterDB, id: string) {
+export async function getItem(storeName: StoreNames, id: string) {
   const db = await initDB();
   return db.get(storeName, id);
-} 
+}

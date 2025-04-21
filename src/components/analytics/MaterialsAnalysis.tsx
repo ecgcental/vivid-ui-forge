@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Package, Zap, Cable, Box } from 'lucide-react';
-import { OP5Fault, Material } from '@/types/faults';
+import { OP5Fault, Material } from '@/lib/types';
 
 interface MaterialsStats {
   totalMaterials: number;
@@ -81,17 +81,20 @@ export default function MaterialsAnalysis({ faults }: MaterialsAnalysisProps) {
         materialsStats.totalMaterials++;
 
         // Count by type
-        const typeIndex = materialsStats.byType.findIndex(item => item.name === material.type);
+        const materialType = (material.type as string).includes('Fuse') ? 'Fuse' : 
+                            (material.type as string).includes('Conductor') ? 'Conductor' : 'Others';
+        
+        const typeIndex = materialsStats.byType.findIndex(item => item.name === materialType);
         if (typeIndex >= 0) {
           materialsStats.byType[typeIndex].value++;
         }
 
         // Count by month
-        const month = new Date(fault.occurrenceDate).toLocaleString('default', { month: 'short', year: 'numeric' });
+        const month = new Date(fault.createdAt).toLocaleString('default', { month: 'short', year: 'numeric' });
         materialsByMonth.set(month, (materialsByMonth.get(month) || 0) + 1);
 
         // Count specific materials
-        const materialKey = getMaterialKey(material);
+        const materialKey = getMaterialKey(material as Material);
         materialsByType.set(materialKey, (materialsByType.get(materialKey) || 0) + 1);
       });
     });
@@ -231,4 +234,4 @@ export default function MaterialsAnalysis({ faults }: MaterialsAnalysisProps) {
       </Card>
     </div>
   );
-} 
+}

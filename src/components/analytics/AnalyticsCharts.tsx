@@ -150,7 +150,7 @@ const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ filteredFaults }) => 
       const district = fault.districtId;
       const date = format(new Date(fault.occurrenceDate), 'yyyy-MM-dd');
       const status = fault.status;
-      const duration = 'outrageDuration' in fault ? fault.outrageDuration || 0 : 0;
+      const duration = 'mttr' in fault ? fault.mttr || 0 : 0;
       
       return [type, region, district, date, status, duration].join(',');
     });

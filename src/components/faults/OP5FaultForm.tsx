@@ -1,13 +1,12 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { OP5Fault, FaultType } from '@/lib/types';
-import { useData } from '@/contexts/DataContext';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { OP5Fault } from '@/lib/types';
+import { useData } from '@/contexts/DataContext';
 import { toast } from '@/components/ui/sonner';
 
 interface OP5FaultFormProps {
@@ -17,11 +16,11 @@ interface OP5FaultFormProps {
 
 const OP5FaultForm: React.FC<OP5FaultFormProps> = ({ onSubmit, initialData }) => {
   const { regions, districts } = useData();
-  const [selectedRegion, setSelectedRegion] = useState(initialData?.regionId || '');
+  const [selectedRegion, setSelectedRegion] = React.useState(initialData?.regionId || '');
   
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<Partial<OP5Fault>>({
     defaultValues: initialData || {
-      faultType: 'Unplanned' as FaultType,
+      faultType: 'Unplanned',
       affectedPopulation: {
         rural: 0,
         urban: 0,
@@ -31,7 +30,8 @@ const OP5FaultForm: React.FC<OP5FaultFormProps> = ({ onSubmit, initialData }) =>
         saidi: 0,
         saifi: 0,
         caidi: 0
-      }
+      },
+      materialsUsed: []
     }
   });
   
@@ -40,7 +40,6 @@ const OP5FaultForm: React.FC<OP5FaultFormProps> = ({ onSubmit, initialData }) =>
   const handleRegionChange = (regionId: string) => {
     setSelectedRegion(regionId);
     setValue('regionId', regionId);
-    // Reset district when region changes
     setValue('districtId', '');
   };
   
@@ -100,38 +99,7 @@ const OP5FaultForm: React.FC<OP5FaultFormProps> = ({ onSubmit, initialData }) =>
           {errors.districtId && <p className="text-red-500 text-sm">District is required</p>}
         </div>
         
-        {/* Fault Type */}
-        <div className="space-y-2">
-          <Label htmlFor="faultType">Fault Type</Label>
-          <Select
-            value={watch('faultType') || 'Unplanned'}
-            onValueChange={(value) => setValue('faultType', value as FaultType)}
-          >
-            <SelectTrigger id="faultType">
-              <SelectValue placeholder="Select Fault Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Planned">Planned</SelectItem>
-              <SelectItem value="Unplanned">Unplanned</SelectItem>
-              <SelectItem value="Emergency">Emergency</SelectItem>
-              <SelectItem value="Load Shedding">Load Shedding</SelectItem>
-              <SelectItem value="GridCo Outages">GridCo Outages</SelectItem>
-            </SelectContent>
-          </Select>
-          {errors.faultType && <p className="text-red-500 text-sm">Fault type is required</p>}
-        </div>
-        
-        {/* Specific Fault Type */}
-        <div className="space-y-2">
-          <Label htmlFor="specificFaultType">Specific Fault Type</Label>
-          <Input
-            id="specificFaultType"
-            placeholder="E.g., JUMPER CUT, CONDUCTOR CUT"
-            {...register('specificFaultType')}
-          />
-        </div>
-        
-        {/* Occurrence Date */}
+        {/* Basic fields for OP5Fault form */}
         <div className="space-y-2">
           <Label htmlFor="occurrenceDate">Occurrence Date</Label>
           <Input
@@ -142,27 +110,6 @@ const OP5FaultForm: React.FC<OP5FaultFormProps> = ({ onSubmit, initialData }) =>
           {errors.occurrenceDate && <p className="text-red-500 text-sm">Occurrence date is required</p>}
         </div>
         
-        {/* Restoration Date (optional) */}
-        <div className="space-y-2">
-          <Label htmlFor="restorationDate">Restoration Date (if resolved)</Label>
-          <Input
-            id="restorationDate"
-            type="datetime-local"
-            {...register('restorationDate')}
-          />
-        </div>
-        
-        {/* Repair Date (optional) */}
-        <div className="space-y-2">
-          <Label htmlFor="repairDate">Repair Date (if applicable)</Label>
-          <Input
-            id="repairDate"
-            type="datetime-local"
-            {...register('repairDate')}
-          />
-        </div>
-        
-        {/* Fault Location */}
         <div className="space-y-2">
           <Label htmlFor="faultLocation">Fault Location</Label>
           <Input
@@ -172,47 +119,6 @@ const OP5FaultForm: React.FC<OP5FaultFormProps> = ({ onSubmit, initialData }) =>
           />
           {errors.faultLocation && <p className="text-red-500 text-sm">Fault location is required</p>}
         </div>
-      </div>
-      
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Affected Population</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="ruralPopulation">Rural</Label>
-            <Input
-              id="ruralPopulation"
-              type="number"
-              {...register('affectedPopulation.rural', { valueAsNumber: true })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="urbanPopulation">Urban</Label>
-            <Input
-              id="urbanPopulation"
-              type="number"
-              {...register('affectedPopulation.urban', { valueAsNumber: true })}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="metroPopulation">Metro</Label>
-            <Input
-              id="metroPopulation"
-              type="number"
-              {...register('affectedPopulation.metro', { valueAsNumber: true })}
-            />
-          </div>
-        </div>
-      </div>
-      
-      {/* Additional Notes */}
-      <div className="space-y-2">
-        <Label htmlFor="outageDescription">Outage Description</Label>
-        <textarea
-          id="outageDescription"
-          className="w-full h-24 p-2 border rounded-md"
-          placeholder="Enter detailed description of the fault..."
-          {...register('outageDescription')}
-        />
       </div>
       
       <div className="flex justify-end space-x-4">
