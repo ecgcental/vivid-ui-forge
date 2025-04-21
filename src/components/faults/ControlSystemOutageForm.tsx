@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,7 +12,7 @@ import { LocationSection } from './form-sections/LocationSection';
 import { OutageDetailsSection } from './form-sections/OutageDetailsSection';
 import { AffectedCustomersSection } from './form-sections/AffectedCustomersSection';
 import { showServiceWorkerNotification, showNotification } from '@/utils/notifications';
-import { FaultType, ControlSystemOutage } from '@/lib/types';
+import { FaultType } from '@/lib/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Calculator, Users, InfoIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";

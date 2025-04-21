@@ -1,8 +1,10 @@
+
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Package, Zap, Cable, Box } from 'lucide-react';
-import { OP5Fault, Material } from '@/lib/types';
+import { OP5Fault } from '@/lib/types';
+import { Material } from '@/types/faults';
 
 interface MaterialsStats {
   totalMaterials: number;
@@ -90,11 +92,12 @@ export default function MaterialsAnalysis({ faults }: MaterialsAnalysisProps) {
         }
 
         // Count by month
+        // Use createdAt instead of occurrenceDate
         const month = new Date(fault.createdAt).toLocaleString('default', { month: 'short', year: 'numeric' });
         materialsByMonth.set(month, (materialsByMonth.get(month) || 0) + 1);
 
         // Count specific materials
-        const materialKey = getMaterialKey(material as Material);
+        const materialKey = getMaterialKey(material as unknown as Material);
         materialsByType.set(materialKey, (materialsByType.get(materialKey) || 0) + 1);
       });
     });
