@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +31,7 @@ export function OP5Form() {
     e.preventDefault();
     
     const notificationTitle = 'OP5 Fault Created';
-    const notificationBody = `New OP5 fault created`;
+    const notificationBody = 'New OP5 fault created';
     
     // Show both types of notifications
     showServiceWorkerNotification(notificationTitle, {
@@ -38,7 +39,7 @@ export function OP5Form() {
       data: { url: window.location.href }
     });
     
-    showNotification(notificationTitle, { body: notificationBody });
+    showNotification(notificationTitle, notificationBody);
     
     toast.success("OP5 fault created successfully");
     navigate("/dashboard");

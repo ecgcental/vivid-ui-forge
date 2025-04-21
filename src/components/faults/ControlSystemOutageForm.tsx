@@ -29,7 +29,7 @@ export function ControlSystemOutageForm() {
     e.preventDefault();
     
     const notificationTitle = 'Control System Outage Created';
-    const notificationBody = `New outage created`;
+    const notificationBody = 'New outage created';
     
     // Show both types of notifications
     showServiceWorkerNotification(notificationTitle, {

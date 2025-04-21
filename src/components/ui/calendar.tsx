@@ -58,15 +58,10 @@ function Calendar({
             {...props}
           />
         ),
-        NextIcon: ({ ...props }) => (
-          <ChevronRight className="h-4 w-4" {...props} />
-        ),
-        PrevIcon: ({ ...props }) => <ChevronLeft className="h-4 w-4" {...props} />,
-        HeadCell: ({ ...props }) => (
-          <th className="font-normal text-muted-foreground" {...props} />
-        ),
-        Caption: ({ className, ...props }) => (
-          <div className={cn("flex justify-center pt-1 relative items-center", className)} {...props} />
+        IconNext: () => <ChevronRight className="h-4 w-4" />,
+        IconPrev: () => <ChevronLeft className="h-4 w-4" />,
+        Caption: ({ ...props }) => (
+          <div className="flex justify-center pt-1 relative items-center" {...props} />
         ),
       }}
       {...props}
@@ -75,4 +70,3 @@ function Calendar({
 }
 
 export { Calendar }
-
